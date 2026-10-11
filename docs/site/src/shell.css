@@ -47,6 +47,8 @@ html { scroll-padding-top: calc(var(--kd-top-h) + 16px); }
 .tr-tabs button[aria-selected="true"] { background: var(--kw-invert-bg); color: var(--kw-invert-fg); font-weight: 600; }
 .tr-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin: 18px 0 12px; }
 .tr-mods, .tr-act { display: flex; flex-wrap: wrap; gap: 6px; }
+.tr-lbl { display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; font-size: 13px; color: var(--kw-mut); }
+.tr-lbl .kd-pic { width: 16px; height: 16px; margin: 0; color: var(--kd-teal); }
 .tr-chip { padding: 4px 10px; border: 1px solid var(--kw-rule); border-radius: 6px; background: transparent; color: var(--kw-mut); font: 500 12px/1.4 'Geist Mono', monospace; transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
 .tr-chip[aria-pressed="true"] { background: var(--kw-raise); color: var(--kw-fg); border-color: var(--kw-dim); }
 .tr-btn { padding: 5px 12px; border: 1px solid var(--kw-rule); border-radius: 8px; background: transparent; color: var(--kw-body); font-size: 13px; }
@@ -112,3 +114,9 @@ html { scroll-padding-top: calc(var(--kd-top-h) + 16px); }
 .sx-k { color: var(--sx-k); } .sx-s { color: var(--sx-s); } .sx-n { color: var(--sx-n); } .sx-b { color: var(--sx-b); }
 .sx-c { color: var(--sx-c); font-style: italic; } .sx-f { color: var(--sx-f); } .sx-v { color: var(--sx-v); }
 .sx-p { color: var(--sx-p); } .sx-a { color: var(--sx-a); font-weight: 600; } .sx-h { color: var(--sx-h); font-weight: 600; }
+
+/* pictogrammes des concepts (src/pictos.py), communs à toutes les pages */
+.kd-pic{width:18px;height:18px;margin-right:8px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.kd-pic.pic-fill{fill:currentColor;stroke:none}
+.kd-pic.p-shield{color:var(--tr-guard)}.kd-pic.p-sword{color:var(--tr-skill)}.kd-pic.p-hook{color:var(--tr-hook)}.kd-pic.p-agent{color:var(--kd-violet)}
+.kd-pic.p-code{color:var(--kd-teal)}.kd-pic.p-book{color:var(--kd-amber)}

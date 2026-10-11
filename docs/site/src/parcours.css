@@ -162,3 +162,8 @@
 @media (hover:hover){.mcp-card:hover{transform:translateY(-2px);background:var(--kw-raise)}}
 @media(max-width:900px){.mcp-duo,.mcp-three{grid-template-columns:minmax(0,1fr)}.mcp-vs td:first-child{white-space:normal}}
 @media(prefers-reduced-motion:reduce){.mcp-card{transition:none}.mcp-card:hover{transform:none}}
+
+/* pictogramme de chaque parcours */
+.pc-card .pc-card-pic{display:block;width:30px;height:30px;margin:0 0 14px;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.pc-card:hover .pc-card-pic{transform:rotate(-8deg) scale(1.12)}
+@media(prefers-reduced-motion:reduce){.pc-card .pc-card-pic{transition:none}.pc-card:hover .pc-card-pic{transform:none}}

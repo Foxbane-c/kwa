@@ -11,9 +11,6 @@ section{scroll-margin-top:84px}
 .kw-hero{grid-template-columns:minmax(0,1fr)}
 .kd-term{min-width:0}
 .kd-eyebrow{font:400 12px/1.4 'Geist Mono',ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--kw-mut);margin-bottom:20px}
-.kd-pic{width:18px;height:18px;margin-right:8px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.kd-pic.pic-fill{fill:currentColor;stroke:none}
-.kd-pic.p-shield{color:var(--tr-guard)}.kd-pic.p-sword{color:var(--tr-skill)}.kd-pic.p-hook{color:var(--tr-hook)}.kd-pic.p-agent{color:var(--kd-violet)}
 .kd-sk h3 .kd-pic{width:16px;height:16px;margin-right:6px;vertical-align:-2px}
 .kd-solo .kd-section{padding-top:36px}
 .kd-solo .kw-page-title{margin:0 0 14px}
@@ -35,6 +32,8 @@ section{scroll-margin-top:84px}
 code{font:.9em 'Geist Mono',monospace;background:var(--kw-tint);border:1px solid var(--kw-rule-soft);border-radius:6px;padding:1px 6px}
 .kd-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .kd-stat{padding:24px;border:1px solid var(--kw-rule);border-radius:20px}
+.kd-stat .kd-pic{display:block;width:26px;height:26px;margin:0 0 14px;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.kd-stat:hover .kd-pic{transform:rotate(-10deg) scale(1.15)}
 .kd-stat .n{font:650 clamp(30px,3.4vw,40px)/1 Geist,system-ui,sans-serif;letter-spacing:-.02em}
 .kd-stat .l{margin-top:10px;color:var(--kw-body);font-size:14px}
 .kd-grid{display:grid;gap:12px}
@@ -138,7 +137,7 @@ footer.kw-footer{margin-top:128px}
   .kd-src .kd-card{grid-template-columns:minmax(0,1fr)}.kd-row{grid-template-columns:minmax(0,1fr)}.kd-row .why{grid-column:1}
   .kd-ob .item{grid-template-columns:minmax(0,1fr);padding:18px}.kd-ob .num{display:none}.kd-section{padding-top:88px}.kd-brand span{display:none}
 }
-@media (prefers-reduced-motion:reduce){.js .kd-rv{opacity:1;transform:none;transition:none}}
+@media (prefers-reduced-motion:reduce){.js .kd-rv{opacity:1;transform:none;transition:none}.kd-stat .kd-pic{transition:none}.kd-stat:hover .kd-pic{transform:none}}
 @media print{</style></head>
 <body class="kw">
 <header class="kd-top"><button type="button" class="kd-menu" id="menu" aria-label="Ouvrir la navigation" aria-expanded="false" aria-controls="side"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><a class="kd-brand" href="index.html" aria-label="Kwa, accueil"><b class="kd-word">kwa</b><span>/ harness</span></a><span class="kd-spacer"></span><button type="button" class="kd-theme" id="theme" aria-label="Passer en thème clair" title="Changer de thème"><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 14.6A8.4 8.4 0 0 1 9.4 3.8a8.4 8.4 0 1 0 10.8 10.8z"/></svg></button></header>

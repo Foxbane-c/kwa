@@ -16,9 +16,6 @@ section{scroll-margin-top:84px}
 .kw-hero{grid-template-columns:minmax(0,1fr)}
 .kd-term{min-width:0}
 .kd-eyebrow{font:400 12px/1.4 'Geist Mono',ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--kw-mut);margin-bottom:20px}
-.kd-pic{width:18px;height:18px;margin-right:8px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.kd-pic.pic-fill{fill:currentColor;stroke:none}
-.kd-pic.p-shield{color:var(--tr-guard)}.kd-pic.p-sword{color:var(--tr-skill)}.kd-pic.p-hook{color:var(--tr-hook)}.kd-pic.p-agent{color:var(--kd-violet)}
 .kd-sk h3 .kd-pic{width:16px;height:16px;margin-right:6px;vertical-align:-2px}
 .kd-solo .kd-section{padding-top:36px}
 .kd-solo .kw-page-title{margin:0 0 14px}
@@ -40,6 +37,8 @@ section{scroll-margin-top:84px}
 code{font:.9em 'Geist Mono',monospace;background:var(--kw-tint);border:1px solid var(--kw-rule-soft);border-radius:6px;padding:1px 6px}
 .kd-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .kd-stat{padding:24px;border:1px solid var(--kw-rule);border-radius:20px}
+.kd-stat .kd-pic{display:block;width:26px;height:26px;margin:0 0 14px;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.kd-stat:hover .kd-pic{transform:rotate(-10deg) scale(1.15)}
 .kd-stat .n{font:650 clamp(30px,3.4vw,40px)/1 Geist,system-ui,sans-serif;letter-spacing:-.02em}
 .kd-stat .l{margin-top:10px;color:var(--kw-body);font-size:14px}
 .kd-grid{display:grid;gap:12px}
@@ -143,7 +142,7 @@ footer.kw-footer{margin-top:128px}
   .kd-src .kd-card{grid-template-columns:minmax(0,1fr)}.kd-row{grid-template-columns:minmax(0,1fr)}.kd-row .why{grid-column:1}
   .kd-ob .item{grid-template-columns:minmax(0,1fr);padding:18px}.kd-ob .num{display:none}.kd-section{padding-top:88px}.kd-brand span{display:none}
 }
-@media (prefers-reduced-motion:reduce){.js .kd-rv{opacity:1;transform:none;transition:none}}
+@media (prefers-reduced-motion:reduce){.js .kd-rv{opacity:1;transform:none;transition:none}.kd-stat .kd-pic{transition:none}.kd-stat:hover .kd-pic{transform:none}}
 @media print{</style>
 </head>
 <body class="kw">
@@ -205,7 +204,7 @@ footer.kw-footer{margin-top:128px}
 </section>
 
 <section class="kw-container kd-section kd-rv" id="memoire">
-  <div class="kd-head"><div class="kd-eyebrow">Mémoire</div><h2 class="kw-section-title">Chaque session enrichit la suivante</h2>
+  <div class="kd-head"><div class="kd-eyebrow">{{pic:book}}Mémoire</div><h2 class="kw-section-title">Chaque session enrichit la suivante</h2>
     <p class="kd-lead">D'autres projets captent des corrections ou des découvertes. Kwa y ajoute le <strong>journal des sessions</strong>, qui dit au démarrage où l'on en était, le <strong>refus d'un garde comme signal d'apprentissage</strong>, et le rangement dans la documentation partagée du projet. Rien n'est écrit sans votre accord.</p></div>
   <div class="kd-loop" style="margin-top:40px">
     <div class="kd-node"><b>1. Capture</b><span>Sans y penser : vos corrections, vos « retiens : » et chaque refus de garde deviennent des candidats. Ou à la main : <code>kwa-memory capture gotcha "…"</code></span></div>
@@ -313,7 +312,7 @@ document.querySelectorAll('#ver, #ver2').forEach(n => n.textContent = DATA.versi
 /* chiffres */
 if ($('#stats')) {
 const nHooks = DATA.modules.reduce((n,m)=>n+m.files.filter(f=>f.includes('/hooks/')&&!f.includes('_kwa')).length,0);
-[[DATA.modules.length,'modules'],[nHooks,'hooks'],[DATA.catalog.length,'skills']].forEach(([n,l]) => $('#stats').append(el('div',{class:'kd-stat'},`<div class="n">${n}</div><div class="l">${l}</div>`)));
+[[DATA.modules.length,'modules','code'],[nHooks,'hooks','shield'],[DATA.catalog.length,'skills','sword']].forEach(([n,l,p]) => $('#stats').append(el('div',{class:'kd-stat'},`${PICTO[p]}<div class="n">${n}</div><div class="l">${l}</div>`)));
 }
 
 /* gardes */
