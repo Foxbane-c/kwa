@@ -8,9 +8,9 @@ SIDE = [  # (groupe, couleur du repère, [(libellé, cible)])
                      ("Démarrer", "index.html#demarrer")]),
     ("Explorer", "violet", [("Carte des skills", "skill-map.html"), ("Workflow d'une demande", "board.html"), ("Terminal", "terminal.html"),
                             ("Skills", "skills.html"), ("Skills qui délèguent", "delegation.html"), ("Gardes en action", "gardes.html"), ("Mémoire", "memoire.html")]),
-    ("Apprendre", "green", [("Les trois parcours", "parcours.html"), ("1 · Culture IA générative", "parcours-culture.html"),
+    ("Apprendre", "green", [("Avant de commencer", "avant-de-commencer.html"), ("Les trois parcours", "parcours.html"), ("1 · Culture IA générative", "parcours-culture.html"),
                             ("2 · Context engineering", "parcours-contexte.html"), ("3 · Harness", "parcours-harness.html")]),
-    ("Référence", "amber", [("Méthode", "methode.html"), ("Remplacer l'existant", "migrer.html"), ("Limites et suite", "limites.html"),
+    ("Référence", "amber", [("Glossaire", "glossaire.html"), ("Méthode", "methode.html"), ("Remplacer l'existant", "migrer.html"), ("Limites et suite", "limites.html"),
                             ("Crédits", "credits.html")]),
 ]
 ICONS = {  # tracés Lucide-like, 24x24, trait seul
@@ -29,7 +29,7 @@ THEME_BUTTON = '<button type="button" class="kd-theme" id="theme" aria-label="Pa
 def topbar(theme_button: str = THEME_BUTTON) -> str:
     return ('<header class="kd-top"><button type="button" class="kd-menu" id="menu" aria-label="Ouvrir la navigation" aria-expanded="false" aria-controls="side">'
             '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>'
-            '<a class="kd-brand" href="index.html" aria-label="Kwa, accueil"><b class="kd-word">kwa</b><span>/ harness</span></a>'
+            '<a class="kd-brand" href="index.html" aria-label="Kwa, accueil"><b class="kd-word">kwa</b><span>/ workflows</span></a>'
             f'<span class="kd-spacer"></span>{theme_button}</header>')
 
 

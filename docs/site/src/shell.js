@@ -58,3 +58,49 @@
     Array.prototype.forEach.call(tree.querySelectorAll('.tr-dir'), function (d) { d.open = b.getAttribute('data-act') === 'open'; });
   });
 })();
+
+/* Glossaire : la première occurrence de chaque terme d'une page devient un lien vers sa définition, avec une
+   infobulle (anglais compris). Rien dans le code, les titres, les liens ni les boutons. */
+(function () {
+  'use strict';
+  var G = window.KWA_GLOSSARY, main = document.querySelector('main');
+  if (!G || !main || /glossaire\.html$/.test(location.pathname)) return;
+  var SKIP = 'code, pre, a, button, h1, h2, h3, label, script, style, textarea, input, select, svg, summary, .kd-eyebrow, .kd-stat, .kd-term, .tr, .km, .kc, .gl';
+  function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  var items = G.map(function (it) {
+    return { it: it, re: new RegExp('(^|[^\\p{L}\\p{N}_/$-])(' + it.words.map(esc).join('|') + ')(?![\\p{L}\\p{N}_-])', 'iu') };
+  });
+  function run() {
+    var done = {}, nodes = [], w = document.createTreeWalker(main, NodeFilter.SHOW_TEXT, null), n;
+    while ((n = w.nextNode())) {
+      if (n.nodeValue.trim().length > 2 && n.parentElement && !n.parentElement.closest(SKIP)) nodes.push(n);
+    }
+    nodes.forEach(function (node) {
+      items.forEach(function (x) {
+        if (done[x.it.id] || !node.parentNode) return;
+        var m = x.re.exec(node.nodeValue);
+        if (!m) return;
+        var start = m.index + m[1].length, word = m[2];
+        var after = node.splitText(start);
+        after.nodeValue = after.nodeValue.slice(word.length);
+        var a = document.createElement('a');
+        a.className = 'gl';
+        a.href = 'glossaire.html#' + x.it.id;
+        a.setAttribute('data-tip', x.it.tip);
+        a.setAttribute('aria-label', word + ' : ' + x.it.tip);
+        a.textContent = word;
+        node.parentNode.insertBefore(a, after);
+        done[x.it.id] = true;
+        node = after;
+      });
+    });
+  }
+  function side(e) {  // infobulle alignée à droite quand le mot est dans la moitié droite de l'écran
+    var a = e.target.closest && e.target.closest('a.gl');
+    if (a) a.classList.toggle('gl-r', a.getBoundingClientRect().left > window.innerWidth / 2);
+  }
+  document.addEventListener('mouseover', side);
+  document.addEventListener('focusin', side);
+  if (document.readyState === 'complete') setTimeout(run, 300);
+  else window.addEventListener('load', function () { setTimeout(run, 300); });
+})();

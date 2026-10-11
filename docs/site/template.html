@@ -35,6 +35,11 @@ section{scroll-margin-top:84px}
 .kd-copy{font:400 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--kw-body);border:1px solid var(--kw-rule);border-radius:999px;padding:6px 12px;min-height:30px}
 .kd-copy:hover{background:var(--kw-raise)}
 code{font:.9em 'Geist Mono',monospace;background:var(--kw-tint);border:1px solid var(--kw-rule-soft);border-radius:6px;padding:1px 6px}
+.kd-start{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:22px 0 4px;padding:12px 14px;border:1px solid var(--kw-rule);border-radius:12px}
+.kd-start b{font-size:14px;margin-right:4px}
+.kd-start a{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;color:var(--kw-fg);text-decoration:none;font-size:14px;background:var(--kw-raise)}
+.kd-start a:hover{background:var(--kw-tint)}
+.kd-start i{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--kd-violet);color:#fff;font:normal 600 11px Geist,sans-serif}
 .kd-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .kd-stat{padding:24px;border:1px solid var(--kw-rule);border-radius:20px}
 .kd-stat .kd-pic{display:block;width:26px;height:26px;margin:0 0 14px;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
@@ -153,6 +158,10 @@ footer.kw-footer{margin-top:128px}
   <div class="kd-eyebrow">Kwa · Kit de Workflows Automatisés · v<span id="ver"></span></div>
   <h1 class="kw-title">Un kit de workflows automatisés pour le dev agentique</h1>
   <p class="kw-lead">Un socle de process de développement pour travailler avec des agents de code : règles, garde-fous, skills, mémoire et workflow, les mêmes sur chaque projet. Ce qui change d'un projet à l'autre tient dans un fichier de politique.</p>
+  <div class="kd-start" aria-label="Vous débutez ?"><b>Vous débutez ?</b>
+    <a href="parcours.html"><i>1</i>Comprendre, avec les trois parcours</a>
+    <a href="avant-de-commencer.html"><i>2</i>Installer un agent de code</a>
+    <a href="#demarrer"><i>3</i>Installer Kwa dans un projet</a></div>
   <div class="kw-actions">
     <a class="kw-btn kw-btn--primary" href="skill-map.html">Voir la carte <span aria-hidden="true">→</span></a>
     <a class="kw-btn" href="board.html">Suivre une demande</a>
@@ -184,22 +193,22 @@ footer.kw-footer{margin-top:128px}
 <!--TREE-->
 
 <section class="kw-container kd-section kd-rv" id="demarrer">
-  <div class="kd-head"><div class="kd-eyebrow">Démarrer</div><h2 class="kw-section-title">Quatre commandes</h2>
-    <p class="kd-lead">Aucune ne modifie git. Les deux premières n'écrivent rien du tout.</p></div>
+  <div class="kd-head"><div class="kd-eyebrow">Démarrer</div><h2 class="kw-section-title">Cinq commandes</h2>
+    <p class="kd-lead">Aucune ne touche à l'historique git de votre projet. La première récupère Kwa ; les deux suivantes n'écrivent rien.</p></div>
   <div class="kd-ob" id="ob" style="margin-top:40px"></div>
 </section>
 
 
 <section class="kw-container kd-section kd-rv" id="skills">
   <div class="kd-head"><div class="kd-eyebrow">{{pic:sword}}Skills</div><h2 class="kw-section-title"><span id="nskills"></span> skills, classées par famille</h2>
-    <p class="kd-lead">Chaque skill dit quand l'utiliser. L'étiquette indique ce dont elle s'inspire ; « Kwa » signifie une conception propre. Aucun texte n'est recopié : tout est réécrit en français et branché sur la politique du projet.</p></div>
+    <p class="kd-lead">Une <strong>skill</strong> est une procédure écrite que l'agent suit quand la situation correspond, ou que vous lancez vous-même : <code>/kwa-commit</code> sous Claude Code, <code>$kwa-commit</code> sous Codex. Chaque skill dit quand l'utiliser. L'étiquette indique ce dont elle s'inspire ; « Kwa » signifie une conception propre. Aucun texte n'est recopié : tout est réécrit en français et branché sur la politique du projet.</p></div>
   <div class="kd-tools" id="sk-tools"></div>
   <div class="kd-sk" id="sk"></div>
 </section>
 
 <section class="kw-container kd-section kd-rv" id="gardes">
   <div class="kd-head"><div class="kd-eyebrow">{{pic:shield}}Gardes en action</div><h2 class="kw-section-title">Ce que Kwa refuse, demande ou laisse passer</h2>
-    <p class="kd-lead">Chaque ligne a été <strong>calculée en exécutant réellement</strong> les gardes sur un dépôt de test avec une politique d'exemple (monorepo web, API et mobile Expo).</p></div>
+    <p class="kd-lead">Un <strong>garde</strong> est un petit script que l'agent lance avant chacune de ses actions ; il répond « refuser », « demander confirmation » ou « laisser passer ». Chaque ligne ci-dessous a été <strong>calculée en exécutant réellement</strong> les gardes sur un dépôt de test avec une politique d'exemple (monorepo web, API et mobile Expo).</p></div>
   <div class="kd-tools" id="tools"></div>
   <div class="kd-table" id="table"></div>
   <p class="kd-note" id="gnote"></p>
@@ -352,6 +361,7 @@ renderSk();
 /* onboarding */
 if ($('#ob')) {
 const OB = [
+ ['Récupérer Kwa','git clone https://github.com/nesyouyou/kwa ~/kwa && export PATH="$HOME/kwa/bin:$PATH"',"Une seule fois. Pour garder la commande <code>kwa</code> dans chaque terminal, ajouter la ligne <code>export</code> à <code>~/.zshrc</code> ou <code>~/.bashrc</code>. Il faut aussi un agent de code installé : voir <a href=\"avant-de-commencer.html\">Avant de commencer</a>."],
  ['Voir ce que Kwa détecte','kwa detect ./mon-projet',"Stack, modules proposés, politique déduite. N'écrit rien."],
  ["Simuler l'installation",'kwa install ./mon-projet --dry-run',"Liste ce qui serait ajouté, fusionné, sauvegardé. N'écrit rien."],
  ['Installer','kwa install ./mon-projet --with client-handover',"Ajouter <code>--with client-handover</code> si le dépôt sera remis au client. Kwa s'installe pour Claude Code et Codex (<code>--no-codex</code> pour Claude Code seul). Puis relire <code>.claude/kwa.policy.json</code> : c'est là que se met le spécifique du projet."],
@@ -386,6 +396,6 @@ if ($('#src')) {
 $('#src').innerHTML = DATA.credits.sources.map(s=>`<div class="kd-card"><div><div class="who"><img class="kd-av" src="${esc((DATA.map.origins[s.id]||{}).avatar)}" alt="" width="24" height="24"><h3>${esc(s.author)}</h3></div><p class="sub"><a href="${esc(s.url)}">${esc(s.name)}</a> · ${esc(s.license)}</p></div><div><p>${rich(s.took)}</p><div>${s.skills.map(k=>`<span class="kd-tag">/kwa-${k}</span>`).join('')}</div></div></div>`).join('') + '<p class="kd-note">Kwa ne copie aucun fichier de ces projets : les textes sont réécrits, les mécanismes réimplémentés et testés. La ligne d\'origine figure à la fin de chaque skill concernée.</p>';
 }
 </script>
-<script src="src/shell.js"></script>
+<script src="src/glossary-data.js"></script><script src="src/shell.js"></script>
 </body>
 </html>
