@@ -281,6 +281,43 @@ class Workflows(unittest.TestCase):
         self.assertIn("src/workflows.js", home)
 
 
+class Beginners(unittest.TestCase):
+    """Un débutant trouve par où commencer, comment installer, et ce que veulent dire les mots anglais."""
+    SITE = os.path.join(PACK, "docs", "site")
+
+    def read(self, name):
+        with open(os.path.join(self.SITE, name), encoding="utf-8") as f:
+            return f.read()
+
+    def test_home_says_where_to_start(self):
+        home = self.read("index.html")
+        self.assertIn("Vous débutez ?", home)
+        for target in ("parcours.html", "avant-de-commencer.html", "#demarrer"):
+            self.assertIn(f'href="{target}"', home, target)
+        self.assertIn("git clone https://github.com/nesyouyou/kwa", home)
+
+    def test_install_page_covers_both_agents_and_kwa(self):
+        page = self.read("avant-de-commencer.html")
+        for needle in ("claude.ai/install.sh", "chatgpt.com/codex/install.sh", "git clone", "kwa install ./mon-projet", "--dry-run",
+                       "Python 3", "/hooks"):
+            self.assertIn(needle, page, needle)
+
+    def test_glossary_has_every_term_with_its_english_word_and_pages_load_the_tooltips(self):
+        sys.path.insert(0, os.path.join(self.SITE, "src"))
+        import glossary
+        page = self.read("glossaire.html")
+        for tid, label, en, _f, _s, _k in glossary.TERMS:
+            self.assertIn(f'id="{tid}"', page, tid)
+            if en:
+                self.assertIn(en.split(",")[0].strip(), page, tid)
+        for name in [f for f in os.listdir(self.SITE) if f.endswith(".html") and f != "template.html"]:
+            self.assertIn("src/glossary-data.js", self.read(name), name)
+        data = self.read(os.path.join("src", "glossary-data.js"))
+        self.assertIn('"id": "harness"', data)
+        self.assertIn("passage de relais", data)
+        self.assertIn("En anglais : guard", data)
+
+
 class Shell(unittest.TestCase):
     """Barre latérale de navigation et arborescence : générées, identiques partout, avec de vrais liens."""
     SITE = os.path.join(PACK, "docs", "site")

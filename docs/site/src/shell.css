@@ -120,3 +120,32 @@ html { scroll-padding-top: calc(var(--kd-top-h) + 16px); }
 .kd-pic.pic-fill{fill:currentColor;stroke:none}
 .kd-pic.p-shield{color:var(--tr-guard)}.kd-pic.p-sword{color:var(--tr-skill)}.kd-pic.p-hook{color:var(--tr-hook)}.kd-pic.p-agent{color:var(--kd-violet)}
 .kd-pic.p-code{color:var(--kd-teal)}.kd-pic.p-book{color:var(--kd-amber)}
+
+/* termes du glossaire : soulignés en pointillés, infobulle au survol et au focus */
+a.gl { position: relative; color: inherit; text-decoration: underline dotted; text-decoration-color: var(--kw-mut); text-underline-offset: 3px; cursor: help; }
+a.gl:hover, a.gl:focus-visible { text-decoration-color: currentColor; }
+a.gl::after { content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 6px); z-index: 40; width: max-content; max-width: min(320px, 78vw);
+  padding: 10px 12px; border-radius: 8px; background: var(--kw-invert-bg); color: var(--kw-invert-fg); font: 400 13px/1.5 Geist, system-ui, sans-serif;
+  white-space: normal; text-align: left; pointer-events: none; opacity: 0; transform: translateY(-4px); transition: opacity .15s ease, transform .15s ease; }
+a.gl:hover::after, a.gl:focus-visible::after { opacity: 1; transform: none; }
+a.gl.gl-r::after { left: auto; right: 0; }
+@media (prefers-reduced-motion: reduce) { a.gl::after { transition: none; } }
+/* page glossaire */
+.gl-lead { margin: 0 0 20px; }
+.gl-search { width: 100%; max-width: 520px; margin: 0 0 22px; padding: 9px 12px; border: 1px solid var(--kw-rule); border-radius: 8px; background: transparent; color: var(--kw-fg); font: 14px Geist, system-ui, sans-serif; }
+.gl-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.gl-item { padding: 16px; border: 1px solid var(--kw-rule); border-radius: 12px; scroll-margin-top: 80px; }
+.gl-item:target { border-color: var(--kd-violet); background: var(--kw-raise); }
+.gl-item h2 { margin: 0; font: 600 17px/1.3 Geist, system-ui, sans-serif; }
+.gl-en { display: block; margin-top: 2px; font: 12px 'Geist Mono', monospace; color: var(--kw-mut); }
+.gl-item p { margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: var(--kw-body); }
+.gl-kwa { color: var(--kw-fg) !important; }
+/* page « Avant de commencer » */
+.bg-steps { list-style: none; margin: 32px 0 0; padding: 0; counter-reset: bg; }
+.bg-steps > li { counter-increment: bg; margin: 0 0 40px; }
+.bg-steps > li > h2::before { content: counter(bg) " · "; color: var(--kw-mut); font-weight: 400; }
+.bg-steps .pc-list { padding-left: 18px; }
+.bg-agents { margin: 16px 0; }
+.bg-agents .kd-card p { font-size: 14px; }
+.bg-steps .kd-note { font: 13px/1.5 Geist, system-ui, sans-serif; letter-spacing: 0; color: var(--kw-mut); }
+.bg-agents .kd-card p { margin: 10px 0 6px; }

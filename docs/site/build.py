@@ -193,6 +193,11 @@ def main():
     stages = parcours.collect(PACK, verdict, worst, make_repo, POLICY)[0]
     import parcours_pages  # noqa: E402
     import delegation  # noqa: E402
+    import glossary  # noqa: E402
+    import beginner  # noqa: E402
+    open(os.path.join(HERE, "src", "glossary-data.js"), "w", encoding="utf-8").write(glossary.data_js())
+    pages["glossaire.html"] = ("Glossaire", "Les mots du dev agentique, en français", "", glossary.page(), "")
+    pages["avant-de-commencer.html"] = ("Avant de commencer", "Installer un agent, puis Kwa", "parcours", beginner.page(), "")
     pages["delegation.html"] = ("Skills qui délèguent", "Des agents neufs, un prompt rempli", "delegation", delegation.page(), "")
     pages["parcours.html"] = ("Parcours d'apprentissage", "Trois parcours, du modèle au harness", "parcours", parcours_pages.hub(), "")
     pages["parcours-culture.html"] = ("Parcours 1 : Culture IA générative", "Comprendre le modèle", "parcours", parcours_pages.culture(), "")
@@ -217,7 +222,7 @@ def main():
 </main>
 </div></div>
 {foot}
-<script src="data.js"></script>{wjs}<script src="src/shell.js"></script>
+<script src="data.js"></script>{wjs}<script src="src/glossary-data.js"></script><script src="src/shell.js"></script>
 <script>
 const DATA = window.KWA;
 const $ = (s, r=document) => r.querySelector(s);
@@ -229,7 +234,7 @@ $('#ver2').textContent = DATA.version;
     # contrôle de syntaxe des scripts inline des pages générées (une apostrophe oubliée casse toute la page)
     import shutil, tempfile
     if shutil.which("node"):
-        for page in ["index.html", "skill-map.html", "board.html", "terminal.html", "parcours.html", "parcours-culture.html", "parcours-contexte.html", "parcours-harness.html", "delegation.html"] + list(SPLIT):
+        for page in ["index.html", "skill-map.html", "board.html", "terminal.html", "parcours.html", "parcours-culture.html", "parcours-contexte.html", "parcours-harness.html", "delegation.html", "glossaire.html", "avant-de-commencer.html"] + list(SPLIT):
             for i, code in enumerate(re.findall(r"<script>(.*?)</script>", open(os.path.join(HERE, page), encoding="utf-8").read(), re.S)):
                 with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
                     f.write(code)

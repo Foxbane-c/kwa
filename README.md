@@ -28,13 +28,18 @@ l'existant, limites, crédits), avec une feuille de style propre (polices dans
 `docs/site/style/`, avec leur licence). Régénérer avec `python3 docs/site/build.py` : les exemples sont
 calculés en exécutant les gardes.
 
+Il faut d'abord un agent de code (Claude Code ou Codex) : voir la page [Avant de commencer](https://nesyouyou.github.io/kwa/avant-de-commencer.html).
+Ensuite :
+
 ```bash
-bin/kwa detect    <projet>                  # stack, modules proposés, politique déduite ; n'écrit rien
-bin/kwa install   <projet> --dry-run        # montre ce qui changerait ; n'écrit rien
-bin/kwa install   <projet> [--with client-handover] [--no-codex]
-bin/kwa doctor    <projet>                  # conformité, doublons avec l'outillage existant du projet
-bin/kwa status    <projet>                  # version, modules, dérive locale
-bin/kwa recommend <projet>                  # skills tierces utiles pour la stack (rien n'est installé)
+git clone https://github.com/nesyouyou/kwa ~/kwa
+export PATH="$HOME/kwa/bin:$PATH"           # à ajouter à ~/.zshrc ou ~/.bashrc
+kwa detect    <projet>                  # stack, modules proposés, politique déduite ; n'écrit rien
+kwa install   <projet> --dry-run        # montre ce qui changerait ; n'écrit rien
+kwa install   <projet> [--with client-handover] [--no-codex]
+kwa doctor    <projet>                  # conformité, doublons avec l'outillage existant du projet
+kwa status    <projet>                  # version, modules, dérive locale
+kwa recommend <projet>                  # skills tierces utiles pour la stack (rien n'est installé)
 bash tests/run-safety.sh                     # suite hors-ligne
 ```
 
