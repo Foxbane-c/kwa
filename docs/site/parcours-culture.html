@@ -168,7 +168,8 @@ footer.kw-footer{margin-top:128px}
 <button type="button" class="kd-copy" id="tk-draw">Tirer 20 fois</button></div>
 <p class="pc-step"><b>3</b> Un jeton est tiré au sort selon ces probabilités, puis le calcul recommence avec lui en plus.</p>
 <div id="tk-draws" class="tk-draws"></div>
-<p class="pc-hint">Chiffres inventés pour illustrer : un vrai modèle calcule sur des dizaines de milliers de jetons possibles, et découpe autrement. La formule est réelle : probabilité = softmax(score ÷ température).</p></div>
+<p class="pc-hint">Chiffres inventés pour illustrer : un vrai modèle calcule sur des dizaines de milliers de jetons possibles, et découpe autrement.</p></div>
+<details class="pc-reveal"><summary>Pour aller plus loin : d'où viennent les probabilités</summary><div><p>Le modèle donne un score à chaque jeton possible. Une fonction appelée <em>softmax</em> transforme ces scores en probabilités qui font 100 % au total : probabilité = softmax(score ÷ température). Une température basse creuse les écarts (le premier jeton gagne presque toujours) ; une température haute les aplatit (les tirages varient plus).</p></div></details>
 <div class="pc-widget"><label class="pc-lbl" for="tok-input">Estimer vos propres textes (ils restent dans votre navigateur)</label>
 <textarea id="tok-input" rows="4" placeholder="Un paragraphe d'un rapport, un e-mail, une page de documentation..."></textarea>
 <div id="tok-chips" class="pc-chips" aria-hidden="true"></div>

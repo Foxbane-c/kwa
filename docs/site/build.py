@@ -188,6 +188,14 @@ def main():
         "board.html": ("Le workflow", "Une demande, de bout en bout", "board+circuit", '<div id="board-root"></div>', "KwaCircuit.mount($('#board-root'));"),
         "terminal.html": ("Le terminal", "Comment on l'utilise", "terminal", '<div id="term-root"></div>', "KwaTerminal.mount($('#term-root'), DATA.terminal);"),
     }
+    no_js = {  # ces trois pages n'existent qu'en JavaScript : sans lui, renvoyer vers leur équivalent statique
+        "skill-map.html": ('skills.html', "la liste des skills"),
+        "board.html": ('index.html#workflows', "les cinq workflows de l'accueil"),
+        "terminal.html": ('index.html#demarrer', "les commandes de démarrage"),
+    }
+    for fname, (href, label) in no_js.items():
+        t, e, w, m, j = pages[fname]
+        pages[fname] = (t, e, w, m + f'<noscript><p class="kd-note">Cette page est interactive et demande JavaScript. Sans lui, voyez <a href="{href}">{label}</a>.</p></noscript>', j)
     sys.path.insert(0, src)
     import parcours  # noqa: E402
     stages = parcours.collect(PACK, verdict, worst, make_repo, POLICY)[0]
