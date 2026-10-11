@@ -252,6 +252,35 @@ class Pictos(unittest.TestCase):
         self.assertIn("<strong>$1</strong>", self.index())
 
 
+class Workflows(unittest.TestCase):
+    """Les cinq workflows de l'accueil ne citent que des skills, hooks et gardes qui existent."""
+
+    def test_every_named_piece_exists(self):
+        sys.path.insert(0, os.path.join(PACK, "docs", "site", "src"))
+        import workflows
+        self.assertEqual(len(workflows.WORKFLOWS), 5)
+        skills = set(os.listdir(os.path.join(PACK, "core", "skills")))
+        hooks = {f[:-3] for f in os.listdir(os.path.join(PACK, "core", "hooks")) if f.endswith(".py")}
+        agents = {"kwa-" + f[:-3] for f in os.listdir(os.path.join(PACK, "core", "agents"))}
+        for key, _p, _t, _promise, link, steps in workflows.WORKFLOWS:
+            target = link.split("#")[0]
+            self.assertTrue(os.path.isfile(os.path.join(PACK, "docs", "site", target)), link)
+            for kind, name, _what in steps:
+                if kind == "skill":
+                    self.assertIn(name.replace("/kwa-", ""), skills, f"{key}: {name}")
+                elif kind == "agent":
+                    self.assertIn(name, agents, f"{key}: {name}")
+                elif kind in ("hook", "garde") and not name.startswith("refus"):
+                    self.assertIn(name, hooks, f"{key}: {name}")
+
+    def test_home_shows_them(self):
+        with open(os.path.join(PACK, "docs", "site", "index.html"), encoding="utf-8") as f:
+            home = f.read()
+        self.assertIn('id="workflows"', home)
+        self.assertEqual(home.count('class="wf-panel"'), 5)
+        self.assertIn("src/workflows.js", home)
+
+
 class Shell(unittest.TestCase):
     """Barre latérale de navigation et arborescence : générées, identiques partout, avec de vrais liens."""
     SITE = os.path.join(PACK, "docs", "site")

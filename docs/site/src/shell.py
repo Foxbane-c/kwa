@@ -4,7 +4,7 @@ from __future__ import annotations
 import html
 
 SIDE = [  # (groupe, couleur du repère, [(libellé, cible)])
-    ("Kwa", "blue", [("Présentation", "index.html#top"), ("Pourquoi ce projet", "index.html#pourquoi"), ("Arborescence", "index.html#arborescence"),
+    ("Kwa", "blue", [("Présentation", "index.html#top"), ("Les workflows", "index.html#workflows"), ("Pourquoi ce projet", "index.html#pourquoi"), ("Arborescence", "index.html#arborescence"),
                      ("Démarrer", "index.html#demarrer")]),
     ("Explorer", "violet", [("Carte des skills", "skill-map.html"), ("Workflow d'une demande", "board.html"), ("Terminal", "terminal.html"),
                             ("Skills", "skills.html"), ("Skills qui délèguent", "delegation.html"), ("Gardes en action", "gardes.html"), ("Mémoire", "memoire.html")]),

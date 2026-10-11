@@ -141,11 +141,11 @@ def main():
     tpl = open(os.path.join(HERE, "template.html"), encoding="utf-8").read()
     css, js = assets(["map", "board", "circuit", "terminal"])
     sys.path.insert(0, src)
-    import shell, tree, pictos  # noqa: E402
+    import shell, tree, pictos, workflows  # noqa: E402
     files = tree.project_files(man, kwa.module_files, {c["id"]: c["description"] for c in catalog})
     shown = [m for m in man if any(m in f["modules"] for f in files)]
     tpl = pictos.fill_placeholders(tpl).replace("/*PICTOS*/{}", pictos.as_json())
-    tpl = tpl.replace("<!--EXTRA_CSS-->", "").replace("<!--EXTRA_JS-->", "").replace("<!--TOPBAR-->", shell.topbar())
+    tpl = tpl.replace("<!--EXTRA_CSS-->", '<link rel="stylesheet" href="src/workflows.css">').replace("<!--EXTRA_JS-->", "").replace("<!--TOPBAR-->", shell.topbar())
     tree_html = tree.section(files, shown, {m: man[m]["about"] for m in shown})
 
     # pages dédiées : chaque section du gabarit qui n'est pas l'accueil devient sa propre page
@@ -166,7 +166,8 @@ def main():
             sys.exit(f"gabarit : section {sid} introuvable")
         pieces[fname] = m.group(0).strip()
         tpl = tpl.replace(m.group(0), "", 1)
-    index_html = tpl.replace("<!--SIDEBAR-->", shell.sidebar("index.html")).replace("<!--TREE-->", tree_html)
+    index_html = (tpl.replace("<!--SIDEBAR-->", shell.sidebar("index.html")).replace("<!--TREE-->", tree_html)
+                  .replace("<!--WORKFLOWS-->", workflows.section()))
     open(os.path.join(HERE, "index.html"), "w", encoding="utf-8").write(index_html)
     main_re = re.compile(r"<main>.*?</main>", re.S)
     for fname, (sid, title, desc) in SPLIT.items():
@@ -174,7 +175,7 @@ def main():
         page = main_re.sub(lambda _m: '<main class="kd-solo">\n' + sec + "\n</main>", tpl, count=1)
         page = re.sub(r"<title>.*?</title>", f"<title>{title} | Kwa</title>", page, count=1)
         page = re.sub(r'<meta name="description" content=".*?">', f'<meta name="description" content="{desc}">', page, count=1)
-        page = page.replace("<!--SIDEBAR-->", shell.sidebar(fname)).replace("<!--TREE-->", "")
+        page = page.replace("<!--SIDEBAR-->", shell.sidebar(fname)).replace("<!--TREE-->", "").replace("<!--WORKFLOWS-->", "")
         open(os.path.join(HERE, fname), "w", encoding="utf-8").write(page)
 
     # pages plein écran : même coquille (barre, thème, logo, pied) autour d'un seul widget
