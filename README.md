@@ -2,9 +2,10 @@
 
 **Site : https://nesyouyou.github.io/kwa/** (documentation illustrée et trois parcours de formation)
 
-Kit de workflow automatisé pour le dev agentique : mêmes règles, mêmes garde-fous, mêmes skills, partout, sous
+Kit de workflows automatisés pour le dev agentique : mêmes règles, mêmes garde-fous, mêmes skills, partout, sous
 Claude Code comme sous Codex.
-Kwa se lit **K**it de **W**orkflow **A**utomatisé : un kit de process de développement pour travailler avec des agents de code.
+Kwa se lit **K**it de **W**orkflows **A**utomatisés : développer une fonctionnalité, corriger un bug, relire, livrer,
+capitaliser, chacun outillé par des garde-fous, des hooks et des skills.
 
 ## Pourquoi ce dépôt
 
