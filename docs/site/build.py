@@ -191,6 +191,8 @@ def main():
     import parcours  # noqa: E402
     stages = parcours.collect(PACK, verdict, worst, make_repo, POLICY)[0]
     import parcours_pages  # noqa: E402
+    import delegation  # noqa: E402
+    pages["delegation.html"] = ("Skills qui délèguent", "Des agents neufs, un prompt rempli", "delegation", delegation.page(), "")
     pages["parcours.html"] = ("Parcours d'apprentissage", "Trois parcours, du modèle au harness", "parcours", parcours_pages.hub(), "")
     pages["parcours-culture.html"] = ("Parcours 1 : Culture IA générative", "Comprendre le modèle", "parcours", parcours_pages.culture(), "")
     pages["parcours-contexte.html"] = ("Parcours 2 : Context engineering", "Donner le bon contexte", "parcours", parcours_pages.contexte(), "")
@@ -226,7 +228,7 @@ $('#ver2').textContent = DATA.version;
     # contrôle de syntaxe des scripts inline des pages générées (une apostrophe oubliée casse toute la page)
     import shutil, tempfile
     if shutil.which("node"):
-        for page in ["index.html", "skill-map.html", "board.html", "terminal.html", "parcours.html", "parcours-culture.html", "parcours-contexte.html", "parcours-harness.html"] + list(SPLIT):
+        for page in ["index.html", "skill-map.html", "board.html", "terminal.html", "parcours.html", "parcours-culture.html", "parcours-contexte.html", "parcours-harness.html", "delegation.html"] + list(SPLIT):
             for i, code in enumerate(re.findall(r"<script>(.*?)</script>", open(os.path.join(HERE, page), encoding="utf-8").read(), re.S)):
                 with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
                     f.write(code)

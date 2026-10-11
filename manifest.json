@@ -179,6 +179,13 @@
         },
         "core/skills/teach/*": {
           "dest": ".claude/skills/kwa-teach"
+        },
+        "core/agents/relecteur.md": {
+          "dest": ".claude/agents/kwa-relecteur.md"
+        },
+        "core/hooks/readonly-bash.py": {
+          "dest": ".claude/kwa/hooks/readonly-bash.py",
+          "mode": "755"
         }
       },
       "hooks": {

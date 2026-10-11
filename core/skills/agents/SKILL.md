@@ -32,8 +32,9 @@ le résultat : conformité à la spec, puis qualité. Le plan vient de `/kwa-pla
 
 ## Mécanique Claude Code
 
-- Dispatch : outil `Agent`, avec `subagent_type: "general-purpose"` pour implémenter et relire (il faut Read, Edit,
-  Bash). `Explore` ou `Plan` servent à cartographier, jamais à écrire.
+- Dispatch : outil `Agent`, avec `subagent_type: "general-purpose"` pour implémenter (il faut Read, Edit, Bash) et
+  `subagent_type: "kwa-relecteur"` pour relire (lecture seule, garantie par l'outil). `Explore` ou `Plan` servent à
+  cartographier, jamais à écrire.
 - Toujours renseigner `model` (`haiku`, `sonnet`, `opus`). Omis, l'agent hérite de ton modèle et la règle de coût saute.
 - `name` donne un nom à l'agent, ce qui permet de le reprendre avec `SendMessage` (contexte conservé). Un agent
   repris garde son historique : utile pour corriger, nocif pour une relecture neuve.
@@ -46,8 +47,8 @@ le résultat : conformité à la spec, puis qualité. Le plan vient de `/kwa-pla
 ## Mécanique Codex
 
 - Dispatch : demander en clair de lancer un agent par tâche et d'attendre les résultats (« lance un agent `worker`
-  pour la tâche 3 avec ce prompt »). `worker` implémente et relit, `explorer` ne fait que lire ; un agent du projet
-  se définit dans `.codex/agents/<nom>.toml` (`name`, `description`, `developer_instructions`).
+  pour la tâche 3 avec ce prompt »). `worker` implémente, `kwa-relecteur` relit (installé par Kwa dans
+  `.codex/agents/`, bac à sable en lecture seule), `explorer` ne fait que lire.
 - Le modèle et l'effort de raisonnement se précisent dans la demande ; omis, l'agent hérite de ta configuration.
 - Codex attend tous les agents demandés et renvoie une synthèse ; il n'y a pas de reprise par nom ni d'isolation en
   worktree documentées : des tâches qui touchent des zones voisines passent l'une après l'autre.

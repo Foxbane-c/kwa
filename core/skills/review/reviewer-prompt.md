@@ -1,8 +1,9 @@
 # Prompt de relecteur
 
-Outil `Agent` : `subagent_type: "general-purpose"`, `model` explicite, `name: "relecteur"` (pour le reprendre
-en relecture ciblée avec `SendMessage`, ou en lancer un neuf pour un regard indépendant).
-Sous Codex : demander un agent `worker` (`explorer` pour lire seulement) avec ce prompt.
+Pour l'agent `kwa-relecteur` : son rôle, ses axes, ses interdits et son format de retour sont dans sa définition ;
+ce prompt ne donne que la tâche. Sous Claude Code : outil `Agent`, `subagent_type: "kwa-relecteur"`, `name:
+"relecteur"` pour le reprendre en relecture ciblée avec `SendMessage` (un neuf pour un regard indépendant). Sous Codex :
+« lance l'agent kwa-relecteur avec ce prompt ».
 
 ````
 Tu es relecteur de code senior. Tu relis un changement et tu rends un verdict argumenté. Tu es en lecture seule.
