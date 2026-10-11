@@ -107,7 +107,8 @@ def culture() -> str:
 <button type="button" class="kd-copy" id="tk-draw">Tirer 20 fois</button></div>
 <p class="pc-step"><b>3</b> Un jeton est tiré au sort selon ces probabilités, puis le calcul recommence avec lui en plus.</p>
 <div id="tk-draws" class="tk-draws"></div>
-<p class="pc-hint">Chiffres inventés pour illustrer : un vrai modèle calcule sur des dizaines de milliers de jetons possibles, et découpe autrement. La formule est réelle : probabilité = softmax(score ÷ température).</p></div>
+<p class="pc-hint">Chiffres inventés pour illustrer : un vrai modèle calcule sur des dizaines de milliers de jetons possibles, et découpe autrement.</p></div>
+<details class="pc-reveal"><summary>Pour aller plus loin : d'où viennent les probabilités</summary><div><p>Le modèle donne un score à chaque jeton possible. Une fonction appelée <em>softmax</em> transforme ces scores en probabilités qui font 100 % au total : probabilité = softmax(score ÷ température). Une température basse creuse les écarts (le premier jeton gagne presque toujours) ; une température haute les aplatit (les tirages varient plus).</p></div></details>
 <div class="pc-widget"><label class="pc-lbl" for="tok-input">Estimer vos propres textes (ils restent dans votre navigateur)</label>
 <textarea id="tok-input" rows="4" placeholder="Un paragraphe d'un rapport, un e-mail, une page de documentation..."></textarea>
 <div id="tok-chips" class="pc-chips" aria-hidden="true"></div>
@@ -343,7 +344,13 @@ MCP_CALL = """-> {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
 
 MCP_VS = """<h3 class="pc-h3">Une API, pour un agent</h3>
 <p>Vous connaissez déjà le principe : un service expose des opérations, un client les appelle. MCP est ce contrat, pensé pour un <strong>agent</strong> plutôt que pour votre code. Les différences tiennent à une idée : <strong>c'est le modèle qui découvre les opérations et décide de les appeler pendant la session</strong>, au lieu d'un développeur qui les a codées à l'avance.</p>
-<table class="pc-table mcp-vs"><thead><tr><th></th><th>API classique (REST)</th><th>Serveur MCP</th></tr></thead><tbody>
+<p>Un serveur MCP expose trois choses, chacune déclenchée par quelqu'un de différent :</p>
+<div class="mcp-three">
+<div class="mcp-card"><span class="mcp-tag mcp-t0">Outils</span><p>Des <strong>actions</strong> : chercher, créer, lancer. Elles sont décrites au modèle, qui décide de les appeler.</p><p class="mcp-ex">Exemples : <code>get_order</code>, <code>browser_click</code></p></div>
+<div class="mcp-card"><span class="mcp-tag mcp-t1">Ressources</span><p>Des <strong>données à lire</strong>, désignées par une URI. Dans Claude Code, vous les référencez vous-même avec <code>@</code>.</p><p class="mcp-ex">Exemple : <code>@postgres:schema://users</code></p></div>
+<div class="mcp-card"><span class="mcp-tag mcp-t2">Prompts</span><p>Des <strong>modèles de demande</strong> avec des arguments, qui deviennent des commandes que vous tapez.</p><p class="mcp-ex">Exemple : <code>/mcp__github__pr_review 456</code></p></div>
+</div>
+""" + reveal("Pour aller plus loin : MCP comparé à une API REST, et les messages échangés", """<table class="pc-table mcp-vs"><thead><tr><th></th><th>API classique (REST)</th><th>Serveur MCP</th></tr></thead><tbody>
 <tr><td>Qui appelle</td><td>Votre code, écrit à l'avance</td><td>Le modèle, qui décide en cours de session</td></tr>
 <tr><td>Découverte</td><td>Vous lisez la documentation (OpenAPI) avant de coder</td><td>Le client demande la liste au serveur, à la connexion (<code>tools/list</code>)</td></tr>
 <tr><td>Description</td><td>Pour un humain : pages de doc, exemples</td><td>Pour le modèle : une phrase en langage naturel et un schéma JSON des paramètres</td></tr>
@@ -359,12 +366,7 @@ MCP_VS = """<h3 class="pc-h3">Une API, pour un agent</h3>
 <div><b>MCP : l'agent découvre la liste</b>""" + code(MCP_LIST) + """</div>
 <div><b>MCP : puis il appelle un outil</b>""" + code(MCP_CALL) + """</div>
 </div>
-<p>Un serveur MCP expose trois choses, chacune déclenchée par quelqu'un de différent :</p>
-<div class="mcp-three">
-<div class="mcp-card"><span class="mcp-tag mcp-t0">Outils</span><p>Des <strong>actions</strong> : chercher, créer, lancer. Elles sont décrites au modèle, qui décide de les appeler.</p><p class="mcp-ex">Exemples : <code>get_order</code>, <code>browser_click</code></p></div>
-<div class="mcp-card"><span class="mcp-tag mcp-t1">Ressources</span><p>Des <strong>données à lire</strong>, désignées par une URI. Dans Claude Code, vous les référencez vous-même avec <code>@</code>.</p><p class="mcp-ex">Exemple : <code>@postgres:schema://users</code></p></div>
-<div class="mcp-card"><span class="mcp-tag mcp-t2">Prompts</span><p>Des <strong>modèles de demande</strong> avec des arguments, qui deviennent des commandes que vous tapez.</p><p class="mcp-ex">Exemple : <code>/mcp__github__pr_review 456</code></p></div>
-</div>
+""") + """
 """
 
 def contexte() -> str:
@@ -531,7 +533,7 @@ def contexte() -> str:
          "Une interdiction écrite dans AGENTS.md reste une demande polie : une garantie passe par un hook ou une règle de permission."),
     ]
     out = "\n".join(stage(*x) for x in s)
-    return (intro("Du prompt isolé à un contexte entretenu : la session, les fichiers d'instructions, les règles, les skills, les agents, les serveurs MCP (dont Context7 et Playwright) et les permissions, avec les vrais fichiers de configuration. Les exemples sont des configurations valides, vérifiées à la génération de la page. Prérequis : le parcours Culture, ou une bonne pratique d'un assistant d'IA. Environ quatre heures, à calibrer en séance.") +
+    return (intro("Du prompt isolé à un contexte entretenu : la session, les fichiers d'instructions, les règles, les skills, les agents, les serveurs MCP (dont Context7 et Playwright) et les permissions, avec les vrais fichiers de configuration. Les exemples sont des configurations valides, vérifiées à la génération de la page. Prérequis : le parcours Culture, ou une bonne pratique d'un assistant d'IA. Pour les exercices : Claude Code ou Codex installé (voir <a href='avant-de-commencer.html'>Avant de commencer</a>) et Node.js pour les serveurs MCP. Environ quatre heures, à calibrer en séance.") +
             nav(CONTEXTE_NAV) + out +
             checklist("Vous avez compris si vous savez", [
                 "lister ce qui remplit la fenêtre d'une session d'agent, et la technique qui répond à chaque problème ;",
@@ -582,7 +584,7 @@ def history() -> str:
 
 
 def harness(practice_html: str) -> str:
-    return (intro("De l'histoire du processus de développement jusqu'à un harness complet, puis dix étapes sur un dépôt jetable, avec les vrais gardes : les sorties affichées sont celles de l'exécution, recalculées à chaque génération du site. Prérequis : les parcours Culture et Contexte, Python 3, git, un terminal. Aucun compte, aucune clé. Environ quatre heures, à calibrer en séance.") +
+    return (intro("De l'histoire du processus de développement jusqu'à un harness complet, puis dix étapes sur un dépôt jetable, avec les vrais gardes : les sorties affichées sont celles de l'exécution, recalculées à chaque génération du site. Prérequis : les parcours Culture et Contexte, Python 3 et Kwa récupéré (voir <a href='avant-de-commencer.html'>Avant de commencer</a>). Les exercices tournent sans agent, sans compte ni clé ; Claude Code ou Codex sert pour les essais en situation, et jq pour l'exemple de hook en bash. Environ quatre heures, à calibrer en séance.") +
             nav(HARNESS_NAV) +
             history() + practice_html)
 
@@ -598,10 +600,10 @@ def hub() -> str:
          "Tout public. Aucun outil à installer."),
         ("2", "Context engineering", "parcours-contexte.html", "Environ 4 h",
          "Le contexte et la session, AGENTS.md, les règles, les skills, les sous-agents, MCP avec Context7 et Playwright, les permissions, et comment choisir.",
-         "Avoir utilisé un assistant d'IA. Un terminal est un plus."),
+         "Avoir utilisé un assistant d'IA. Pour les exercices : un agent de code installé, Node.js."),
         ("3", "Harness", "parcours-harness.html", "Environ 4 h",
          "De l'histoire du processus de développement jusqu'à Kwa : gardes, événements de hooks, politique, skills, mémoire, workflow, et le flux complet d'un développeur aujourd'hui.",
-         "Les parcours 1 et 2, Python 3, git, un terminal."),
+         "Les parcours 1 et 2, Python 3, Kwa récupéré."),
     ]
     c = "".join(
         f'<a class="pc-card" data-acc="{u[9:-5]}" href="{u}">{pictos.svg({"1": "book", "2": "agent", "3": "shield"}[n], "pc-card-pic")}<p class="pc-kicker">Parcours {n}</p><h2>{esc(t)}</h2><p class="pc-tag">{esc(d)}</p><p>{esc(txt)}</p><p class="kd-note">{esc(pre)}</p></a>'

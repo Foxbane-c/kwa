@@ -317,6 +317,20 @@ class Beginners(unittest.TestCase):
         self.assertIn("passage de relais", data)
         self.assertIn("En anglais : guard", data)
 
+    def test_parcours_state_what_the_exercises_need_and_fold_the_theory(self):
+        contexte, harness = self.read("parcours-contexte.html"), self.read("parcours-harness.html")
+        self.assertIn("Node.js", contexte)
+        self.assertIn("avant-de-commencer.html", contexte)
+        self.assertIn("jq pour l'exemple de hook", harness)
+        self.assertIn("avant-de-commencer.html", harness)
+        # la théorie reste là, mais repliée : le tableau MCP/REST et softmax ne passent plus avant la pratique
+        self.assertRegex(contexte, r'<details class="pc-reveal"><summary>Pour aller plus loin[^<]*</summary><div><table class="pc-table mcp-vs">')
+        self.assertRegex(self.read("parcours-culture.html"), r"Pour aller plus loin[^<]*</summary><div><p>[^<]*<em>softmax</em>")
+
+    def test_js_only_pages_point_to_a_static_equivalent(self):
+        for name, href in (("skill-map.html", "skills.html"), ("board.html", "index.html#workflows"), ("terminal.html", "index.html#demarrer")):
+            self.assertRegex(self.read(name), rf'<noscript>.*href="{re.escape(href)}".*</noscript>', name)
+
 
 class Shell(unittest.TestCase):
     """Barre latérale de navigation et arborescence : générées, identiques partout, avec de vrais liens."""
