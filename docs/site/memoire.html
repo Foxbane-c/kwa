@@ -16,9 +16,6 @@ section{scroll-margin-top:84px}
 .kw-hero{grid-template-columns:minmax(0,1fr)}
 .kd-term{min-width:0}
 .kd-eyebrow{font:400 12px/1.4 'Geist Mono',ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--kw-mut);margin-bottom:20px}
-.kd-pic{width:18px;height:18px;margin-right:8px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.kd-pic.pic-fill{fill:currentColor;stroke:none}
-.kd-pic.p-shield{color:var(--tr-guard)}.kd-pic.p-sword{color:var(--tr-skill)}.kd-pic.p-hook{color:var(--tr-hook)}.kd-pic.p-agent{color:var(--kd-violet)}
 .kd-sk h3 .kd-pic{width:16px;height:16px;margin-right:6px;vertical-align:-2px}
 .kd-solo .kd-section{padding-top:36px}
 .kd-solo .kw-page-title{margin:0 0 14px}
@@ -40,6 +37,8 @@ section{scroll-margin-top:84px}
 code{font:.9em 'Geist Mono',monospace;background:var(--kw-tint);border:1px solid var(--kw-rule-soft);border-radius:6px;padding:1px 6px}
 .kd-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .kd-stat{padding:24px;border:1px solid var(--kw-rule);border-radius:20px}
+.kd-stat .kd-pic{display:block;width:26px;height:26px;margin:0 0 14px;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.kd-stat:hover .kd-pic{transform:rotate(-10deg) scale(1.15)}
 .kd-stat .n{font:650 clamp(30px,3.4vw,40px)/1 Geist,system-ui,sans-serif;letter-spacing:-.02em}
 .kd-stat .l{margin-top:10px;color:var(--kw-body);font-size:14px}
 .kd-grid{display:grid;gap:12px}
@@ -143,7 +142,7 @@ footer.kw-footer{margin-top:128px}
   .kd-src .kd-card{grid-template-columns:minmax(0,1fr)}.kd-row{grid-template-columns:minmax(0,1fr)}.kd-row .why{grid-column:1}
   .kd-ob .item{grid-template-columns:minmax(0,1fr);padding:18px}.kd-ob .num{display:none}.kd-section{padding-top:88px}.kd-brand span{display:none}
 }
-@media (prefers-reduced-motion:reduce){.js .kd-rv{opacity:1;transform:none;transition:none}}
+@media (prefers-reduced-motion:reduce){.js .kd-rv{opacity:1;transform:none;transition:none}.kd-stat .kd-pic{transition:none}.kd-stat:hover .kd-pic{transform:none}}
 @media print{</style>
 </head>
 <body class="kw">
@@ -151,7 +150,7 @@ footer.kw-footer{margin-top:128px}
 <div class="kd-layout"><aside class="kd-side" id="side" aria-label="Navigation"><nav><div class="kd-sg"><h2><svg class="kd-ico" style="--dot:var(--kd-blue)" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Kwa</h2><ul><li><a href="index.html#top">Présentation</a></li><li><a href="index.html#pourquoi">Pourquoi ce projet</a></li><li><a href="index.html#arborescence">Arborescence</a></li><li><a href="index.html#demarrer">Démarrer</a></li></ul></div><div class="kd-sg"><h2><svg class="kd-ico" style="--dot:var(--kd-violet)" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>Explorer</h2><ul><li><a href="skill-map.html">Carte des skills</a></li><li><a href="board.html">Workflow d&#x27;une demande</a></li><li><a href="terminal.html">Terminal</a></li><li><a href="skills.html">Skills</a></li><li><a href="gardes.html">Gardes en action</a></li><li><a href="memoire.html" aria-current="page">Mémoire</a></li></ul></div><div class="kd-sg"><h2><svg class="kd-ico" style="--dot:var(--kd-green)" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.2 2.7 3 6 3s6-1.8 6-3v-4.5"/></svg>Apprendre</h2><ul><li><a href="parcours.html">Les trois parcours</a></li><li><a href="parcours-culture.html">1 · Culture IA générative</a></li><li><a href="parcours-contexte.html">2 · Context engineering</a></li><li><a href="parcours-harness.html">3 · Harness</a></li></ul></div><div class="kd-sg"><h2><svg class="kd-ico" style="--dot:var(--kd-amber)" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Référence</h2><ul><li><a href="methode.html">Méthode</a></li><li><a href="migrer.html">Remplacer l&#x27;existant</a></li><li><a href="limites.html">Limites et suite</a></li><li><a href="credits.html">Crédits</a></li></ul></div></nav></aside><div class="kd-scrim" id="scrim"></div><div class="kd-main">
 <main class="kd-solo">
 <section class="kw-container kd-section kd-rv" id="memoire">
-  <div class="kd-head"><div class="kd-eyebrow">Mémoire</div><h1 class="kw-page-title">Chaque session enrichit la suivante</h1>
+  <div class="kd-head"><div class="kd-eyebrow"><svg class="kd-pic p-book" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5z"/><path d="M12 6.5V19"/></svg>Mémoire</div><h1 class="kw-page-title">Chaque session enrichit la suivante</h1>
     <p class="kd-lead">D'autres projets captent des corrections ou des découvertes. Kwa y ajoute le <strong>journal des sessions</strong>, qui dit au démarrage où l'on en était, le <strong>refus d'un garde comme signal d'apprentissage</strong>, et le rangement dans la documentation partagée du projet. Rien n'est écrit sans votre accord.</p></div>
   <div class="kd-loop" style="margin-top:40px">
     <div class="kd-node"><b>1. Capture</b><span>Sans y penser : vos corrections, vos « retiens : » et chaque refus de garde deviennent des candidats. Ou à la main : <code>kwa-memory capture gotcha "…"</code></span></div>
@@ -184,7 +183,7 @@ footer.kw-footer{margin-top:128px}
 const DATA = window.KWA;
 document.documentElement.classList.add('js');
 const $ = (s, r=document) => r.querySelector(s);
-const PICTO = {"shield": "<svg class=\"kd-pic p-shield\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3l7.5 3v5.2c0 4.6-3.1 8.2-7.5 9.8-4.4-1.6-7.5-5.2-7.5-9.8V6z\"/><path d=\"m8.8 12 2.3 2.3 4.2-4.6\"/></svg>", "sword": "<svg class=\"kd-pic p-sword\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M21 3 10.2 16.2 7.8 13.8z\"/><path d=\"M5.5 11.5l7 7\"/><path d=\"M9 15l-3.5 3.5\"/><circle cx=\"4.6\" cy=\"19.4\" r=\"1.1\"/></svg>", "hook": "<svg class=\"kd-pic p-hook\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3v11\"/><path d=\"M6 14a6 6 0 0 0 12 0\"/><circle cx=\"12\" cy=\"5\" r=\"1.6\"/></svg>", "agent": "<svg class=\"kd-pic p-agent pic-fill\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M7 1h2v3h4v1h1v1h1v4h-1v1h-1v1H3v-1H2v-1H1V6h1V5h1V4h4zM5 6h2v3H5zM9 6h2v3H9zM7 10h2v1H7zM3 9h1v1H3zM12 9h1v1h-1z\"/></svg>"};
+const PICTO = {"shield": "<svg class=\"kd-pic p-shield\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3l7.5 3v5.2c0 4.6-3.1 8.2-7.5 9.8-4.4-1.6-7.5-5.2-7.5-9.8V6z\"/><path d=\"m8.8 12 2.3 2.3 4.2-4.6\"/></svg>", "sword": "<svg class=\"kd-pic p-sword\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M21 3 10.2 16.2 7.8 13.8z\"/><path d=\"M5.5 11.5l7 7\"/><path d=\"M9 15l-3.5 3.5\"/><circle cx=\"4.6\" cy=\"19.4\" r=\"1.1\"/></svg>", "code": "<svg class=\"kd-pic p-code\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m8 7-5 5 5 5\"/><path d=\"m16 7 5 5-5 5\"/><path d=\"m14 4-4 16\"/></svg>", "book": "<svg class=\"kd-pic p-book\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5z\"/><path d=\"M12 6.5V19\"/></svg>", "hook": "<svg class=\"kd-pic p-hook\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3v11\"/><path d=\"M6 14a6 6 0 0 0 12 0\"/><circle cx=\"12\" cy=\"5\" r=\"1.6\"/></svg>", "agent": "<svg class=\"kd-pic p-agent pic-fill\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M7 1h2v3h4v1h1v1h1v4h-1v1h-1v1H3v-1H2v-1H1V6h1V5h1V4h4zM5 6h2v3H5zM9 6h2v3H9zM7 10h2v1H7zM3 9h1v1H3zM12 9h1v1h-1z\"/></svg>"};
 const rich = t => esc(t).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
 const el = (t, a={}, h='') => { const e=document.createElement(t); for(const k in a){ if(k==='class') e.className=a[k]; else e.setAttribute(k,a[k]); } e.innerHTML=h; return e; };
 const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
@@ -215,7 +214,7 @@ document.querySelectorAll('#ver, #ver2').forEach(n => n.textContent = DATA.versi
 /* chiffres */
 if ($('#stats')) {
 const nHooks = DATA.modules.reduce((n,m)=>n+m.files.filter(f=>f.includes('/hooks/')&&!f.includes('_kwa')).length,0);
-[[DATA.modules.length,'modules'],[nHooks,'hooks'],[DATA.catalog.length,'skills']].forEach(([n,l]) => $('#stats').append(el('div',{class:'kd-stat'},`<div class="n">${n}</div><div class="l">${l}</div>`)));
+[[DATA.modules.length,'modules','code'],[nHooks,'hooks','shield'],[DATA.catalog.length,'skills','sword']].forEach(([n,l,p]) => $('#stats').append(el('div',{class:'kd-stat'},`${PICTO[p]}<div class="n">${n}</div><div class="l">${l}</div>`)));
 }
 
 /* gardes */
