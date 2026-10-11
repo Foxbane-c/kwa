@@ -49,6 +49,7 @@ DESC = {  # fichiers installés : une ligne chacun
     "pull_request_template.md": "Gabarit de PR : contexte, changements, vérification, risque.",
     "kwa-hygiene.yml": "Job CI du contrôle d'hygiène.",
     "kwa.hygiene.allow": "Exceptions datées au contrôle d'hygiène.",
+    "openai.yaml": "Réglage Codex : la skill ne se lance qu'à la demande, jamais d'elle-même.",
 }
 SYNTHETIC = [  # fichiers créés par l'installeur ou par l'usage, pas copiés depuis le pack
     ("AGENTS.md", "doc", ["core"], "Source unique des instructions de l'agent. Kwa ne gère que son bloc entre marqueurs, le reste est à vous."),

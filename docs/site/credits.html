@@ -242,7 +242,7 @@ if ($('#ob')) {
 const OB = [
  ['Voir ce que Kwa détecte','kwa detect ./mon-projet',"Stack, modules proposés, politique déduite. N'écrit rien."],
  ["Simuler l'installation",'kwa install ./mon-projet --dry-run',"Liste ce qui serait ajouté, fusionné, sauvegardé. N'écrit rien."],
- ['Installer','kwa install ./mon-projet --with client-handover --codex',"Ajouter <code>--with client-handover</code> si le dépôt sera remis au client, <code>--codex</code> pour la parité Codex. Puis relire <code>.claude/kwa.policy.json</code> : c'est là que se met le spécifique du projet."],
+ ['Installer','kwa install ./mon-projet --with client-handover',"Ajouter <code>--with client-handover</code> si le dépôt sera remis au client. Kwa s'installe pour Claude Code et Codex (<code>--no-codex</code> pour Claude Code seul). Puis relire <code>.claude/kwa.policy.json</code> : c'est là que se met le spécifique du projet."],
  ['Vérifier','kwa doctor ./mon-projet',"AGENTS.md, CLAUDE.md, hooks branchés, règles de politique, doublons avec l'outillage existant du projet."]
 ];
 OB.forEach(([t,c,d],i)=> $('#ob').append(el('div',{class:'item'},`<div class="num">${i+1}</div><div><h3>${t}</h3><p>${d}</p><div class="kd-term" style="margin-top:0"><div class="top"><span>Terminal</span><button class="kd-copy" data-copy="${esc(c)}">Copier</button></div><pre class="kd-code"><span class="p">$</span> ${esc(c)}</pre></div></div>`)));
@@ -261,7 +261,7 @@ const MAP = [
  ['Une skill TestFlight (Release sur simulateur avant build EAS)','/kwa-testflight, profils lus dans <code>mobile</code> et eas.json (React Native / Expo)'],
  ['Une règle de remise au client et un contrôle d\'hygiène en CI',"module client-handover : règle, kwa-hygiene, liste d'exceptions, job CI"],
  ["Modèles d'issues et de PR",'Gabarits copiés une fois (seed), puis au projet'],
- ['.agents/skills et .codex/hooks.json','<code>kwa install --codex</code>'],
+ ['.agents/skills, .codex/hooks.json et règles Codex','<code>kwa install</code> (Codex inclus par défaut)'],
  ["Une section « conventions de collaboration » dans AGENTS.md",'Dans le bloc commun : langue, simplicité, changements chirurgicaux, confidentialité'],
  ['Les scripts propres au projet (statut, jetons de thème, CI)','Conservés tels quels : Kwa ne touche que ses propres fichiers']
 ];

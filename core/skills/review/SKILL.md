@@ -33,6 +33,8 @@ connais déjà les raisons.
    sécurité, données) et pour la relecture finale d'une branche entière. Toujours le préciser dans l'appel.
 4. **Dispatcher** : outil `Agent`, `subagent_type: "general-purpose"` (il lui faut `git` et la lecture), avec le
    prompt de `reviewer-prompt.md` rempli. Un seul relecteur par passe. Au premier plan si tu attends son verdict.
+   Sous Codex : demander un agent neuf (`worker`, ou un agent `relecteur` défini dans `.codex/agents/`) avec ce
+   prompt, et attendre son retour.
 5. **Classer et traiter** les retours (voir ci-dessous).
 6. **Boucler** jusqu'au vert, avec les règles de sortie.
 

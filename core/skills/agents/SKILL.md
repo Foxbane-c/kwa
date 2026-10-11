@@ -43,6 +43,16 @@ le résultat : conformité à la spec, puis qualité. Le plan vient de `/kwa-pla
   zones voisines (voir /kwa-parallel). Séquentiellement, tous les agents travaillent dans le worktree de la branche.
 - Un agent ne doit pas lancer d'agents : le dire dans le prompt.
 
+## Mécanique Codex
+
+- Dispatch : demander en clair de lancer un agent par tâche et d'attendre les résultats (« lance un agent `worker`
+  pour la tâche 3 avec ce prompt »). `worker` implémente et relit, `explorer` ne fait que lire ; un agent du projet
+  se définit dans `.codex/agents/<nom>.toml` (`name`, `description`, `developer_instructions`).
+- Le modèle et l'effort de raisonnement se précisent dans la demande ; omis, l'agent hérite de ta configuration.
+- Codex attend tous les agents demandés et renvoie une synthèse ; il n'y a pas de reprise par nom ni d'isolation en
+  worktree documentées : des tâches qui touchent des zones voisines passent l'une après l'autre.
+- Les agents héritent du bac à sable et des règles d'approbation de la session.
+
 ## Choix du modèle
 
 Le moins puissant qui réussit, mais pas en dessous du milieu de gamme quand la tâche est décrite en prose.

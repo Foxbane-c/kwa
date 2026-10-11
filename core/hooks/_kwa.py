@@ -47,8 +47,58 @@ def _log_refusal(reason: str) -> None:
         pass
 
 
+# Ce que Kwa fait confirmer et que Codex sait confirmer lui-même, par ses règles de commandes (.codex/rules/kwa.rules,
+# écrit par kwa install). Sous Codex, une demande couverte par une de ces règles laisse passer le hook : c'est Codex
+# qui demande. Une demande non couverte devient un refus. (motif, raison, exemple qui doit correspondre)
+CODEX_PROMPTS = [
+    (["git", "push"], "Kwa : publier une branche demande confirmation.", "git push origin feat/x"),
+    (["git", "reset", "--hard"], "Kwa : git reset --hard détruit les modifications non commitées.", "git reset --hard HEAD"),
+    (["git", "clean"], "Kwa : git clean supprime des fichiers non suivis.", "git clean -fd"),
+    (["git", "branch", ["-d", "-D", "--delete"]], "Kwa : suppression de branche.", "git branch -D feat/x"),
+    (["gh", "pr", "merge"], "Kwa : fusionner une PR, c'est publier.", "gh pr merge 12"),
+]
+PLAIN_RE = re.compile(r"[$`<>*?(){}\[\]\n&|;\\]")
+
+
+def codex_prompts(policy: dict) -> list[tuple[list, str, str]]:
+    """Règles de confirmation pour Codex : les fixes de Kwa, puis les motifs `codex_prompt` des règles bash.ask."""
+    out = list(CODEX_PROMPTS)
+    for rule in (policy.get("bash") or {}).get("ask", []):
+        for pattern in rule.get("codex_prompt", []):
+            out.append((pattern, f"Kwa [{rule.get('id', 'politique')}] : {rule.get('reason', 'confirmer')}", ""))
+    return out
+
+
+def codex_covers(command: str, policy: dict) -> bool:
+    """Vrai si Codex confirmera lui-même cette commande : une seule commande simple (Codex ne découpe pas les scripts
+    avec substitution, redirection ou variable) dont les mots commencent par un motif de codex_prompts."""
+    if not command or PLAIN_RE.search(command) or re.match(r"^\s*[A-Za-z_][A-Za-z0-9_]*=", command):
+        return False
+    try:
+        argv = shlex.split(command)
+    except ValueError:
+        return False
+    for pattern, _reason, _example in codex_prompts(policy):
+        if len(argv) >= len(pattern) and all(a == p or (isinstance(p, list) and a in p) for a, p in zip(argv, pattern)):
+            return True
+    return False
+
+
+def is_codex() -> bool:
+    """Les hooks branchés pour Codex sont lancés avec KWA_AGENT=codex (voir kwa install --codex)."""
+    return os.environ.get("KWA_AGENT") == "codex"
+
+
 def decide(decision: str, reason: str) -> None:
-    """decision: deny | ask. Sort avec le code 0 après avoir imprimé la décision."""
+    """decision: deny | ask. Sort avec le code 0 après avoir imprimé la décision.
+    Les hooks de Codex ne savent pas demander une confirmation : « ask » y passerait. Si une règle de commandes de Codex
+    couvre la commande, on laisse Codex demander ; sinon on refuse, en disant pourquoi."""
+    if decision == "ask" and is_codex():
+        if codex_covers(str((_LAST.get("tool_input") or {}).get("command") or ""), load_policy(_LAST)):
+            sys.exit(0)  # Codex demandera lui-même confirmation (règle de .codex/rules/kwa.rules)
+        decision = "deny"
+        reason = (f"{reason} (Codex ne peut pas demander confirmation pour cette action : refusé par prudence ; "
+                  "si c'est voulu, l'utilisateur la lance lui-même)")
     if decision == "deny":
         _log_refusal(reason)
     print(json.dumps({"hookSpecificOutput": {
@@ -108,7 +158,42 @@ def segments(command: str, _depth: int = 0) -> list[list[str]]:
 
 
 def project_dir(payload: dict) -> str:
-    return os.path.realpath(os.environ.get("CLAUDE_PROJECT_DIR") or payload.get("cwd") or os.getcwd())
+    return os.path.realpath(os.environ.get("CLAUDE_PROJECT_DIR") or os.environ.get("KWA_PROJECT_DIR")
+                            or payload.get("cwd") or os.getcwd())
+
+
+PATCH_FILE_RE = re.compile(r"^\*\*\* (Add|Update|Delete) File: (.+)$")
+PATCH_MOVE_RE = re.compile(r"^\*\*\* Move to: (.+)$")
+
+
+def edits(payload: dict) -> list[tuple[str, str, str]]:
+    """Fichiers qu'une écriture touche : (chemin absolu, texte ajouté, nature).
+
+    Claude Code envoie file_path et le contenu (Write, Edit, MultiEdit, NotebookEdit). Codex envoie un patch
+    apply_patch dans tool_input.command ; on en lit les fichiers (« *** Add File: », « *** Update File: »,
+    « *** Delete File: », « *** Move to: ») et les lignes ajoutées. nature : add, update, delete ou write."""
+    ti = payload.get("tool_input") or {}
+    base = payload.get("cwd") or os.getcwd()
+    command = ti.get("command") if isinstance(ti.get("command"), str) else ""
+    if payload.get("tool_name") == "apply_patch" or command.lstrip().startswith("*** Begin Patch"):
+        out: list[list] = []
+        for line in command.splitlines():
+            m = PATCH_FILE_RE.match(line)
+            if m:
+                out.append([os.path.join(base, m.group(2).strip()), [], m.group(1).lower()])
+                continue
+            m = PATCH_MOVE_RE.match(line)
+            if m and out:
+                out.append([os.path.join(base, m.group(1).strip()), out[-1][1], "add"])
+                continue
+            if out and line.startswith("+") and not line.startswith("+++"):
+                out[-1][1].append(line[1:])
+        return [(p, "\n".join(lines), kind) for p, lines, kind in out]
+    path = ti.get("file_path") or ti.get("notebook_path") or ""
+    texts = [ti.get("content", ""), ti.get("new_string", ""), ti.get("new_source", "")]
+    texts += [e.get("new_string", "") for e in ti.get("edits", []) if isinstance(e, dict)]
+    path = os.path.join(base, path) if path and not os.path.isabs(path) else path
+    return [(path, "\n".join(t for t in texts if t), "write")] if (path or any(texts)) else []
 
 
 # --- corps de heredoc : une DONNÉE (doc, message de commit citant un motif), sauf s'il est exécuté.

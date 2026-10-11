@@ -1,5 +1,5 @@
 Kwa — routage des skills. Ces skills portent la méthode de travail du projet. Quand la demande correspond à une
-ligne ci-dessous, invoque la skill avec l'outil Skill AVANT d'agir, y compris avant de poser des questions ou
+ligne ci-dessous, invoque la skill AVANT d'agir, y compris avant de poser des questions ou
 d'explorer le code ; elle dit comment le faire. Une question simple ou une conversation : réponds directement, sans skill.
 
 | Quand | Skill |

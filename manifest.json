@@ -33,11 +33,11 @@
         "core/rules/writing-standard.md": {
           "dest": ".claude/rules/kwa-writing-standard.md"
         },
-        "core/skills/commit/SKILL.md": {
-          "dest": ".claude/skills/kwa-commit/SKILL.md"
+        "core/skills/commit/*": {
+          "dest": ".claude/skills/kwa-commit"
         },
-        "core/skills/ship/SKILL.md": {
-          "dest": ".claude/skills/kwa-ship/SKILL.md"
+        "core/skills/ship/*": {
+          "dest": ".claude/skills/kwa-ship"
         }
       },
       "hooks": {
@@ -409,8 +409,8 @@
     "deploy": {
       "about": "/kwa-deploy : pré-vol, déploiement et vérification avec preuve, pilotés par les environnements de la politique",
       "files": {
-        "core/skills/deploy/SKILL.md": {
-          "dest": ".claude/skills/kwa-deploy/SKILL.md"
+        "core/skills/deploy/*": {
+          "dest": ".claude/skills/kwa-deploy"
         }
       },
       "policy": {
@@ -494,8 +494,8 @@
         ]
       },
       "files": {
-        "core/skills/testflight/SKILL.md": {
-          "dest": ".claude/skills/kwa-testflight/SKILL.md"
+        "core/skills/testflight/*": {
+          "dest": ".claude/skills/kwa-testflight"
         }
       },
       "policy": {

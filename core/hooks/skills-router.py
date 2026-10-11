@@ -12,7 +12,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _kwa import load_payload, project_dir  # noqa: E402
+from _kwa import is_codex, load_payload, project_dir  # noqa: E402
 
 
 def main() -> int:
@@ -29,6 +29,8 @@ def main() -> int:
         kept.append(line)
     if not any(re.search(r"/kwa-", x) for x in kept if x.startswith("|")):
         return 0
+    if is_codex():  # sous Codex, une skill se mentionne avec $ et il n'y a pas d'outil « Skill »
+        kept = [x.replace("/kwa-", "$kwa-") for x in kept]
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "\n".join(kept)}},
                      ensure_ascii=False))
     return 0

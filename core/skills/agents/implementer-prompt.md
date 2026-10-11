@@ -2,6 +2,7 @@
 
 Outil `Agent` : `subagent_type: "general-purpose"`, `model` explicite, `name: "impl-tache-N"`. Remplacer chaque
 `{{...}}`. Le prompt doit se suffire : l'agent ne voit ni la conversation ni le plan complet.
+Sous Codex : demander un agent `worker` (`explorer` pour lire seulement) avec ce prompt.
 
 ````
 Tu implémentes UNE tâche d'un plan, dans un dépôt déjà préparé. Tu es seul sur cette tâche.
