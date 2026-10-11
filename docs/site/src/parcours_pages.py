@@ -10,6 +10,7 @@ import re
 import sys
 
 import hl
+import pictos
 from parcours import code, cmd, esc, pill, reveal, stage
 
 CULTURE_NAV = [("1", "Le modèle"), ("2", "Les jetons"), ("3", "Les hallucinations"), ("4", "Le contexte"), ("5", "Le prompt"), ("6", "L'agent"), ("7", "Risques")]
@@ -603,7 +604,7 @@ def hub() -> str:
          "Les parcours 1 et 2, Python 3, git, un terminal."),
     ]
     c = "".join(
-        f'<a class="pc-card" data-acc="{u[9:-5]}" href="{u}"><p class="pc-kicker">Parcours {n}</p><h2>{esc(t)}</h2><p class="pc-tag">{esc(d)}</p><p>{esc(txt)}</p><p class="kd-note">{esc(pre)}</p></a>'
+        f'<a class="pc-card" data-acc="{u[9:-5]}" href="{u}">{pictos.svg({"1": "book", "2": "agent", "3": "shield"}[n], "pc-card-pic")}<p class="pc-kicker">Parcours {n}</p><h2>{esc(t)}</h2><p class="pc-tag">{esc(d)}</p><p>{esc(txt)}</p><p class="kd-note">{esc(pre)}</p></a>'
         for n, t, u, d, txt, pre in cards)
     return (intro("Trois parcours qui s'enchaînent : comprendre le modèle, apprendre à lui donner le bon contexte, puis l'encadrer avec un harness. Chacun se lit seul, mais l'ordre est celui d'une progression. Les durées sont des estimations de conception, à ajuster après une première séance.") +
             f'<div class="pc-cards">{c}</div>' +

@@ -227,7 +227,7 @@ def section(files: list[dict], modules: list[str], about: dict | None = None) ->
   <div class="tr" id="tree">
     <div class="tr-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-tab="project">Dans votre projet</button><button type="button" role="tab" aria-selected="false" data-tab="repo">Dans le dépôt Kwa</button></div>
     <div class="tr-panel" data-panel="project">
-      <div class="tr-bar"><div class="tr-mods" role="group" aria-label="Modules">{mod_chips}</div>
+      <div class="tr-bar"><div class="tr-mods" role="group" aria-label="Modules"><span class="tr-lbl">{pictos.svg("code")}Modules</span>{mod_chips}</div>
         <div class="tr-act"><button type="button" class="tr-btn" data-act="open">Tout ouvrir</button><button type="button" class="tr-btn" data-act="close">Tout replier</button></div></div>
       <p class="tr-modnote" id="tr-modnote">Survolez un module pour voir son rôle ; décochez-le pour voir ce qui disparaît.</p>
       <div class="tr-body">{render_project(files)}</div>
