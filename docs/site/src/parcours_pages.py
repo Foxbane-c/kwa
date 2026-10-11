@@ -533,7 +533,7 @@ def contexte() -> str:
          "Une interdiction écrite dans AGENTS.md reste une demande polie : une garantie passe par un hook ou une règle de permission."),
     ]
     out = "\n".join(stage(*x) for x in s)
-    return (intro("Du prompt isolé à un contexte entretenu : la session, les fichiers d'instructions, les règles, les skills, les agents, les serveurs MCP (dont Context7 et Playwright) et les permissions, avec les vrais fichiers de configuration. Les exemples sont des configurations valides, vérifiées à la génération de la page. Prérequis : le parcours Culture, ou une bonne pratique d'un assistant d'IA. Pour les exercices : Claude Code ou Codex installé (voir <a href='avant-de-commencer.html'>Avant de commencer</a>), un terminal, et Node.js pour les serveurs MCP. Environ quatre heures, à calibrer en séance.") +
+    return (intro("Du prompt isolé à un contexte entretenu : la session, les fichiers d'instructions, les règles, les skills, les agents, les serveurs MCP (dont Context7 et Playwright) et les permissions, avec les vrais fichiers de configuration. Les exemples sont des configurations valides, vérifiées à la génération de la page. Prérequis : le parcours Culture, ou une bonne pratique d'un assistant d'IA. Pour les exercices : Claude Code ou Codex installé (voir <a href='avant-de-commencer.html'>Avant de commencer</a>) et Node.js pour les serveurs MCP. Environ quatre heures, à calibrer en séance.") +
             nav(CONTEXTE_NAV) + out +
             checklist("Vous avez compris si vous savez", [
                 "lister ce qui remplit la fenêtre d'une session d'agent, et la technique qui répond à chaque problème ;",
@@ -584,7 +584,7 @@ def history() -> str:
 
 
 def harness(practice_html: str) -> str:
-    return (intro("De l'histoire du processus de développement jusqu'à un harness complet, puis dix étapes sur un dépôt jetable, avec les vrais gardes : les sorties affichées sont celles de l'exécution, recalculées à chaque génération du site. Prérequis : les parcours Culture et Contexte, Python 3, git, un terminal, et Kwa récupéré (voir <a href='avant-de-commencer.html'>Avant de commencer</a>). Les exercices tournent sans agent, sans compte ni clé ; Claude Code ou Codex sert pour les essais en situation, et jq pour l'exemple de hook en bash. Environ quatre heures, à calibrer en séance.") +
+    return (intro("De l'histoire du processus de développement jusqu'à un harness complet, puis dix étapes sur un dépôt jetable, avec les vrais gardes : les sorties affichées sont celles de l'exécution, recalculées à chaque génération du site. Prérequis : les parcours Culture et Contexte, Python 3 et Kwa récupéré (voir <a href='avant-de-commencer.html'>Avant de commencer</a>). Les exercices tournent sans agent, sans compte ni clé ; Claude Code ou Codex sert pour les essais en situation, et jq pour l'exemple de hook en bash. Environ quatre heures, à calibrer en séance.") +
             nav(HARNESS_NAV) +
             history() + practice_html)
 
@@ -600,10 +600,10 @@ def hub() -> str:
          "Tout public. Aucun outil à installer."),
         ("2", "Context engineering", "parcours-contexte.html", "Environ 4 h",
          "Le contexte et la session, AGENTS.md, les règles, les skills, les sous-agents, MCP avec Context7 et Playwright, les permissions, et comment choisir.",
-         "Avoir utilisé un assistant d'IA. Pour les exercices : un agent de code installé, un terminal, Node.js."),
+         "Avoir utilisé un assistant d'IA. Pour les exercices : un agent de code installé, Node.js."),
         ("3", "Harness", "parcours-harness.html", "Environ 4 h",
          "De l'histoire du processus de développement jusqu'à Kwa : gardes, événements de hooks, politique, skills, mémoire, workflow, et le flux complet d'un développeur aujourd'hui.",
-         "Les parcours 1 et 2, Python 3, git, un terminal, Kwa récupéré."),
+         "Les parcours 1 et 2, Python 3, Kwa récupéré."),
     ]
     c = "".join(
         f'<a class="pc-card" data-acc="{u[9:-5]}" href="{u}">{pictos.svg({"1": "book", "2": "agent", "3": "shield"}[n], "pc-card-pic")}<p class="pc-kicker">Parcours {n}</p><h2>{esc(t)}</h2><p class="pc-tag">{esc(d)}</p><p>{esc(txt)}</p><p class="kd-note">{esc(pre)}</p></a>'

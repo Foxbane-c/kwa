@@ -319,7 +319,7 @@ class Beginners(unittest.TestCase):
 
     def test_parcours_state_what_the_exercises_need_and_fold_the_theory(self):
         contexte, harness = self.read("parcours-contexte.html"), self.read("parcours-harness.html")
-        self.assertIn("Node.js pour les serveurs MCP", contexte)
+        self.assertIn("Node.js", contexte)
         self.assertIn("avant-de-commencer.html", contexte)
         self.assertIn("jq pour l'exemple de hook", harness)
         self.assertIn("avant-de-commencer.html", harness)

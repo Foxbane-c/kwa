@@ -151,18 +151,15 @@ footer.kw-footer{margin-top:128px}
   <div class="kd-eyebrow">Installer un agent, puis Kwa</div>
   <h1 class="kw-page-title">Avant de commencer</h1>
   <p class="kw-lead bg-lead">Kwa ne remplace pas un agent de code : il l'encadre. Il vous faut donc d'abord un agent,
-<strong>Claude Code</strong> ou <strong>Codex</strong>, qui tourne sur votre machine. Comptez une demi-heure pour tout
-installer. Si vous n'avez jamais utilisé d'agent, lisez d'abord le <a href="parcours-culture.html">parcours 1</a> :
+<strong>Claude Code</strong> ou <strong>Codex</strong>, qui tourne sur votre machine. Si vous n'avez jamais utilisé d'agent, lisez d'abord le <a href="parcours-culture.html">parcours 1</a> :
 il ne demande aucune installation.</p>
 
 <ol class="bg-steps">
 <li><h2 class="kw-section-title">Ce qu'il vous faut</h2>
 <ul class="pc-list">
-<li><strong>Un ordinateur</strong> sous macOS 13 ou plus récent, Windows 10 ou 11, ou Linux (Ubuntu 20.04, Debian 10 ou plus récents). Sous Windows, WSL (un Linux intégré) est le plus simple pour la suite.</li>
-<li><strong>Un terminal</strong> : vous y taperez quelques commandes. L'agent travaille aussi dans le terminal.</li>
-<li><strong>git</strong> et un compte <strong>GitHub</strong> : Kwa organise le travail en branches et en pull requests.</li>
-<li><strong>Python 3</strong> : les garde-fous de Kwa sont de petits scripts Python, sans dépendance à installer.</li>
-<li><strong>Node.js</strong>, seulement si vous branchez les serveurs MCP vus au parcours 2 (Context7, Playwright).</li>
+<li><strong>Python 3</strong> : les garde-fous de Kwa sont de petits scripts Python, sans dépendance.</li>
+<li><strong>GitHub CLI</strong> (<code>gh</code>), connecté avec <code>gh auth login</code> : Kwa ouvre les issues et les pull requests avec.</li>
+<li><strong>Node.js</strong>, seulement pour les serveurs MCP du parcours 2 (Context7, Playwright).</li>
 </ul></li>
 
 <li><h2 class="kw-section-title">Installer un agent de code</h2>
@@ -178,12 +175,7 @@ il ne demande aucune installation.</p>
 <p><strong>Compte</strong> : au premier lancement, choisissez « Sign in with ChatGPT » ou une autre méthode de connexion proposée. Les offres qui incluent Codex sont listées par OpenAI.</p>
 <p class="kd-note">Windows, npm, Homebrew : <a href="https://developers.openai.com/codex/cli">documentation de Codex</a>.</p></div>
 </div>
-<p><strong>Combien ça coûte ?</strong> Un abonnement mensuel, ou une facturation au nombre de jetons consommés. Les prix changent souvent : vérifiez-les sur les sites des deux éditeurs avant de choisir.</p></li>
-
-<li><h2 class="kw-section-title">Un premier échange</h2>
-<p>Ouvrez un projet que vous connaissez, lancez l'agent, puis posez une question qui ne modifie rien :</p>
-<pre class="kd-code">Explique-moi comment ce projet est organisé, et comment on lance ses tests.</pre>
-<p>L'agent lit les fichiers et répond. Vous venez de voir la boucle d'un agent : il réfléchit, utilise un outil, lit le résultat. Avant de lui demander de modifier du code, installez Kwa : c'est lui qui posera les garde-fous.</p></li>
+</li>
 
 <li><h2 class="kw-section-title">Récupérer et installer Kwa</h2>
 <p>Kwa se récupère en clonant son dépôt, puis en ajoutant sa commande au chemin du terminal :</p>
