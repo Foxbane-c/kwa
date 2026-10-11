@@ -444,6 +444,31 @@ def codex_rules_text(policy: dict) -> str:
     return "\n".join(out)
 
 
+def codex_agent_toml(md: str, source: str) -> str:
+    """Un agent de Claude Code (Markdown à en-tête YAML) traduit en agent Codex (TOML). Un agent sans outil
+    d'écriture tourne dans un bac à sable en lecture seule : c'est la garantie que Codex sait donner."""
+    _, head, body = md.split("---", 2)
+    meta = {}
+    for line in head.splitlines():
+        if ":" in line and not line.startswith((" ", "\t", "-")):
+            k, v = line.split(":", 1)
+            meta[k.strip()] = v.strip()
+    writes = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
+    tools = {t.strip() for t in meta.get("tools", "").split(",") if t.strip()}
+    denied = {t.strip() for t in meta.get("disallowedTools", "").split(",") if t.strip()}
+    read_only = bool(tools) and not (tools - denied) & writes
+    body = body.strip() + "\n"
+    if "'''" in body:
+        die(f"{source} : le texte de l'agent contient ''', impossible en TOML littéral")
+    out = [f"# Géré par Kwa (kwa install) : généré depuis {source}, ne pas éditer.",
+           f"name = {json.dumps(meta['name'], ensure_ascii=False)}",
+           f"description = {json.dumps(meta['description'], ensure_ascii=False)}"]
+    if read_only:
+        out.append('sandbox_mode = "read-only"')
+    out.append("developer_instructions = '''\n" + body + "'''")
+    return "\n".join(out) + "\n"
+
+
 def strip_kwa_hooks(settings: dict) -> None:
     """Retire les hooks de Kwa (pour les réécrire à neuf) ; garde ceux du projet."""
     for event in list(settings.get("hooks", {})):
@@ -487,6 +512,19 @@ def apply_codex(target: Path, modules: list[str], dry: bool) -> list[str]:
         rules.parent.mkdir(parents=True, exist_ok=True)
         atomic_write(rules, text)
     notes.append(".codex/rules/kwa.rules : " + ("à jour" if same else "confirmations écrites"))
+    for m in modules:
+        for src, spec in module_files(manifest()[m]):
+            if not spec["dest"].startswith(".claude/agents/"):
+                continue
+            name = Path(spec["dest"]).stem
+            dest = target / ".codex" / "agents" / f"{name}.toml"
+            text = codex_agent_toml((PACK / src).read_text(encoding="utf-8"), spec["dest"])
+            if dest.exists() and dest.read_text(encoding="utf-8") == text:
+                continue
+            notes.append(f".codex/agents/{name}.toml")
+            if not dry:
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                atomic_write(dest, text)
     notes.append("à faire une fois dans Codex : approuver le projet et valider ses hooks avec /hooks (à refaire après chaque mise à jour)")
     return notes
 

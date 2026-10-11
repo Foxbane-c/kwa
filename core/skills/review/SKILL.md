@@ -31,10 +31,10 @@ connais déjà les raisons.
    résumer), ce qui est volontairement hors sujet, les doutes que tu as.
 3. **Choisir le modèle** : `sonnet` pour un diff courant, `opus` pour un changement subtil ou risqué (concurrence,
    sécurité, données) et pour la relecture finale d'une branche entière. Toujours le préciser dans l'appel.
-4. **Dispatcher** : outil `Agent`, `subagent_type: "general-purpose"` (il lui faut `git` et la lecture), avec le
-   prompt de `reviewer-prompt.md` rempli. Un seul relecteur par passe. Au premier plan si tu attends son verdict.
-   Sous Codex : demander un agent neuf (`worker`, ou un agent `relecteur` défini dans `.codex/agents/`) avec ce
-   prompt, et attendre son retour.
+4. **Dispatcher** l'agent `kwa-relecteur` (installé par Kwa, en lecture seule) avec le prompt de
+   `reviewer-prompt.md` rempli : sous Claude Code, outil `Agent` avec `subagent_type: "kwa-relecteur"` ; sous Codex,
+   « lance l'agent kwa-relecteur avec ce prompt » puis attendre son retour. Un seul relecteur par passe. Au premier
+   plan si tu attends son verdict.
 5. **Classer et traiter** les retours (voir ci-dessous).
 6. **Boucler** jusqu'au vert, avec les règles de sortie.
 

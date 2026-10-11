@@ -49,6 +49,8 @@ DESC = {  # fichiers installés : une ligne chacun
     "pull_request_template.md": "Gabarit de PR : contexte, changements, vérification, risque.",
     "kwa-hygiene.yml": "Job CI du contrôle d'hygiène.",
     "kwa.hygiene.allow": "Exceptions datées au contrôle d'hygiène.",
+    "kwa-relecteur.md": "Agent relecteur en lecture seule, lancé par /kwa-review et /kwa-agents ; traduit pour Codex en bac à sable en lecture seule.",
+    "readonly-bash.py": "Dans l'agent relecteur seulement : n'autorise que les commandes shell qui lisent.",
     "openai.yaml": "Réglage Codex : la skill ne se lance qu'à la demande, jamais d'elle-même.",
 }
 SYNTHETIC = [  # fichiers créés par l'installeur ou par l'usage, pas copiés depuis le pack
