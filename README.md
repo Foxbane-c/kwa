@@ -65,6 +65,24 @@ Le spécifique d'un projet vit dans `.claude/kwa.policy.json` (créé une fois �
 - Les gardes sont des filets contre la bévue, pas une frontière de sécurité ; leurs erreurs internes demandent à
   l'humain. Pour une vraie barrière : protection de branche GitHub + `permissions.deny`.
 
+## Claude Code et Codex
+
+`kwa install <projet> --codex` installe la même chose pour les deux agents. Claude Code lit `.claude/` et
+`CLAUDE.md` ; Codex lit `AGENTS.md`, les skills par les liens `.agents/skills/kwa-*` et les hooks dans
+`.codex/hooks.json`. Les scripts des gardes sont les mêmes ; seules les différences de Codex sont traitées :
+
+| Différence de Codex | Ce que fait Kwa |
+|---|---|
+| Il ne sait pas demander une confirmation (`ask` y passerait) | Les hooks Codex tournent avec `KWA_AGENT=codex` : une demande devient un refus expliqué |
+| Il édite par `apply_patch`, sans chemin de fichier séparé | Les gardes d'écriture et le formatage lisent le patch (fichiers ajoutés, modifiés, supprimés, déplacés) |
+| Il ignore `disable-model-invocation` | Les skills à lancer à la main portent `agents/openai.yaml` (`allow_implicit_invocation: false`) |
+| Ses filtres sont des expressions régulières, fin de session limitée à 3 s | Pas de filtre `*`, l'écriture couvre `apply_patch`, délai de fin de session ramené à 3 s |
+| Une skill se mentionne avec `$` | Le rappel de routage écrit `$kwa-…` sous Codex |
+
+À faire une fois dans Codex : approuver le projet, puis valider ses hooks avec `/hooks` (à refaire après chaque
+mise à jour de Kwa, car la validation porte sur le contenu des hooks). Ces adaptations sont vérifiées par
+`tests/test_codex.py`, avec les charges que Codex documente ; pas encore dans une vraie session Codex.
+
 ## Remplacer un outillage maison
 
 `tests/test_policy_example.py` rejoue contre Kwa des cas représentatifs d'un harnais de garde-fous réel (reset de

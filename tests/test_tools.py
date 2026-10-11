@@ -337,7 +337,21 @@ class Modules(unittest.TestCase):
         self.assertTrue(os.path.islink(os.path.join(d, ".agents/skills/kwa-commit")))
         hooks = json.load(open(os.path.join(d, ".codex/hooks.json")))
         cmds = [h["command"] for e in hooks["hooks"]["PreToolUse"] for h in e["hooks"]]
-        self.assertTrue(all(c.startswith('cd "$(git rev-parse --show-toplevel)" && python3 .claude/kwa/hooks/') for c in cmds))
+        self.assertTrue(all(c.startswith('cd "$(git rev-parse --show-toplevel)" && KWA_AGENT=codex KWA_PROJECT_DIR="$PWD" python3 .claude/kwa/hooks/') for c in cmds))
+        # filtres valides pour Codex : pas de « * », l'écriture couvre apply_patch, fin de session sous 3 s
+        for event, entries in hooks["hooks"].items():
+            for e in entries:
+                self.assertNotEqual(e.get("matcher"), "*", event)
+                if "Edit" in e.get("matcher", ""):
+                    self.assertIn("apply_patch", e["matcher"])
+                if event == "SessionEnd":
+                    self.assertTrue(all(h.get("timeout", 1) <= 3 for h in e["hooks"]))
+        # une seconde installation ne duplique rien
+        before = open(os.path.join(d, ".codex/hooks.json")).read()
+        self.kwa("install", d, "--codex")
+        self.assertEqual(open(os.path.join(d, ".codex/hooks.json")).read(), before)
+        # les skills à lancer à la main le restent sous Codex
+        self.assertIn("allow_implicit_invocation: false", open(os.path.join(d, ".agents/skills/kwa-commit/agents/openai.yaml")).read())
 
     def test_unknown_module_and_with(self):
         d = self.project()

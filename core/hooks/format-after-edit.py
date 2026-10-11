@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PostToolUse Edit|Write — formate UNIQUEMENT les fichiers nouveaux.
+"""PostToolUse Edit|Write (Claude Code) et apply_patch (Codex) — formate UNIQUEMENT les fichiers nouveaux.
 
 Sur un fichier déjà suivi par git, reformater à la sauvegarde noie un changement d'une ligne dans un diff de 23
 (le dépôt n'est pas forcément « clean »). On se contente de signaler ; un formatage global appartient à un lot dédié.
@@ -14,7 +14,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _kwa import load_payload, load_policy, project_dir  # noqa: E402
+from _kwa import edits, load_payload, load_policy, project_dir  # noqa: E402
 
 DEFAULT_EXT = [".ts", ".tsx", ".js", ".jsx", ".json", ".md"]
 
@@ -23,10 +23,7 @@ def run(cmd: str, path: str, cwd: str) -> subprocess.CompletedProcess:
     return subprocess.run(shlex.split(cmd.replace("{file}", shlex.quote(path))), cwd=cwd, capture_output=True, text=True, timeout=60)
 
 
-def main() -> int:
-    d = load_payload()
-    policy = load_policy(d).get("format", {})
-    path = (d.get("tool_input") or {}).get("file_path", "")
+def format_one(path: str, d: dict, policy: dict) -> int:
     if not path or not os.path.isfile(path) or os.path.splitext(path)[1] not in policy.get("extensions", DEFAULT_EXT):
         return 0
     root = project_dir(d)
@@ -52,6 +49,16 @@ def main() -> int:
     except (OSError, subprocess.SubprocessError):
         return 0
     return 0
+
+
+def main() -> int:
+    d = load_payload()
+    policy = load_policy(d).get("format", {})
+    status = 0
+    for path, _text, kind in edits(d):
+        if kind != "delete":
+            status = max(status, format_one(path, d, policy))
+    return status
 
 
 if __name__ == "__main__":

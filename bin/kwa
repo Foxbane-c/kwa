@@ -405,6 +405,42 @@ def apply_settings(target: Path, modules: list[str], dry: bool) -> list[str]:
     return added
 
 
+CODEX_PREFIX = 'cd "$(git rev-parse --show-toplevel)" && KWA_AGENT=codex KWA_PROJECT_DIR="$PWD" '
+CODEX_MAX_TIMEOUT = {"SessionEnd": 3}  # Codex plafonne ces événements (secondes)
+
+
+def codex_hooks(modules: list[str]) -> dict:
+    """Les hooks de Claude Code traduits pour Codex : même script, lancé depuis la racine du dépôt avec KWA_AGENT=codex.
+    Le filtre « * » (tout) n'est pas une expression régulière valide chez Codex : on l'omet. Les filtres d'écriture
+    couvrent aussi apply_patch, l'outil d'édition de Codex."""
+    snippet = module_hooks(modules)
+    for event, entries in snippet.items():
+        for e in entries:
+            if e.get("matcher") == "*":
+                del e["matcher"]
+            elif "Edit" in e.get("matcher", "") and "apply_patch" not in e["matcher"]:
+                e["matcher"] += "|apply_patch"
+            for h in e["hooks"]:
+                h["command"] = CODEX_PREFIX + h["command"].replace('python3 "$CLAUDE_PROJECT_DIR"/', "python3 ")
+                if event in CODEX_MAX_TIMEOUT:
+                    h["timeout"] = min(h.get("timeout", CODEX_MAX_TIMEOUT[event]), CODEX_MAX_TIMEOUT[event])
+    return snippet
+
+
+def strip_kwa_hooks(settings: dict) -> None:
+    """Retire les hooks de Kwa (pour les réécrire à neuf) ; garde ceux du projet."""
+    for event in list(settings.get("hooks", {})):
+        kept = []
+        for entry in settings["hooks"][event]:
+            hooks = [h for h in entry.get("hooks", []) if ".claude/kwa/hooks/" not in h.get("command", "")]
+            if hooks:
+                kept.append({**entry, "hooks": hooks})
+        if kept:
+            settings["hooks"][event] = kept
+        else:
+            del settings["hooks"][event]
+
+
 def apply_codex(target: Path, modules: list[str], dry: bool) -> list[str]:
     """Parité Codex : mêmes skills (liens relatifs dans .agents/skills) et mêmes hooks (.codex/hooks.json)."""
     notes = []
@@ -418,18 +454,16 @@ def apply_codex(target: Path, modules: list[str], dry: bool) -> list[str]:
         if not dry:
             link.parent.mkdir(parents=True, exist_ok=True)
             link.symlink_to(f"../../.claude/skills/{name}")
-    snippet = module_hooks(modules)
-    prefix = 'cd "$(git rev-parse --show-toplevel)" && '
-    for entries in snippet.values():
-        for e in entries:
-            for h in e["hooks"]:
-                h["command"] = prefix + h["command"].replace('python3 "$CLAUDE_PROJECT_DIR"/', "python3 ")
     path = target / ".codex" / "hooks.json"
     settings = read_json(path, {})
-    added = merge_hooks(settings, snippet)
-    if added and not dry:
+    before = json.dumps(settings, sort_keys=True)
+    strip_kwa_hooks(settings)
+    merge_hooks(settings, codex_hooks(modules))
+    changed = json.dumps(settings, sort_keys=True) != before
+    if changed and not dry:
         save_settings(path, settings)
-    notes.append(f".codex/hooks.json : {len(added)} hook(s) ajouté(s)")
+    notes.append(".codex/hooks.json : " + ("hooks de Kwa écrits" if changed else "à jour"))
+    notes.append("à faire une fois dans Codex : approuver le projet et valider ses hooks avec /hooks (à refaire après chaque mise à jour)")
     return notes
 
 
@@ -590,7 +624,8 @@ def finish_legacy(target: Path, dry: bool) -> list[str]:
         if not root.is_dir():
             continue
         for d in sorted((x for x in root.rglob("*") if x.is_dir()), key=lambda x: len(x.parts), reverse=True):
-            if (root != claude / "skills" or d.name.startswith("kata-")) and not any(d.iterdir()):
+            in_old_skill = any(part.startswith("kata-") for part in d.relative_to(root).parts)
+            if (root != claude / "skills" or in_old_skill) and not any(d.iterdir()):
                 d.rmdir()
         if root == claude / "kata" and root.is_dir() and not any(root.iterdir()):
             root.rmdir()
