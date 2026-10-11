@@ -27,7 +27,8 @@ KEYS = [
     ("clé privée", r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
 ]
 ALLOW_MARK = "kwa:allow-secret"
-PROTECTED = (".claude/settings.json", ".claude/settings.local.json", ".claude/kwa/", ".claude/hooks/", ".codex/hooks.json")
+PROTECTED = (".claude/settings.json", ".claude/settings.local.json", ".claude/kwa/", ".claude/hooks/", ".codex/hooks.json",
+             ".codex/rules/")
 
 
 def branch_of(path: str) -> str:

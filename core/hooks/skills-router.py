@@ -30,7 +30,7 @@ def main() -> int:
     if not any(re.search(r"/kwa-", x) for x in kept if x.startswith("|")):
         return 0
     if is_codex():  # sous Codex, une skill se mentionne avec $ et il n'y a pas d'outil « Skill »
-        kept = [x.replace("avec l'outil Skill", "en la mentionnant ($kwa-…)").replace("/kwa-", "$kwa-") for x in kept]
+        kept = [x.replace("/kwa-", "$kwa-") for x in kept]
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "\n".join(kept)}},
                      ensure_ascii=False))
     return 0

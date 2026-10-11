@@ -2,6 +2,7 @@
 
 Outil `Agent` : `subagent_type: "general-purpose"`, `model` explicite, `name: "relecteur"` (pour le reprendre
 en relecture ciblée avec `SendMessage`, ou en lancer un neuf pour un regard indépendant).
+Sous Codex : demander un agent `worker` (`explorer` pour lire seulement) avec ce prompt.
 
 ````
 Tu es relecteur de code senior. Tu relis un changement et tu rends un verdict argumenté. Tu es en lecture seule.

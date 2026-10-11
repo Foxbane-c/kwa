@@ -29,7 +29,7 @@ calculés en exécutant les gardes.
 ```bash
 bin/kwa detect    <projet>                  # stack, modules proposés, politique déduite ; n'écrit rien
 bin/kwa install   <projet> --dry-run        # montre ce qui changerait ; n'écrit rien
-bin/kwa install   <projet> [--with client-handover] [--codex]
+bin/kwa install   <projet> [--with client-handover] [--no-codex]
 bin/kwa doctor    <projet>                  # conformité, doublons avec l'outillage existant du projet
 bin/kwa status    <projet>                  # version, modules, dérive locale
 bin/kwa recommend <projet>                  # skills tierces utiles pour la stack (rien n'est installé)
@@ -67,17 +67,22 @@ Le spécifique d'un projet vit dans `.claude/kwa.policy.json` (créé une fois �
 
 ## Claude Code et Codex
 
-`kwa install <projet> --codex` installe la même chose pour les deux agents. Claude Code lit `.claude/` et
-`CLAUDE.md` ; Codex lit `AGENTS.md`, les skills par les liens `.agents/skills/kwa-*` et les hooks dans
-`.codex/hooks.json`. Les scripts des gardes sont les mêmes ; seules les différences de Codex sont traitées :
+`kwa install <projet>` installe Kwa pour les deux agents (`--no-codex` pour s'en tenir à Claude Code). Claude Code
+lit `.claude/` et `CLAUDE.md` ; Codex lit `AGENTS.md`, les skills par les liens `.agents/skills/kwa-*`, les hooks dans
+`.codex/hooks.json` et les règles de commandes dans `.codex/rules/kwa.rules`. Les skills et les scripts des gardes
+sont les mêmes ; seules les différences de Codex sont traitées :
 
 | Différence de Codex | Ce que fait Kwa |
 |---|---|
-| Il ne sait pas demander une confirmation (`ask` y passerait) | Les hooks Codex tournent avec `KWA_AGENT=codex` : une demande devient un refus expliqué |
+| Ses hooks ne savent pas demander une confirmation (`ask` y passerait) | Les confirmations de Kwa (push, `reset --hard`, `git clean`, suppression de branche, fusion de PR, et les motifs `codex_prompt` de la politique) sont écrites en règles de commandes Codex : Codex les demande lui-même. Ce qu'aucune règle ne couvre (commande composée, cible calculée, écriture d'un garde) devient un refus expliqué |
 | Il édite par `apply_patch`, sans chemin de fichier séparé | Les gardes d'écriture et le formatage lisent le patch (fichiers ajoutés, modifiés, supprimés, déplacés) |
 | Il ignore `disable-model-invocation` | Les skills à lancer à la main portent `agents/openai.yaml` (`allow_implicit_invocation: false`) |
 | Ses filtres sont des expressions régulières, fin de session limitée à 3 s | Pas de filtre `*`, l'écriture couvre `apply_patch`, délai de fin de session ramené à 3 s |
-| Une skill se mentionne avec `$` | Le rappel de routage écrit `$kwa-…` sous Codex |
+| Une skill se mentionne avec `$` ; les sous-agents se lancent en langage naturel (`worker`, `explorer`) | Le rappel de routage écrit `$kwa-…` sous Codex ; les skills qui délèguent décrivent les deux façons de faire |
+
+Une règle de projet propre à Codex s'ajoute dans la politique, sur une règle `bash.ask` :
+`"codex_prompt": [["scw", "container", "container", ["update", "deploy"]]]` (mots de début de commande, une liste
+pour plusieurs choix).
 
 À faire une fois dans Codex : approuver le projet, puis valider ses hooks avec `/hooks` (à refaire après chaque
 mise à jour de Kwa, car la validation porte sur le contenu des hooks). Ces adaptations sont vérifiées par

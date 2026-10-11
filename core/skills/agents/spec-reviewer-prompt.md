@@ -2,6 +2,7 @@
 
 Premier temps de la relecture. Un agent NEUF (jamais l'implémenteur) : `subagent_type: "general-purpose"`,
 `model: "sonnet"`. Il vérifie que le code fait ce que la tâche demande, rien d'autre. La qualité vient après.
+Sous Codex : demander un agent `worker` neuf avec ce prompt.
 
 ````
 Tu vérifies qu'une implémentation respecte exactement sa spécification. Tu ne juges pas le style : un autre

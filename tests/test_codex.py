@@ -48,14 +48,35 @@ def patch(*lines):
     return {"tool_name": "apply_patch", "tool_input": {"command": "\n".join(["*** Begin Patch", *lines, "*** End Patch"])}}
 
 
-class AskBecomesDeny(unittest.TestCase):
-    def test_a_confirmation_is_a_refusal_under_codex_and_a_question_under_claude(self):
+class Confirmations(unittest.TestCase):
+    """Sous Claude Code, le hook demande. Sous Codex, le hook ne sait pas demander : soit une règle de commandes de
+    Codex couvre la commande (Codex demandera), soit le hook refuse. Jamais un passage silencieux."""
+
+    def test_push_is_asked_by_claude_and_left_to_the_codex_rule(self):
         d = repo("feat/x")
         bash = {"tool_name": "Bash", "tool_input": {"command": "git push origin feat/x"}}
         self.assertEqual(run("guard-git.py", bash, d, codex=False)[0], "ask")
-        decision, reason = run("guard-git.py", bash, d)
-        self.assertEqual(decision, "deny")
-        self.assertIn("Codex", reason)
+        self.assertEqual(run("guard-git.py", bash, d)[0], "allow")
+        self.assertTrue(_kwa.codex_covers("git push origin feat/x", {}))
+
+    def test_what_codex_cannot_split_is_refused(self):
+        d = repo("feat/x")
+        for cmd in ("git push origin $(git branch --show-current)", "cd sub && git push origin feat/x", "FOO=1 git push"):
+            decision, reason = run("guard-git.py", {"tool_name": "Bash", "tool_input": {"command": cmd}}, d)
+            self.assertEqual(decision, "deny", cmd)
+            self.assertIn("Codex", reason)
+
+    def test_project_rules_reach_codex_through_codex_prompt(self):
+        policy = {"bash": {"ask": [{"id": "deploy", "reason": "déploiement direct", "any": ["scw container"],
+                                    "codex_prompt": [["scw", "container", "container", ["update", "deploy"]]]}]}}
+        self.assertTrue(_kwa.codex_covers("scw container container deploy abc", policy))
+        self.assertFalse(_kwa.codex_covers("scw container container list", policy))
+        d = repo("feat/x")
+        with open(os.path.join(d, ".claude", "kwa.policy.json"), "w") as f:
+            json.dump(policy, f)
+        bash = {"tool_name": "Bash", "tool_input": {"command": "scw container container deploy abc"}}
+        self.assertEqual(run("guard-policy.py", bash, d, codex=False)[0], "ask")
+        self.assertEqual(run("guard-policy.py", bash, d)[0], "allow")
 
 
 class ApplyPatch(unittest.TestCase):
@@ -105,7 +126,7 @@ class Router(unittest.TestCase):
         os.makedirs(os.path.join(d, ".claude", "kwa"))
         os.makedirs(os.path.join(d, ".claude", "skills", "kwa-commit"))
         with open(os.path.join(d, ".claude", "kwa", "router.md"), "w") as f:
-            f.write("Invoque la skill avec l'outil Skill.\n\n| Quand | Skill |\n|---|---|\n| Committer | /kwa-commit |\n")
+            f.write("Invoque la skill avant d'agir.\n\n| Quand | Skill |\n|---|---|\n| Committer | /kwa-commit |\n")
         env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PROJECT_DIR"}
         env.update(KWA_AGENT="codex", KWA_PROJECT_DIR=d)
         p = subprocess.run([sys.executable, os.path.join(HOOKS, "skills-router.py")], input=json.dumps({"cwd": d}),
@@ -113,7 +134,6 @@ class Router(unittest.TestCase):
         ctx = json.loads(p.stdout)["hookSpecificOutput"]["additionalContext"]
         self.assertIn("$kwa-commit", ctx)
         self.assertNotIn("/kwa-commit", ctx)
-        self.assertNotIn("outil Skill", ctx)
 
 
 class ManualSkills(unittest.TestCase):

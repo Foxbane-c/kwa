@@ -43,7 +43,9 @@ recherche de trois bibliothèques candidates ; des correctifs dans des modules s
 3. **Rédiger un prompt autonome par agent** à partir de `agent-prompt.md` (même dossier). L'agent ne voit pas la
    conversation : contexte, fichiers, erreurs exactes collées, contraintes, format de retour.
 4. **Dispatcher tout en un seul message**, plusieurs appels à l'outil `Agent`, avec `run_in_background: true`,
-   un `model` explicite et un `name` par agent. Un appel par message serait séquentiel.
+   un `model` explicite et un `name` par agent. Un appel par message serait séquentiel. Sous Codex : une seule
+   demande qui lance un agent `worker` par problème et attend tous les résultats ; sans isolation en worktree,
+   ne lancer ensemble que des agents qui écrivent sur des fichiers disjoints.
 5. **Pendant que ça tourne**, ne refais pas leur travail. Prépare l'intégration (commandes de vérification de
    `verify.commands`, grille de lecture des rapports). Les fins te sont notifiées ; ne scrute pas en boucle.
 

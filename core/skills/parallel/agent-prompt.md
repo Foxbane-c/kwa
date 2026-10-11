@@ -3,6 +3,7 @@
 Un exemplaire par agent. Outil `Agent` : `subagent_type: "general-purpose"` (ou `Explore` pour de la lecture pure),
 `model` explicite, `name` unique, `run_in_background: true`, `isolation: "worktree"` si les zones sont voisines.
 Tous les appels dans le même message.
+Sous Codex : demander un agent `worker` (`explorer` pour lire seulement) avec ce prompt.
 
 ````
 Tu traites UN problème précis, indépendant de ceux que d'autres agents traitent en même temps.

@@ -47,6 +47,43 @@ def _log_refusal(reason: str) -> None:
         pass
 
 
+# Ce que Kwa fait confirmer et que Codex sait confirmer lui-même, par ses règles de commandes (.codex/rules/kwa.rules,
+# écrit par kwa install). Sous Codex, une demande couverte par une de ces règles laisse passer le hook : c'est Codex
+# qui demande. Une demande non couverte devient un refus. (motif, raison, exemple qui doit correspondre)
+CODEX_PROMPTS = [
+    (["git", "push"], "Kwa : publier une branche demande confirmation.", "git push origin feat/x"),
+    (["git", "reset", "--hard"], "Kwa : git reset --hard détruit les modifications non commitées.", "git reset --hard HEAD"),
+    (["git", "clean"], "Kwa : git clean supprime des fichiers non suivis.", "git clean -fd"),
+    (["git", "branch", ["-d", "-D", "--delete"]], "Kwa : suppression de branche.", "git branch -D feat/x"),
+    (["gh", "pr", "merge"], "Kwa : fusionner une PR, c'est publier.", "gh pr merge 12"),
+]
+PLAIN_RE = re.compile(r"[$`<>*?(){}\[\]\n&|;\\]")
+
+
+def codex_prompts(policy: dict) -> list[tuple[list, str, str]]:
+    """Règles de confirmation pour Codex : les fixes de Kwa, puis les motifs `codex_prompt` des règles bash.ask."""
+    out = list(CODEX_PROMPTS)
+    for rule in (policy.get("bash") or {}).get("ask", []):
+        for pattern in rule.get("codex_prompt", []):
+            out.append((pattern, f"Kwa [{rule.get('id', 'politique')}] : {rule.get('reason', 'confirmer')}", ""))
+    return out
+
+
+def codex_covers(command: str, policy: dict) -> bool:
+    """Vrai si Codex confirmera lui-même cette commande : une seule commande simple (Codex ne découpe pas les scripts
+    avec substitution, redirection ou variable) dont les mots commencent par un motif de codex_prompts."""
+    if not command or PLAIN_RE.search(command) or re.match(r"^\s*[A-Za-z_][A-Za-z0-9_]*=", command):
+        return False
+    try:
+        argv = shlex.split(command)
+    except ValueError:
+        return False
+    for pattern, _reason, _example in codex_prompts(policy):
+        if len(argv) >= len(pattern) and all(a == p or (isinstance(p, list) and a in p) for a, p in zip(argv, pattern)):
+            return True
+    return False
+
+
 def is_codex() -> bool:
     """Les hooks branchés pour Codex sont lancés avec KWA_AGENT=codex (voir kwa install --codex)."""
     return os.environ.get("KWA_AGENT") == "codex"
@@ -54,12 +91,14 @@ def is_codex() -> bool:
 
 def decide(decision: str, reason: str) -> None:
     """decision: deny | ask. Sort avec le code 0 après avoir imprimé la décision.
-    Codex ne sait pas encore demander une confirmation : il traiterait « ask » comme un passage. On refuse donc à la
-    place, en disant pourquoi, pour ne jamais laisser filer ce qu'on voulait faire confirmer."""
+    Les hooks de Codex ne savent pas demander une confirmation : « ask » y passerait. Si une règle de commandes de Codex
+    couvre la commande, on laisse Codex demander ; sinon on refuse, en disant pourquoi."""
     if decision == "ask" and is_codex():
+        if codex_covers(str((_LAST.get("tool_input") or {}).get("command") or ""), load_policy(_LAST)):
+            sys.exit(0)  # Codex demandera lui-même confirmation (règle de .codex/rules/kwa.rules)
         decision = "deny"
-        reason = (f"{reason} (confirmation impossible sous Codex : refusé par prudence ; "
-                  "si c'est voulu, lancez l'action vous-même ou demandez-la explicitement à l'utilisateur)")
+        reason = (f"{reason} (Codex ne peut pas demander confirmation pour cette action : refusé par prudence ; "
+                  "si c'est voulu, l'utilisateur la lance lui-même)")
     if decision == "deny":
         _log_refusal(reason)
     print(json.dumps({"hookSpecificOutput": {

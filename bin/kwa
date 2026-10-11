@@ -2,7 +2,7 @@
 """kwa — uniformise les projets : AGENTS.md, garde-fous, règles, skills, politique projet.
 
     kwa detect    <cible>                         stack détectée, modules proposés, politique déduite
-    kwa install   <cible> [--modules auto|a,b] [--with m ...] [--codex] [--dry-run]
+    kwa install   <cible> [--modules auto|a,b] [--with m ...] [--no-codex] [--dry-run]
     kwa status    <cible>                         version, modules, dérive locale
     kwa doctor    <cible>                         conformité (bloc, hooks, politique, doublons projet)
     kwa recommend <cible>                         skills tierces utiles pour cette stack (rien n'est installé)
@@ -427,6 +427,23 @@ def codex_hooks(modules: list[str]) -> dict:
     return snippet
 
 
+def codex_rules_text(policy: dict) -> str:
+    """Règles de commandes de Codex (Starlark) : ce que les gardes font confirmer, Codex le demande lui-même."""
+    sys.path.insert(0, str(PACK / "core" / "hooks"))
+    import _kwa  # noqa: E402
+
+    out = ["# Géré par Kwa (kwa install) : régénéré à chaque installation, ne pas éditer.",
+           "# Sous Codex, ces commandes demandent confirmation : c'est l'équivalent des « demandes » des gardes sous",
+           "# Claude Code. Ajouter un motif propre au projet : champ codex_prompt d'une règle bash.ask de la politique.", ""]
+    for pattern, reason, example in _kwa.codex_prompts(policy):
+        out += ["prefix_rule(", f"    pattern = {json.dumps(pattern, ensure_ascii=False)},", '    decision = "prompt",',
+                f"    justification = {json.dumps(reason, ensure_ascii=False)},"]
+        if example:
+            out.append(f"    match = [{json.dumps(example, ensure_ascii=False)}],")
+        out += [")", ""]
+    return "\n".join(out)
+
+
 def strip_kwa_hooks(settings: dict) -> None:
     """Retire les hooks de Kwa (pour les réécrire à neuf) ; garde ceux du projet."""
     for event in list(settings.get("hooks", {})):
@@ -463,6 +480,13 @@ def apply_codex(target: Path, modules: list[str], dry: bool) -> list[str]:
     if changed and not dry:
         save_settings(path, settings)
     notes.append(".codex/hooks.json : " + ("hooks de Kwa écrits" if changed else "à jour"))
+    rules = target / ".codex" / "rules" / "kwa.rules"
+    text = codex_rules_text(read_json(target / POLICY_REL, {}) or {})
+    same = rules.exists() and rules.read_text(encoding="utf-8") == text
+    if not same and not dry:
+        rules.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write(rules, text)
+    notes.append(".codex/rules/kwa.rules : " + ("à jour" if same else "confirmations écrites"))
     notes.append("à faire une fois dans Codex : approuver le projet et valider ses hooks avec /hooks (à refaire après chaque mise à jour)")
     return notes
 
@@ -714,7 +738,7 @@ def cmd_install(a) -> int:
     print(f"  .git/info/exclude : {apply_local_excludes(target, a.dry_run)}")
     added = apply_settings(target, modules, a.dry_run)
     print(f"  hooks settings.json : {len(added)} ajouté(s)" + "".join(f"\n    + {x}" for x in added))
-    if a.codex:
+    if not a.no_codex:
         print("  codex : " + "; ".join(apply_codex(target, modules, a.dry_run)))
     recs = [r for r in recommendations(found["tags"], modules) if not skill_present(r["name"], target)]
     if recs:
@@ -812,7 +836,8 @@ def main() -> int:
     p.add_argument("target")
     p.add_argument("--modules")
     p.add_argument("--with", dest="with_", action="append")
-    p.add_argument("--codex", action="store_true")
+    p.add_argument("--codex", action="store_true", help="sans effet : Codex est installé par défaut")
+    p.add_argument("--no-codex", action="store_true", help="ne pas installer la parité Codex")
     p.add_argument("--dry-run", action="store_true")
     for name in ("detect", "status", "doctor", "recommend"):
         p = sub.add_parser(name)

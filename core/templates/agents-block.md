@@ -12,9 +12,9 @@ Tout ce qui est propre au projet va **au-dessus ou en dessous** des marqueurs, o
 - Skills : `/kwa-commit`, `/kwa-ship` ; selon les modules : méthode (`/kwa-brainstorm`, `/kwa-plan`, `/kwa-execute`,
   `/kwa-agents`, `/kwa-parallel`, `/kwa-tdd`, `/kwa-debug`, `/kwa-verify`, `/kwa-review`), workflow (`/kwa-start-dev`),
   livraison (`/kwa-deploy`, `/kwa-testflight`), mémoire (`/kwa-learn`). Un rappel de routage est injecté à chaque session.
-- Avec Codex : les skills se lancent en les mentionnant (`$kwa-commit`), via `.agents/skills/` ; les hooks du projet
-  (`.codex/hooks.json`) ne tournent qu'après approbation du projet et validation par `/hooks`. Une action que les
-  gardes feraient confirmer sous Claude Code est refusée sous Codex, faute de confirmation possible.
+- Claude Code et Codex : une skill se lance avec `/kwa-commit` sous Claude Code, `$kwa-commit` sous Codex. Sous Codex,
+  les hooks (`.codex/hooks.json`) et les règles de commandes (`.codex/rules/kwa.rules`) ne tournent qu'après
+  approbation du projet et validation par `/hooks` ; une confirmation que Codex ne sait pas demander devient un refus.
 {{KNOWLEDGE_LINE}}
 
 ### Façon de travailler

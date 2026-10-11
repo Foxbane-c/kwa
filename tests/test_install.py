@@ -20,7 +20,7 @@ def tree(root):
             continue
         for f in fs:
             p = os.path.join(d, f)
-            out[os.path.relpath(p, root)] = open(p, "rb").read()
+            out[os.path.relpath(p, root)] = ("-> " + os.readlink(p)).encode() if os.path.islink(p) else open(p, "rb").read()
     return out
 
 
