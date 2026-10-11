@@ -2,8 +2,9 @@
 
 **Site : https://nesyouyou.github.io/kwa/** (documentation illustrée et trois parcours de formation)
 
-Un socle de harness pour agents de code : mêmes règles, mêmes garde-fous, mêmes skills, partout.
-Kwa se lit **K**it · **W**orkflow · **A**gents (le K est aussi *Knowledge* : la connaissance qui s'enrichit) : un kit de process de développement pour travailler avec des agents de code.
+Kit de workflow automatisé pour le dev agentique : mêmes règles, mêmes garde-fous, mêmes skills, partout, sous
+Claude Code comme sous Codex.
+Kwa se lit **K**it de **W**orkflow **A**utomatisé : un kit de process de développement pour travailler avec des agents de code.
 
 ## Pourquoi ce dépôt
 

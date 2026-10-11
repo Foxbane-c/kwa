@@ -9,6 +9,7 @@ import json
 PICTOS = {  # nom -> (style, contenu SVG sur une grille 24x24 ou 16x16)
     "shield": ("stroke", "24", '<path d="M12 3l7.5 3v5.2c0 4.6-3.1 8.2-7.5 9.8-4.4-1.6-7.5-5.2-7.5-9.8V6z"/><path d="m8.8 12 2.3 2.3 4.2-4.6"/>'),
     "sword": ("stroke", "24", '<path d="M21 3 10.2 16.2 7.8 13.8z"/><path d="M5.5 11.5l7 7"/><path d="M9 15l-3.5 3.5"/><circle cx="4.6" cy="19.4" r="1.1"/>'),
+    "doc": ("stroke", "24", '<path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4"/><path d="M9 12h6M9 15.5h6"/>'),
     "hook": ("stroke", "24", '<path d="M12 3v11"/><path d="M6 14a6 6 0 0 0 12 0"/><circle cx="12" cy="5" r="1.6"/>'),
     # petite tête d'agent en pixels : antenne, grosses joues, yeux et sourire en creux
     "agent": ("fill", "16", '<path fill-rule="evenodd" d="M7 1h2v3h4v1h1v1h1v4h-1v1h-1v1H3v-1H2v-1H1V6h1V5h1V4h4z'

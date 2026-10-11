@@ -1,0 +1,50 @@
+/* Schéma « Skills qui délèguent » */
+.dg-lead { margin: 0 0 28px; max-width: 72ch; }
+.dg { margin: 0 0 40px; padding: 18px; border: 1px solid var(--kw-rule); border-radius: 14px; }
+.dg-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 16px; }
+.dg-bar .kd-copy[aria-pressed="true"] { background: var(--kw-invert-bg); color: var(--kw-invert-fg); }
+.dg-sp { flex: 1; }
+.dg-line { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.dg-st { position: relative; min-width: 0; padding: 12px; border: 1px solid var(--kw-rule); border-radius: 10px; opacity: .55;
+  transition: opacity .3s ease, background-color .3s ease, border-color .3s ease; }
+.dg-st:not(:last-child)::after { content: "→"; position: absolute; right: -10px; top: 22px; transform: translateX(50%);
+  font: 14px 'Geist Mono', monospace; color: var(--kw-mut); }
+.dg-st.done { opacity: .85; }
+.dg-st.on { opacity: 1; background: var(--kw-raise); border-color: var(--kd-violet); }
+.dg-head { display: flex; gap: 8px; align-items: flex-start; }
+.dg-head .kd-pic { width: 20px; height: 20px; margin: 2px 0 0; flex: none; }
+.dg-head b { display: block; font-size: 14px; color: var(--kw-fg); }
+.dg-head small { display: block; font-size: 12px; color: var(--kw-mut); line-height: 1.35; }
+.dg-body { display: grid; gap: 6px; margin-top: 10px; min-height: 30px; }
+.dg-chip { padding: 7px 9px; border: 1px solid var(--kw-rule); border-radius: 8px; background: var(--kw-bg); font-size: 12.5px;
+  animation: dg-pop .35s cubic-bezier(.34, 1.56, .64, 1) both; }
+.dg-t { display: block; font: 500 12.5px/1.35 'Geist Mono', monospace; color: var(--kw-fg); word-break: break-word; }
+.dg-fill { display: block; margin-top: 3px; color: var(--kw-body); font-size: 12px; }
+.dg-tag { display: inline-block; margin-top: 5px; padding: 1px 6px; border-radius: 6px; font: normal 600 11px 'Geist Mono', monospace;
+  color: var(--kd-red); border: 1px solid currentColor; }
+.dg-file .dg-t { color: var(--kd-teal); }
+.dg-agent .dg-t, .dg-review .dg-t { color: var(--kd-violet); }
+.dg-proof .dg-t { color: var(--kd-green); }
+.dg-run { display: block; height: 5px; margin-top: 6px; border-radius: 3px; background: var(--kw-rule); overflow: hidden; }
+.dg-run i { display: block; height: 100%; width: 0; background: var(--kd-violet); transition: width 1.4s cubic-bezier(.22, 1, .36, 1); }
+.dg-cap { min-height: 44px; margin: 14px 0 0; font-size: 14px; color: var(--kw-fg); }
+@keyframes dg-pop { from { opacity: 0; transform: translateY(6px) scale(.94); } to { opacity: 1; transform: none; } }
+.dg-h { margin: 44px 0 14px; }
+.dg-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dg-table th, .dg-table td { text-align: left; vertical-align: top; padding: 10px 12px; border-top: 1px solid var(--kw-rule); }
+.dg-table th { font-weight: 600; color: var(--kw-fg); }
+.dg-table td { color: var(--kw-body); }
+.dg-grid { margin: 0 0 8px; }
+@media (max-width: 1180px) {
+  .dg-line { grid-template-columns: minmax(0, 1fr); }
+  .dg-st { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); gap: 12px; align-items: start; }
+  .dg-body { margin-top: 0; }
+  .dg-st:not(:last-child)::after { content: "↓"; right: auto; left: 22px; top: auto; bottom: -14px; transform: none; }
+  .dg-sp { display: none; }
+}
+@media (max-width: 600px) {
+  .dg-st { grid-template-columns: minmax(0, 1fr); }
+  .dg-body { margin-top: 10px; }
+  .dg-table { display: block; overflow-x: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .dg-chip { animation: none; } .dg-st, .dg-run i { transition: none; } }

@@ -7,7 +7,7 @@ SIDE = [  # (groupe, couleur du repère, [(libellé, cible)])
     ("Kwa", "blue", [("Présentation", "index.html#top"), ("Pourquoi ce projet", "index.html#pourquoi"), ("Arborescence", "index.html#arborescence"),
                      ("Démarrer", "index.html#demarrer")]),
     ("Explorer", "violet", [("Carte des skills", "skill-map.html"), ("Workflow d'une demande", "board.html"), ("Terminal", "terminal.html"),
-                            ("Skills", "skills.html"), ("Gardes en action", "gardes.html"), ("Mémoire", "memoire.html")]),
+                            ("Skills", "skills.html"), ("Skills qui délèguent", "delegation.html"), ("Gardes en action", "gardes.html"), ("Mémoire", "memoire.html")]),
     ("Apprendre", "green", [("Les trois parcours", "parcours.html"), ("1 · Culture IA générative", "parcours-culture.html"),
                             ("2 · Context engineering", "parcours-contexte.html"), ("3 · Harness", "parcours-harness.html")]),
     ("Référence", "amber", [("Méthode", "methode.html"), ("Remplacer l'existant", "migrer.html"), ("Limites et suite", "limites.html"),
