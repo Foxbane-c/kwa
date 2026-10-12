@@ -156,7 +156,7 @@ footer.kw-footer{margin-top:128px}
 <main class="kd-solo">
 <section class="kw-container kd-section kd-rv" id="skills">
   <div class="kd-head"><div class="kd-eyebrow"><svg class="kd-pic p-sword" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.2 16.2 7.8 13.8z"/><path d="M5.5 11.5l7 7"/><path d="M9 15l-3.5 3.5"/><circle cx="4.6" cy="19.4" r="1.1"/></svg>Skills</div><h1 class="kw-page-title"><span id="nskills"></span> skills, classées par famille</h1>
-    <p class="kd-lead">Une <strong>skill</strong> est une procédure écrite que l'agent suit quand la situation correspond, ou que vous lancez vous-même : <code>/kwa-commit</code> sous Claude Code, <code>$kwa-commit</code> sous Codex. Chaque skill dit quand l'utiliser. L'étiquette indique ce dont elle s'inspire ; « Kwa » signifie une conception propre. Aucun texte n'est recopié : tout est réécrit en français et branché sur la politique du projet.</p></div>
+    <p class="kd-lead">Une <strong>skill</strong> est une procédure écrite que l'agent suit quand la situation correspond, ou que vous lancez vous-même : <code>/kwa:commit</code> sous Claude Code, <code>$kwa:commit</code> sous Codex. Chaque skill dit quand l'utiliser. L'étiquette indique ce dont elle s'inspire ; « Kwa » signifie une conception propre. Aucun texte n'est recopié : tout est réécrit en français et branché sur la politique du projet.</p></div>
   <div class="kd-tools" id="sk-tools"></div>
   <div class="kd-sk" id="sk"></div>
 </section>
@@ -237,7 +237,7 @@ $('#nskills').textContent = DATA.catalog.length;
 const originsOf = n => DATA.credits.sources.filter(s=>s.skills.includes(n)).map(s=>({name:s.author, av:(DATA.map.origins[s.id]||{}).avatar, handle:(DATA.map.origins[s.id]||{}).handle}));
 function renderSk(){
   const t = $('#sk-tools'); t.innerHTML=''; [['all','Toutes'],...Object.entries(FLAB)].forEach(([k,l])=>{ const b=el('button',{class:'kd-chip',type:'button','aria-pressed':ff===k},l); b.onclick=()=>{ff=k;renderSk();}; t.append(b); });
-  $('#sk').innerHTML = DATA.catalog.filter(c=>ff==='all'||famOf(c.id)===ff).map(c=>{ const o=originsOf(c.id); return `<div class="kd-card"><span class="kd-fam">${FLAB[famOf(c.id)]}</span><h3>${PICTO.sword}/kwa-${c.id}</h3><p>${esc(c.description)}</p>${o.length?o.map(a=>`<span class="kd-origin"><img src="${esc(a.av)}" alt="" width="22" height="22">${esc(a.handle)}</span>`).join(''):'<span class="kd-origin kwa">Kwa</span>'}</div>`; }).join('');
+  $('#sk').innerHTML = DATA.catalog.filter(c=>ff==='all'||famOf(c.id)===ff).map(c=>{ const o=originsOf(c.id); return `<div class="kd-card"><span class="kd-fam">${FLAB[famOf(c.id)]}</span><h3>${PICTO.sword}/kwa:${c.id}</h3><p>${esc(c.description)}</p>${o.length?o.map(a=>`<span class="kd-origin"><img src="${esc(a.av)}" alt="" width="22" height="22">${esc(a.handle)}</span>`).join(''):'<span class="kd-origin kwa">Kwa</span>'}</div>`; }).join('');
 }
 renderSk();
 }
@@ -262,9 +262,9 @@ const MAP = [
  ['Un hook qui exige « Closes #N » et une preuve avant fusion','guard-github (module issue-flow), testé avec un faux gh'],
  ['Un hook qui protège les migrations, les .env et interdit le code sur main','guard-write : <code>write.deny</code> et <code>write.no_code_on_main</code>'],
  ['Formatage à la sauvegarde, vérification à la fin de session','format-after-edit et verify-stop (module verify), commandes lues dans la politique'],
- ['Une skill « démarrer un développement » + un script de worktree','/kwa-start-dev + kwa-start'],
- ['Des skills de déploiement par environnement avec pré-vol','/kwa-deploy piloté par <code>environments</code> ; pré-vol et rationalisations dans la politique'],
- ['Une skill TestFlight (Release sur simulateur avant build EAS)','/kwa-testflight, profils lus dans <code>mobile</code> et eas.json (React Native / Expo)'],
+ ['Une skill « démarrer un développement » + un script de worktree','/kwa:start-dev + kwa-start'],
+ ['Des skills de déploiement par environnement avec pré-vol','/kwa:deploy piloté par <code>environments</code> ; pré-vol et rationalisations dans la politique'],
+ ['Une skill TestFlight (Release sur simulateur avant build EAS)','/kwa:testflight, profils lus dans <code>mobile</code> et eas.json (React Native / Expo)'],
  ['Une règle de remise au client et un contrôle d\'hygiène en CI',"module client-handover : règle, kwa-hygiene, liste d'exceptions, job CI"],
  ["Modèles d'issues et de PR",'Gabarits copiés une fois (seed), puis au projet'],
  ['.agents/skills, .codex/hooks.json et règles Codex','Le plugin pour les skills ; <code>kwa init</code> écrit <code>.codex/hooks.json</code> (par <code>kwa hook</code>) et les règles'],
@@ -277,7 +277,7 @@ $('#detect').textContent = DATA.detect.trim();
 
 /* crédits */
 if ($('#src')) {
-$('#src').innerHTML = DATA.credits.sources.map(s=>`<div class="kd-card"><div><div class="who"><img class="kd-av" src="${esc((DATA.map.origins[s.id]||{}).avatar)}" alt="" width="24" height="24"><h3>${esc(s.author)}</h3></div><p class="sub"><a href="${esc(s.url)}">${esc(s.name)}</a> · ${esc(s.license)}</p></div><div><p>${rich(s.took)}</p><div>${s.skills.map(k=>`<span class="kd-tag">/kwa-${k}</span>`).join('')}</div></div></div>`).join('') + '<p class="kd-note">Kwa ne copie aucun fichier de ces projets : les textes sont réécrits, les mécanismes réimplémentés et testés. La ligne d\'origine figure à la fin de chaque skill concernée.</p>';
+$('#src').innerHTML = DATA.credits.sources.map(s=>`<div class="kd-card"><div><div class="who"><img class="kd-av" src="${esc((DATA.map.origins[s.id]||{}).avatar)}" alt="" width="24" height="24"><h3>${esc(s.author)}</h3></div><p class="sub"><a href="${esc(s.url)}">${esc(s.name)}</a> · ${esc(s.license)}</p></div><div><p>${rich(s.took)}</p><div>${s.skills.map(k=>`<span class="kd-tag">/kwa:${k}</span>`).join('')}</div></div></div>`).join('') + '<p class="kd-note">Kwa ne copie aucun fichier de ces projets : les textes sont réécrits, les mécanismes réimplémentés et testés. La ligne d\'origine figure à la fin de chaque skill concernée.</p>';
 }
 </script>
 <script src="src/glossary-data.js"></script><script src="src/shell.js"></script>

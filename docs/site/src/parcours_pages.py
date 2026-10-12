@@ -571,20 +571,20 @@ def history() -> str:
 <p class="kd-note">Dates : repères généraux de l'histoire du génie logiciel (article de Royce en 1970, Manifeste agile en 2001, GitHub en 2008, GitHub Copilot en 2021, ChatGPT fin 2022, MCP fin 2024). La lecture « le harness rebranche le processus » est celle de Kwa, pas un consensus.</p>
 <p>Chaque étape du processus d'équipe a donc son équivalent autour de l'agent :</p>
 <table class="pc-table"><thead><tr><th>Étape du processus</th><th>Dans le harness (Kwa)</th></tr></thead><tbody>
-<tr><td>Cadrer le besoin</td><td><code>/kwa-brainstorm</code>, <code>/kwa-plan</code></td></tr>
-<tr><td>Ticket et branche dédiée</td><td><code>/kwa-start-dev</code> et <code>kwa-start</code></td></tr>
-<tr><td>Tests d'abord</td><td><code>/kwa-tdd</code></td></tr>
-<tr><td>Revue de code</td><td><code>/kwa-review</code>, retours traités par <code>/kwa-review-feedback</code></td></tr>
+<tr><td>Cadrer le besoin</td><td><code>/kwa:brainstorm</code>, <code>/kwa:plan</code></td></tr>
+<tr><td>Ticket et branche dédiée</td><td><code>/kwa:start-dev</code> et <code>kwa-start</code></td></tr>
+<tr><td>Tests d'abord</td><td><code>/kwa:tdd</code></td></tr>
+<tr><td>Revue de code</td><td><code>/kwa:review</code>, retours traités par <code>/kwa:review-feedback</code></td></tr>
 <tr><td>Branches protégées, pas de force-push</td><td>Gardes <code>guard-git</code>, <code>guard-write</code></td></tr>
-<tr><td>Intégration continue</td><td><code>/kwa-verify</code>, vérifications de la politique</td></tr>
-<tr><td>Pull request avec preuve</td><td><code>/kwa-ship</code>, <code>guard-github</code></td></tr>
-<tr><td>Déploiement vérifié</td><td><code>/kwa-deploy</code></td></tr>
-<tr><td>Rétrospective</td><td><code>/kwa-learn</code>, mémoire de session</td></tr></tbody></table>
+<tr><td>Intégration continue</td><td><code>/kwa:verify</code>, vérifications de la politique</td></tr>
+<tr><td>Pull request avec preuve</td><td><code>/kwa:ship</code>, <code>guard-github</code></td></tr>
+<tr><td>Déploiement vérifié</td><td><code>/kwa:deploy</code></td></tr>
+<tr><td>Rétrospective</td><td><code>/kwa:learn</code>, mémoire de session</td></tr></tbody></table>
 <div class="pc-proof"><div><b>Preuve attendue</b><p>Placer cinq étapes de votre processus actuel et dire ce qui les remplace quand un agent travaille.</p></div><div><b>Piège</b><p>Un harness rend vérifiables par une machine des contrôles que l'équipe faisait déjà ; il ne doit pas en ajouter par réflexe.</p></div></div></div></section>"""
 
 
 def harness(practice_html: str) -> str:
-    return (intro("De l'histoire du processus de développement jusqu'à un harness complet, puis dix étapes sur un dépôt jetable, avec les vrais gardes : les sorties affichées sont celles de l'exécution, recalculées à chaque génération du site. Prérequis : les parcours Culture et Contexte, Python 3 et Kwa récupéré (voir <a href='avant-de-commencer.html'>Avant de commencer</a>). Les exercices tournent sans agent, sans compte ni clé ; Claude Code ou Codex sert pour les essais en situation, et jq pour l'exemple de hook en bash. Environ quatre heures, à calibrer en séance.") +
+    return (intro("De l'histoire du processus de développement jusqu'à un harness complet, puis dix étapes sur un dépôt jetable, avec les vrais gardes : les sorties affichées sont celles de l'exécution, recalculées à chaque génération du site. Pour voir chaque pièce, la pratique installe Kwa par copie (<code>kwa install</code>) dans un dépôt jetable : les gardes y sont de simples fichiers que l'on lance à la main ; dans vos projets, le plugin apporte les mêmes scripts. Prérequis : les parcours Culture et Contexte, Python 3 et Kwa récupéré (voir <a href='avant-de-commencer.html'>Avant de commencer</a>). Les exercices tournent sans agent, sans compte ni clé ; Claude Code ou Codex sert pour les essais en situation, et jq pour l'exemple de hook en bash. Environ quatre heures, à calibrer en séance.") +
             nav(HARNESS_NAV) +
             history() + practice_html)
 

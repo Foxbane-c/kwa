@@ -23,7 +23,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 PACK = HERE.parents[2]
 OUT = HERE / "terminal-data.json"
-DAY = "2026-10-07"  # date figée dans les sorties (kwa-memory date ses notes du jour)
+DAY = "2026-10-07"  # date figée dans les sorties (kwa memory date ses notes du jour)
 
 BASE_ENV = {k: v for k, v in os.environ.items() if k.startswith(("LC_", "LANG")) or k in {"PATH", "HOME"}}
 BASE_ENV["GH"] = "false"  # jamais le vrai GitHub : la capture doit être la même partout
@@ -69,9 +69,7 @@ class Sandbox:
         """Commande affichée -> commande exécutée (alias du pack, chemin du projet)."""
         cmd = display.replace("~/mon-projet", str(self.proj))
         cmd = re.sub(r"\bpython3 ", f"{sys.executable} ", cmd)
-        cmd = re.sub(r"(^|&& )kwa-memory\b", rf"\1{sys.executable} {PACK}/core/bin/kwa-memory", cmd)
-        cmd = re.sub(r"(^|&& )kwa-hygiene\b", rf"\1{sys.executable} {PACK}/core/bin/kwa-hygiene", cmd)
-        cmd = re.sub(r"(^|&& )kwa\b", rf"\1{sys.executable} {PACK}/bin/kwa", cmd)
+        cmd = re.sub(r"(^|&& |\| )kwa\b", rf"\1{sys.executable} {PACK}/bin/kwa", cmd)
         return cmd.strip()
 
     def step(self, display: str, explain: dict, cwd: str = "parent", empty_note: str | None = None,
@@ -131,28 +129,29 @@ def scenario_install() -> dict:
                 "Chaque indice allume un **module** (`verify`, `stack-expo`, `stack-prisma`, `deploy`…) et pré-remplit la "
                 "**politique** du projet. Le module `client-handover` est seulement proposé : il dépend d'une intention, "
                 "jamais d'une détection.")),
-            sb.step("kwa install ./mon-projet --dry-run", ex(
+            sb.step("kwa init ./mon-projet --dry-run", ex(
                 "**Simuler** avant de toucher",
-                "Même calcul que l'installation, mais **rien n'est écrit**. On voit les fichiers qui seraient ajoutés, "
-                "le bloc géré d'`AGENTS.md`, la politique créée, les hooks branchés dans `settings.json`.",
+                "Même calcul que la préparation, mais **rien n'est écrit**. On voit les gabarits qui seraient copiés, "
+                "le bloc géré d'`AGENTS.md`, la politique créée, le plugin proposé dans `settings.json`.",
                 "C'est le moment de relire : le préfixe `[simulation]` rappelle que le dépôt est intact.")),
-            sb.step("kwa install ./mon-projet", ex(
-                "Installer le **socle**",
-                "Les gardes, règles et skills sont copiés dans `.claude/`. `AGENTS.md` reçoit un bloc balisé "
-                "(`kwa:begin` / `kwa:end`) : rien en dehors des marqueurs n'est modifié. `CLAUDE.md` devient un "
-                "pointeur vers `@AGENTS.md`.",
+            sb.step("kwa init ./mon-projet", ex(
+                "Préparer le projet pour le **plugin**",
+                "Aucun script n'est copié : gardes, règles et skills viennent du plugin, installé une fois par machine. "
+                "`AGENTS.md` reçoit un bloc balisé (`kwa:begin` / `kwa:end`) : rien en dehors des marqueurs n'est "
+                "modifié. `CLAUDE.md` devient un pointeur vers `@AGENTS.md`. `.claude/settings.json` propose le plugin "
+                "à toute l'équipe.",
                 "La politique `.claude/kwa.policy.json` est **créée une fois** puis appartient au projet : une "
-                "réinstallation ne l'écrase jamais.",
+                "relance ne l'écrase jamais, elle ne tient à jour que la liste des modules.",
                 "La dernière ligne le dit : Kwa n'ajoute, ne commite et ne pousse rien.")),
             sb.step("kwa doctor ./mon-projet", ex(
                 "Vérifier la **conformité**",
-                "`doctor` contrôle le bloc `AGENTS.md`, les hooks, la politique, et signale les **doublons** avec "
-                "l'outillage maison du projet.",
-                "Ici, le `guard-bash.sh` préexistant fait doublon avec les gardes de Kwa : c'est une note, pas une "
-                "erreur. Code de sortie 0 : la cible est conforme.")),
+                "`doctor` contrôle le bloc `AGENTS.md`, la politique, le plugin activé pour le projet et installé sur "
+                "la machine, et signale les **doublons** avec l'outillage maison du projet.",
+                "Ici, le `guard-bash.sh` préexistant fait doublon avec les gardes de Kwa, et le plugin n'est pas "
+                "installé dans ce dossier de démonstration : ce sont des notes, pas des erreurs. Code de sortie 0.")),
         ]
         return {"id": "install", "title": "Détecter et installer",
-                "summary": "De `detect` à `doctor` : installer le socle sur un monorepo pnpm, sans rien committer.",
+                "summary": "De `detect` à `doctor` : préparer un monorepo pnpm pour le plugin, sans rien committer.",
                 "prep": "Projet jetable : monorepo pnpm (scripts typecheck / lint / test), `apps/web` Next + Prisma, "
                         "`apps/mobile` Expo avec `eas.json`, `prisma/migrations`, workflow de déploiement Scaleway, "
                         "un ancien garde `.claude/hooks/guard-bash.sh`. Dépôt git initialisé sur `main`.",
@@ -168,7 +167,7 @@ def payload(cmd: str) -> str:
 
 
 def guard_step(sb: Sandbox, guard: str, cmd: str, explain: dict, pretty: bool = True) -> dict:
-    display = f"echo '{payload(cmd)}' | python3 .claude/kwa/hooks/{guard}.py"
+    display = f"echo '{payload(cmd)}' | kwa hook {guard}"
     if pretty:
         display += " | python3 -m json.tool --no-ensure-ascii"
     return sb.step(display, explain, cwd="project",
@@ -182,7 +181,7 @@ def scenario_guards() -> dict:
                 "pnpm-lock.yaml": "", "src/index.ts": "export {}\n", ".env": "SECRET_TOKEN=valeur-factice\n",
                 ".env.example": "SECRET_TOKEN=\n"})
         sb.setup("git init -q -b main .")
-        sb.setup("kwa install ./mon-projet --modules core", cwd="parent")
+        sb.setup("kwa init ./mon-projet --modules core", cwd="parent")
         steps = [
             guard_step(sb, "guard-secrets", "cat .env", ex(
                 "Un fichier de secrets : **refusé**",
@@ -213,7 +212,8 @@ def scenario_guards() -> dict:
         ]
         return {"id": "guards", "title": "Un garde en action",
                 "summary": "Les vrais gardes, alimentés par la charge utile que leur envoie Claude Code.",
-                "prep": "Projet jetable sur la branche `main`, avec un `.env` factice, après `kwa install --modules core`. "
+                "prep": "Projet jetable sur la branche `main`, avec un `.env` factice, après `kwa init --modules core`. "
+                        "`kwa hook` lance un garde comme le plugin le fait (le plugin appelle le même `run.py`). "
                         "La variable `CLAUDE_PROJECT_DIR` (posée par Claude Code) désigne le projet ; elle n'apparaît pas à "
                         "l'écran. La sortie passe par `json.tool` pour rester lisible.",
                 "steps": steps}
@@ -233,38 +233,38 @@ def scenario_memory() -> dict:
         sb.setup("git switch -q -c feat/export")
         sb.put({"src/export.ts": "export const exporter = () => {}\n"})
         with open(sb.proj / ".git" / "info" / "exclude", "a", encoding="utf-8") as f:
-            f.write(".claude/kwa/local/\n")  # ce que fait `kwa install`
+            f.write(".claude/kwa/local/\n")  # ce que fait `kwa init`
         steps = [
-            sb.step('kwa-memory capture gotcha "Le seed Prisma échoue si la base n\'est pas migrée"', ex(
+            sb.step('kwa memory capture gotcha "Le seed Prisma échoue si la base n\'est pas migrée"', ex(
                 "Noter un **piège**, sans quitter le travail",
                 "Une note rapide, rangée par type : `gotcha` (piège), `decision`, `rule`, `pref` ou `vault`. Elle est "
                 "datée et ajoutée à `.claude/kwa/local/inbox.md`.",
-                "Ce dossier est **local** : exclu de git par `kwa install`. Rien n'est écrit dans la documentation du "
+                "Ce dossier est **local** : exclu de git par `kwa init`. Rien n'est écrit dans la documentation du "
                 "projet à ce stade."), cwd="project"),
-            sb.step('kwa-memory capture decision "Pagination par curseur plutôt que par offset"', ex(
+            sb.step('kwa memory capture decision "Pagination par curseur plutôt que par offset"', ex(
                 "Une **décision**, même principe",
                 "On capture au fil de l'eau, en une ligne. Le tri se fait **à la fin**, pas pendant."), cwd="project"),
-            sb.step("kwa-memory pending", ex(
+            sb.step("kwa memory pending", ex(
                 "Voir ce qui **attend**",
                 "Le nombre de notes puis leur liste. Si la session a produit du travail substantiel et qu'aucune note "
                 "n'existe, un hook propose **une seule fois** de faire le point en fin de session."), cwd="project"),
-            sb.step("kwa-memory digest", ex(
-                "Tout pour **/kwa-learn**",
+            sb.step("kwa memory digest", ex(
+                "Tout pour **/kwa:learn**",
                 "Le digest réunit les notes, la branche, les commits et les fichiers modifiés, puis rappelle les "
                 "**destinations** : décisions, pièges, politique.",
-                "C'est `/kwa-learn` qui propose les écritures et l'humain qui valide. La base de connaissance de l'équipe n'est touchée "
+                "C'est `/kwa:learn` qui propose les écritures et l'humain qui valide. La base de connaissance de l'équipe n'est touchée "
                 "que si `KWA_VAULT_INBOX` est défini."), cwd="project"),
-            sb.step("kwa-memory clear", ex(
+            sb.step("kwa memory clear", ex(
                 "**Archiver** les notes traitées",
                 "Les notes sont déplacées dans `archive/`, horodatées. On repart d'une boîte vide : `pending` "
                 "ne les montre plus."), cwd="project"),
-            sb.step("kwa-memory pending", ex(
+            sb.step("kwa memory pending", ex(
                 "**Boîte** vide", "Le cycle est bouclé : capturer, trier, archiver."), cwd="project"),
         ]
         return {"id": "memory", "title": "Mémoire de session",
                 "summary": "Capturer les apprentissages en passant, les trier à la fin.",
                 "prep": "Dépôt git jetable avec un commit, sur la branche `feat/export`, un fichier non commité. "
-                        "Le dossier de notes est exclu de git, comme après `kwa install`.",
+                        "Le dossier de notes est exclu de git, comme après `kwa init`.",
                 "steps": steps}
     finally:
         sb.close()
@@ -284,7 +284,7 @@ def scenario_hygiene() -> dict:
         sb.setup("git init -q -b main .")
         sb.setup("git add -A")
         steps = [
-            sb.step("kwa-hygiene", ex(
+            sb.step("kwa hygiene", ex(
                 "Contrôler **avant** de remettre au client",
                 "Le contrôle porte sur les fichiers **produit** suivis par git (hors tests, hors `docs/`, hors Kwa). "
                 "Quatre familles : `SECRET`, `PERSONNEL`, `NOMINATIF`, `PÉRISSABLE`.",
@@ -300,12 +300,12 @@ def scenario_hygiene() -> dict:
                 "Un cas que l'on ne peut pas régler tout de suite va dans `.claude/kwa.hygiene.allow` : famille, "
                 "fichier, raison. Ce n'est pas un silence : la liste est **réaffichée à chaque exécution**."),
                     cwd="project"),
-            sb.step("kwa-hygiene", ex(
+            sb.step("kwa hygiene", ex(
                 "**Relancer**",
                 "Reste un compte personnel (`admin.ts`) : toujours bloquant. L'exception sur `legacy.ts` est "
                 "reportée, et sa justification s'affiche en bas.",
                 "La liste d'exceptions **est** la checklist de remise."), cwd="project"),
-            sb.step("echo \"export const admin = 'admin@exemple-client.fr'\" > src/admin.ts && git add -A && kwa-hygiene", ex(
+            sb.step("echo \"export const admin = 'admin@exemple-client.fr'\" > src/admin.ts && git add -A && kwa hygiene", ex(
                 "Remplacer le compte par une adresse **du client**",
                 "Plus d'occurrence bloquante : code de sortie 0. Les exceptions assumées restent listées, pour que la "
                 "remise ne les oublie pas.",
