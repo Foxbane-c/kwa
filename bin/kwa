@@ -905,6 +905,8 @@ def migrate_copy(target: Path, dry: bool, legacy: bool = False) -> list[str]:
             continue
         before = json.dumps(settings, sort_keys=True)
         strip_kwa_hooks(settings)
+        if settings.get("hooks") == {}:  # plus aucun hook : la clé vide ne sert à rien
+            del settings["hooks"]
         if json.dumps(settings, sort_keys=True) != before and not dry:
             save_settings(path, settings)
     notes.append(f"installation par copie retirée ({len(state['files'])} fichier(s) gérés"

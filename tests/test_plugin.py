@@ -218,7 +218,8 @@ class Init(unittest.TestCase):
                                                            ".agents/"))], left)
         saved = [f for f in self.files() if f.startswith(".claude/kwa/backup/") and f.endswith("kwa-commit/SKILL.md")]
         self.assertTrue(saved and "retouche locale" in read(os.path.join(self.t, saved[0])))
-        self.assertNotIn(".claude/kwa/hooks", read(os.path.join(self.t, ".claude", "settings.json")))
+        settings = json.loads(read(os.path.join(self.t, ".claude", "settings.json")))
+        self.assertNotIn("hooks", settings, "la clé hooks vidée par la migration disparaît")
         self.assertEqual(kwa("doctor", self.t).returncode, 0)
 
     def test_rerun_keeps_the_chosen_modules(self):
