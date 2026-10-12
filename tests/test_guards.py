@@ -106,6 +106,21 @@ class Git(unittest.TestCase):
         self.assertEqual(bash("guard-git.py", "git reset --hard", cwd=self.repo), "ask")
         self.assertEqual(bash("guard-git.py", "git status", cwd=self.repo), "allow")
 
+    def test_the_repo_named_by_the_command_decides(self):
+        # session ouverte dans un projet sur main, commande qui vise un autre dépôt sur une branche de travail
+        other = tempfile.mkdtemp()
+        subprocess.run(["git", "init", "-q", "-b", "feat/y", other], check=True)
+        for cmd in [f"git -C {other} commit -m x", f"cd {other} && git commit -m x", f"cd {other}; git commit -m x"]:
+            with self.subTest(cmd=cmd):
+                self.assertEqual(bash("guard-git.py", cmd, cwd=self.repo), "allow")
+        # et l'inverse : session sur une branche, commande qui vise un dépôt sur main
+        self.branch("feat/x")
+        main_repo = tempfile.mkdtemp()
+        subprocess.run(["git", "init", "-q", "-b", "main", main_repo], check=True)
+        for cmd in [f"git -C {main_repo} commit -m x", f"cd {main_repo} && git commit -m x", f"git -C {main_repo} push"]:
+            with self.subTest(cmd=cmd):
+                self.assertEqual(bash("guard-git.py", cmd, cwd=self.repo), "deny")
+
     def test_escape_hatch(self):
         self.assertEqual(bash("guard-git.py", "git commit -m x", cwd=self.repo, env={"KWA_ALLOW_MAIN": "1"}), "allow")
 
