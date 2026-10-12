@@ -15,7 +15,7 @@ KIND = {  # type d'étape -> (pictogramme, libellé)
 }
 
 WORKFLOWS = [  # (clé, pictogramme, titre, promesse, lien, [(type, nom, ce qui se passe)])
-    ("feature", "code", "Développer une fonctionnalité", "De l'idée floue à une PR prouvée.", "skill-map.html#view=feature", [
+    ("feature", "code", "Développer une fonctionnalité", "De l'idée floue à une PR prouvée.", "board.html#detail", [
         ("skill", "/kwa:brainstorm", "cadrer l'intention, écrire une spec courte"),
         ("vous", "validation", "vous approuvez la spec"),
         ("skill", "/kwa:plan", "découper en tâches de quelques minutes"),

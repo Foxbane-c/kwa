@@ -4,10 +4,10 @@ from __future__ import annotations
 import html
 
 SIDE = [  # (groupe, couleur du repère, [(libellé, cible)])
-    ("Kwa", "blue", [("Présentation", "index.html#top"), ("Les workflows", "index.html#workflows"), ("Pourquoi ce projet", "index.html#pourquoi"), ("Arborescence", "index.html#arborescence"),
+    ("Kwa", "blue", [("Présentation", "index.html#top"), ("Pourquoi ce projet", "index.html#pourquoi"), ("Arborescence", "index.html#arborescence"),
                      ("Démarrer", "index.html#demarrer")]),
-    ("Explorer", "violet", [("Carte des skills", "skill-map.html"), ("Workflow d'une demande", "board.html"), ("Terminal", "terminal.html"),
-                            ("Skills", "skills.html"), ("Skills qui délèguent", "delegation.html"), ("Gardes en action", "gardes.html"), ("Mémoire", "memoire.html")]),
+    ("Explorer", "violet", [("Les workflows", "board.html"), ("Skills", "skills.html"), ("Skills qui délèguent", "delegation.html"),
+                            ("Gardes en action", "gardes.html"), ("Mémoire", "memoire.html"), ("Terminal", "terminal.html")]),
     ("Apprendre", "green", [("Avant de commencer", "avant-de-commencer.html"), ("Premier pas en 30 min", "premier-pas.html"), ("Les trois parcours", "parcours.html"), ("1 · Culture IA générative", "parcours-culture.html"),
                             ("2 · Context engineering", "parcours-contexte.html"), ("3 · Harness", "parcours-harness.html")]),
     ("Référence", "amber", [("Glossaire", "glossaire.html"), ("Méthode", "methode.html"), ("Remplacer l'existant", "migrer.html"), ("Limites et suite", "limites.html"),
@@ -33,8 +33,12 @@ def topbar(theme_button: str = THEME_BUTTON) -> str:
             f'<span class="kd-spacer"></span>{theme_button}</header>')
 
 
+ALIAS = {"skill-map.html": "skills.html"}  # la carte n'a pas d'entrée : elle se range sous Skills
+
+
 def sidebar(current: str, toc: list[tuple[str, str]] | None = None) -> str:
     """current : nom du fichier de la page (index.html, board.html…). toc : (ancre, libellé) affichés sous l'entrée courante."""
+    current = ALIAS.get(current, current)
     out = ['<aside class="kd-side" id="side" aria-label="Navigation"><nav>']
     for group, color, items in SIDE:
         out.append(f'<div class="kd-sg"><h2><svg class="kd-ico" style="--dot:var(--kd-{color})" viewBox="0 0 24 24" aria-hidden="true">{ICONS[group]}</svg>{html.escape(group)}</h2><ul>')
