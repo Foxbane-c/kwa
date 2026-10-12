@@ -327,6 +327,19 @@ class Beginners(unittest.TestCase):
         self.assertRegex(contexte, r'<details class="pc-reveal"><summary>Pour aller plus loin[^<]*</summary><div><table class="pc-table mcp-vs">')
         self.assertRegex(self.read("parcours-culture.html"), r"Pour aller plus loin[^<]*</summary><div><p>[^<]*<em>softmax</em>")
 
+    def test_first_steps_tutorial_uses_the_demo_repo_and_quotes_real_refusals(self):
+        sys.path.insert(0, os.path.join(self.SITE, "src"))
+        import firststeps
+        page = self.read("premier-pas.html")
+        for needle in ("nesyouyou/kwa-demo", "--template</span>", "</span> verify</pre>", '"commands": ["python3 -m unittest"]', "chore/install-kwa", "/kwa-ship", "/kwa-learn"):
+            self.assertIn(needle, page)
+        self.assertIn('href="premier-pas.html"', self.read("index.html"))
+        hooks = os.path.join(PACK, "core", "hooks")
+        # les refus cités sont ceux du code : début du message, puis la suite construite par le garde
+        for fragment, guard in ((firststeps.REFUS_WRITE[:60], "guard-write.py"), ("refusé : travailler sur une branche ", "guard-git.py")):
+            self.assertIn(fragment, open(os.path.join(hooks, guard), encoding="utf-8").read(), guard)
+        self.assertTrue(firststeps.REFUS_COMMIT.startswith("git commit sur main refusé : travailler sur une branche"))
+
     def test_js_only_pages_point_to_a_static_equivalent(self):
         for name, href in (("skill-map.html", "skills.html"), ("board.html", "index.html#workflows"), ("terminal.html", "index.html#demarrer")):
             self.assertRegex(self.read(name), rf'<noscript>.*href="{re.escape(href)}".*</noscript>', name)

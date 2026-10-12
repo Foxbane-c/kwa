@@ -50,5 +50,5 @@ il ne demande aucune installation.</p>
 <p>Les deux premières commandes n'écrivent rien. La troisième installe Kwa pour Claude Code et pour Codex ; aucune ne fait de commit ni de push. Sous Codex, validez une fois les hooks du projet avec <code>/hooks</code>.</p></li>
 
 <li><h2 class="kw-section-title">Et ensuite</h2>
-<p>Suivez les <a href="parcours.html">trois parcours</a> dans l'ordre : comprendre le modèle, lui donner le bon contexte, puis l'encadrer avec Kwa. Un mot vous échappe ? Le <a href="glossaire.html">glossaire</a> traduit chaque terme anglais.</p></li>
+<p>Faites le <a href="premier-pas.html">premier pas en 30 minutes</a> sur un projet d'exercice, puis suivez les <a href="parcours.html">trois parcours</a> dans l'ordre : comprendre le modèle, lui donner le bon contexte, puis l'encadrer avec Kwa. Un mot vous échappe ? Le <a href="glossaire.html">glossaire</a> traduit chaque terme anglais.</p></li>
 </ol>"""
