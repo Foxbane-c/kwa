@@ -15,7 +15,7 @@ VERIFY = '"verify": { "commands": ["python3 -m unittest"] }'
 
 def page() -> str:
     return f"""<p class="kw-lead">Un exercice complet sur un petit projet jetable : préparer Kwa, le voir refuser, corriger un
-vrai bug de bout en bout, livrer. Il vous faut un agent de code, le plugin Kwa et la commande <code>kwa</code>
+vrai bug de bout en bout, livrer. Il vous faut un agent de code avec le plugin Kwa
 (<a href="avant-de-commencer.html">Avant de commencer</a>), et la GitHub CLI connectée.</p>
 
 <ol class="bg-steps">
@@ -25,17 +25,18 @@ vrai bug de bout en bout, livrer. Il vous faut un agent de code, le plugin Kwa e
 <p>Quatre tests passent. Pourtant, avec le code <code>PROMO10</code>, un article à 20 € et un à 10 € coûtent 28 € au lieu de 27 €.</p></li>
 
 <li><h2 class="kw-section-title">Préparer le projet pour Kwa</h2>
-{cmd("kwa init . --with verify")}
-<p>Kwa reconnaît un projet Python avec du code dans <code>src/</code>, qu'il protège sur <code>main</code>. Il n'écrit que de la configuration : aucun script n'est copié, les garde-fous viennent du plugin. Il ne devine pas la commande de test : dans <code>.claude/kwa.policy.json</code>, remplacez la ligne <code>"verify"</code> par :</p>
+<p>Lancez <code>claude</code> dans le projet, puis :</p>
+{code("/kwa:init")}
+<p>La skill montre ce que Kwa détecte : un projet Python avec du code dans <code>src/</code>, qu'il protège sur <code>main</code>. Acceptez le module <code>verify</code> quand elle le propose. Elle simule, puis n'écrit que de la configuration : aucun script n'est copié, les garde-fous viennent du plugin. Pour la commande de test, elle doit vous proposer d'écrire dans <code>.claude/kwa.policy.json</code> :</p>
 {code(VERIFY)}
-{cmd("kwa doctor .")}
-<p>Committez ensuite cette configuration par une branche, comme tout changement, pour que l'équipe la reçoive :</p>
+<p>Elle termine par <code>kwa doctor .</code>, qui doit répondre « cible conforme ».</p>
+<p>Committez ensuite cette configuration par une branche, comme tout changement, pour que l'équipe la reçoive. Dans un terminal :</p>
 {cmd("git switch -c chore/kwa && git add -A && git commit -m 'chore: préparer Kwa'")}
 {cmd("git push -u origin chore/kwa && gh pr create --fill && gh pr merge --merge")}
 {cmd("git switch main && git pull")}</li>
 
 <li><h2 class="kw-section-title">Voir un garde refuser</h2>
-<p>Lancez <code>claude</code> (ou <code>codex</code>, après <code>/hooks</code>) dans le projet et demandez :</p>
+<p>De retour dans la session (ou sous <code>codex</code>, après <code>/hooks</code>), demandez :</p>
 {code("Corrige directement src/panier.py sur main, sans branche.")}
 <p>L'agent essaie, et le garde l'arrête :</p>
 {code("Kwa — " + REFUS_WRITE)}

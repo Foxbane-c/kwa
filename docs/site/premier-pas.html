@@ -151,7 +151,7 @@ footer.kw-footer{margin-top:128px}
   <div class="kd-eyebrow">Kwa sur un projet d'exercice</div>
   <h1 class="kw-page-title">Premier pas en 30 minutes</h1>
   <p class="kw-lead">Un exercice complet sur un petit projet jetable : préparer Kwa, le voir refuser, corriger un
-vrai bug de bout en bout, livrer. Il vous faut un agent de code, le plugin Kwa et la commande <code>kwa</code>
+vrai bug de bout en bout, livrer. Il vous faut un agent de code avec le plugin Kwa
 (<a href="avant-de-commencer.html">Avant de commencer</a>), et la GitHub CLI connectée.</p>
 
 <ol class="bg-steps">
@@ -161,17 +161,18 @@ vrai bug de bout en bout, livrer. Il vous faut un agent de code, le plugin Kwa e
 <p>Quatre tests passent. Pourtant, avec le code <code>PROMO10</code>, un article à 20 € et un à 10 € coûtent 28 € au lieu de 27 €.</p></li>
 
 <li><h2 class="kw-section-title">Préparer le projet pour Kwa</h2>
-<pre class="kd-code"><span class="p">$</span> kwa init . <span class="sx-f">--with</span> verify</pre>
-<p>Kwa reconnaît un projet Python avec du code dans <code>src/</code>, qu'il protège sur <code>main</code>. Il n'écrit que de la configuration : aucun script n'est copié, les garde-fous viennent du plugin. Il ne devine pas la commande de test : dans <code>.claude/kwa.policy.json</code>, remplacez la ligne <code>"verify"</code> par :</p>
+<p>Lancez <code>claude</code> dans le projet, puis :</p>
+<pre class="kd-code">/kwa:init</pre>
+<p>La skill montre ce que Kwa détecte : un projet Python avec du code dans <code>src/</code>, qu'il protège sur <code>main</code>. Acceptez le module <code>verify</code> quand elle le propose. Elle simule, puis n'écrit que de la configuration : aucun script n'est copié, les garde-fous viennent du plugin. Pour la commande de test, elle doit vous proposer d'écrire dans <code>.claude/kwa.policy.json</code> :</p>
 <pre class="kd-code">"verify": { "commands": ["python3 -m unittest"] }</pre>
-<pre class="kd-code"><span class="p">$</span> kwa doctor .</pre>
-<p>Committez ensuite cette configuration par une branche, comme tout changement, pour que l'équipe la reçoive :</p>
+<p>Elle termine par <code>kwa doctor .</code>, qui doit répondre « cible conforme ».</p>
+<p>Committez ensuite cette configuration par une branche, comme tout changement, pour que l'équipe la reçoive. Dans un terminal :</p>
 <pre class="kd-code"><span class="p">$</span> git switch <span class="sx-f">-c</span> chore/kwa &amp;&amp; git add <span class="sx-f">-A</span> &amp;&amp; git commit <span class="sx-f">-m</span> <span class="sx-s">'chore: préparer Kwa'</span></pre>
 <pre class="kd-code"><span class="p">$</span> git push <span class="sx-f">-u</span> origin chore/kwa &amp;&amp; gh pr create <span class="sx-f">--fill</span> &amp;&amp; gh pr merge <span class="sx-f">--merge</span></pre>
 <pre class="kd-code"><span class="p">$</span> git switch main &amp;&amp; git pull</pre></li>
 
 <li><h2 class="kw-section-title">Voir un garde refuser</h2>
-<p>Lancez <code>claude</code> (ou <code>codex</code>, après <code>/hooks</code>) dans le projet et demandez :</p>
+<p>De retour dans la session (ou sous <code>codex</code>, après <code>/hooks</code>), demandez :</p>
 <pre class="kd-code">Corrige directement src/panier.py sur main, sans branche.</pre>
 <p>L'agent essaie, et le garde l'arrête :</p>
 <pre class="kd-code">Kwa — Pas de code sur main : ouvrir d'abord l'issue et sa branche (/kwa:start-dev), puis travailler dans le worktree créé.</pre>

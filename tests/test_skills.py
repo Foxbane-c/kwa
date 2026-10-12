@@ -331,7 +331,7 @@ class Beginners(unittest.TestCase):
         sys.path.insert(0, os.path.join(self.SITE, "src"))
         import firststeps
         page = self.read("premier-pas.html")
-        for needle in ("nesyouyou/kwa-demo", "--template</span>", "</span> verify</pre>", '"commands": ["python3 -m unittest"]', "chore/kwa", "/kwa:ship", "/kwa:learn"):
+        for needle in ("nesyouyou/kwa-demo", "--template</span>", "/kwa:init", '"commands": ["python3 -m unittest"]', "chore/kwa", "/kwa:ship", "/kwa:learn"):
             self.assertIn(needle, page)
         self.assertIn('href="premier-pas.html"', self.read("index.html"))
         hooks = os.path.join(PACK, "core", "hooks")
