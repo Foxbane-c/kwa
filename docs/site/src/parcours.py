@@ -282,7 +282,7 @@ def render(c: dict) -> str:
         ("8", "Le workflow complet", "Une demande, une branche, une preuve, une PR.",
          f"""<p>Démarrez un changement : une branche dans son propre worktree, à côté du dépôt, jamais sur <code>main</code>.</p>
 {start_cmd}{code(c["started"])}{code(c["trees"])}
-<p>La suite se joue avec les skills : <code>/kwa-brainstorm</code>, <code>/kwa-plan</code>, <code>/kwa-tdd</code>, <code>/kwa-verify</code>, <code>/kwa-review</code>, <code>/kwa-ship</code>. La page <a href="board.html">Board</a> déroule ce workflow sur une demande réelle, et le <a href="terminal.html">Terminal</a> montre les commandes.</p>""",
+<p>La suite se joue avec les skills : <code>/kwa-brainstorm</code>, <code>/kwa-plan</code>, <code>/kwa-tdd</code>, <code>/kwa-verify</code>, <code>/kwa-review</code>, <code>/kwa-ship</code>. La page <a href="board.html">Les workflows</a> déroule ce workflow sur une demande réelle, et le <a href="terminal.html">Terminal</a> montre les commandes.</p>""",
          "Conduire un petit changement jusqu'à une PR, avec une preuve que quelqu'un d'autre peut rejouer.",
          "Versionner n'est pas publier, et un commit n'est pas un déploiement. Chaque étape reste une décision."),
         ("9", "Le flux d'un développeur aujourd'hui", "Tout mis ensemble : une journée où presque tout est automatisé, sauf les décisions.",

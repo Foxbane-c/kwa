@@ -204,15 +204,23 @@ def main():
     head = re.search(r"<style>.*?</style>", tpl, re.S).group(0)
     foot = re.search(r"<footer.*?</footer>", tpl, re.S).group(0)
     theme_js = re.search(r"/\* thème : clair par défaut.*?/\* fin du bloc thème \*/\n", tpl, re.S).group(0)
+    # les cinq workflows en onglets, puis l'un d'eux déroulé en détail (le script des onglets vient des assets de la page)
+    BOARD_HTML = (re.sub(r'\s*<script src="src/workflows.js"></script>', "", workflows.section())
+                  .replace('class="kw-container kd-section kd-rv" id="workflows"', 'class="bd-wf" id="workflows"')
+                  .replace('<div class="kd-eyebrow">Les workflows</div><h2 class="kw-section-title">Cinq workflows automatisés</h2>', '')
+                  + '<h2 class="kw-section-title bd-detail" id="detail">En détail : une demande de fonctionnalité</h2>'
+                  '<p class="kd-lead">Le workflow « Développer une fonctionnalité » déroulé pas à pas, avec ce que fait '
+                  'chaque pièce et ce que vous décidez.</p><div id="board-root"></div>')
     pages = {
         "skill-map.html": ("Carte des skills", "Carte interactive", "map", '<div id="map" data-deeplink></div>',
                            "DATA.map && KwaMap.mount($('#map'), DATA.map);"),
-        "board.html": ("Le workflow", "Une demande, de bout en bout", "board+circuit", '<div id="board-root"></div>', "KwaCircuit.mount($('#board-root'));"),
+        "board.html": ("Les workflows", "Fonctionnalité, bug, relecture, livraison, capitalisation", "board+circuit+workflows",
+                       BOARD_HTML, "KwaCircuit.mount($('#board-root'));"),
         "terminal.html": ("Le terminal", "Comment on l'utilise", "terminal", '<div id="term-root"></div>', "KwaTerminal.mount($('#term-root'), DATA.terminal);"),
     }
     no_js = {  # ces trois pages n'existent qu'en JavaScript : sans lui, renvoyer vers leur équivalent statique
         "skill-map.html": ('skills.html', "la liste des skills"),
-        "board.html": ('index.html#workflows', "les cinq workflows de l'accueil"),
+        "board.html": ('index.html#workflows', "les cinq workflows de l'accueil"),  # le déroulé détaillé est en JS
         "terminal.html": ('index.html#demarrer', "les commandes de démarrage"),
     }
     for fname, (href, label) in no_js.items():

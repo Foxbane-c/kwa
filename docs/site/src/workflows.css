@@ -53,3 +53,4 @@
   .wf-step, .wf-tab { transition: none; }
   .wf-step:hover { transform: none; }
 }
+.kd-main .bd-detail { margin: 88px 0 8px; }

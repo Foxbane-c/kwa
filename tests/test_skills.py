@@ -174,6 +174,17 @@ class ParcoursVisuals(unittest.TestCase):
     """Explications visuelles des parcours : éléments présents, couleurs par parcours, mouvement réduit respecté."""
     SITE = os.path.join(PACK, "docs", "site")
 
+    def test_widgets_do_not_share_a_variable(self):
+        # les widgets vivent dans une seule fonction : deux « var » du même nom n'en font qu'une, et l'un casse l'autre
+        js = open(os.path.join(PACK, "docs", "site", "src", "parcours.js"), encoding="utf-8").read()
+        shared = []  # déclarations au niveau de la fonction ou d'un bloc de widget (indentation 2 ou 4)
+        for line in js.splitlines():
+            m = re.match(r"^ {2,4}var (.+)$", line)
+            if m:
+                shared += re.findall(r"(?:^|,\s*)([A-Za-z_$][\w$]*)\s*=(?!=)", m.group(1))
+        dup = sorted({n for n in shared if shared.count(n) > 1})
+        self.assertEqual(dup, [], dup)
+
     def read(self, *parts):
         return open(os.path.join(self.SITE, *parts), encoding="utf-8").read()
 
@@ -371,7 +382,8 @@ class Shell(unittest.TestCase):
             self.assertIn('class="kd-side"', text, name)
             self.assertIn('class="kd-top"', text, name)
             current = re.findall(r'<a href="([^"]+)" aria-current="page"', text)
-            self.assertEqual(current, [name] if name != "index.html" else ["index.html#top"] if "index.html#top" in current else current, name)
+            own = {"skill-map.html": "skills.html"}.get(name, name)  # la carte se range sous Skills
+            self.assertEqual(current, [own] if name != "index.html" else ["index.html#top"] if "index.html#top" in current else current, name)
             self.assertIn("src/shell.js", text, name)
 
     def test_every_sidebar_target_exists(self):
