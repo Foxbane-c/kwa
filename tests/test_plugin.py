@@ -232,6 +232,15 @@ class Init(unittest.TestCase):
         self.assertTrue(os.access(os.path.join(self.t, ".claude", "kwa", "bin", "kwa-hygiene"), os.X_OK),
                         "la CI de remise lance kwa-hygiene : il reste un fichier du projet")
 
+    def test_init_unplugs_copy_hooks_left_in_settings(self):
+        kwa("install", self.t)
+        settings = read(os.path.join(self.t, ".claude", "settings.json"))
+        kwa("init", self.t)
+        with open(os.path.join(self.t, ".claude", "settings.json"), "w") as f:  # réglages restaurés après migration
+            f.write(settings)
+        kwa("init", self.t)
+        self.assertNotIn(".claude/kwa/hooks", read(os.path.join(self.t, ".claude", "settings.json")))
+
     def test_copy_install_leaves_no_python_cache_nor_codex_hooks(self):
         kwa("install", self.t)
         os.makedirs(os.path.join(self.t, ".claude", "kwa", "hooks", "__pycache__"))

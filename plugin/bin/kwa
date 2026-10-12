@@ -948,6 +948,9 @@ def apply_plugin_settings(target: Path, dry: bool) -> str:
     path = target / ".claude" / "settings.json"
     settings = read_json(path, {}) or {}
     before = json.dumps(settings, sort_keys=True)
+    strip_kwa_hooks(settings)  # des hooks copiés qui pointent encore vers .claude/kwa/hooks/ : le plugin les remplace
+    if settings.get("hooks") == {}:
+        del settings["hooks"]
     settings.setdefault("extraKnownMarketplaces", {})[MARKETPLACE["name"]] = {
         "source": {"source": "github", "repo": MARKETPLACE["repo"]}}
     settings.setdefault("enabledPlugins", {})[PLUGIN_ID] = True
