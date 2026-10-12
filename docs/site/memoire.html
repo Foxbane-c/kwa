@@ -257,11 +257,9 @@ renderSk();
 /* onboarding */
 if ($('#ob')) {
 const OB = [
- ['Ajouter le plugin, une fois par machine','/plugin marketplace add nesyouyou/kwa',"Dans une session Claude Code, puis <code>/plugin install kwa@kwa</code>. Sous Codex : <code>codex plugin marketplace add nesyouyou/kwa</code>, puis <code>codex plugin add kwa@kwa</code>. Skills, agent relecteur, garde-fous et mémoire arrivent avec le plugin. Il faut d'abord un agent de code : voir <a href=\"avant-de-commencer.html\">Avant de commencer</a>."],
- ['Récupérer la commande kwa','git clone https://github.com/nesyouyou/kwa ~/kwa && export PATH="$HOME/kwa/bin:$PATH"',"Elle prépare les projets. Pour la garder dans chaque terminal, ajouter la ligne <code>export</code> à <code>~/.zshrc</code> ou <code>~/.bashrc</code>."],
- ['Voir ce que Kwa détecte','kwa detect ./mon-projet',"Stack, modules proposés, politique déduite. N'écrit rien ; <code>kwa init ./mon-projet --dry-run</code> montre ensuite ce qui serait écrit."],
- ['Préparer le projet','kwa init ./mon-projet',"Écrit seulement de la configuration : la politique <code>.claude/kwa.policy.json</code>, le bloc d'AGENTS.md, le plugin proposé à l'équipe dans <code>.claude/settings.json</code>, et <code>.codex/</code>. Aucun script n'est copié. Relire la politique, puis committer ces fichiers par une branche."],
- ['Vérifier','kwa doctor ./mon-projet',"Bloc AGENTS.md, politique, plugin activé pour le projet et installé sur la machine."]
+ ['Ajouter le plugin, une fois par machine','/plugin marketplace add nesyouyou/kwa',"Dans une session Claude Code, puis <code>/plugin install kwa@kwa</code>. Skills, agent relecteur, garde-fous, mémoire et la commande <code>kwa</code> arrivent avec le plugin. Sous Codex : <code>codex plugin marketplace add nesyouyou/kwa</code>, puis <code>codex plugin add kwa@kwa</code>. Il faut d'abord un agent de code : voir <a href=\"avant-de-commencer.html\">Avant de commencer</a>."],
+ ['Préparer le projet, une fois par dépôt','/kwa:init',"Dans une session ouverte dans le projet. La skill montre ce que Kwa détecte, simule, puis n'écrit que de la configuration après votre accord : la politique <code>.claude/kwa.policy.json</code>, le bloc d'AGENTS.md, le plugin proposé à l'équipe. Elle complète la politique avec vous et vérifie le résultat. Aucun script n'est copié."],
+ ['Committer la configuration','/kwa:commit',"Sur une branche, puis <code>/kwa:ship</code> pour la pull request : l'équipe reçoit la proposition d'installer le plugin en ouvrant le projet."]
 ];
 OB.forEach(([t,c,d],i)=> $('#ob').append(el('div',{class:'item'},`<div class="num">${i+1}</div><div><h3>${t}</h3><p>${d}</p><div class="kd-term" style="margin-top:0"><div class="top"><span>Terminal</span><button class="kd-copy" data-copy="${esc(c)}">Copier</button></div><pre class="kd-code"><span class="p">$</span> ${esc(c)}</pre></div></div>`)));
 }

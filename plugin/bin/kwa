@@ -731,9 +731,16 @@ PLUGIN_RUNTIME = ("VERSION", "manifest.json", "profiles", "bin/kwa", "core/hooks
 PLUGIN_REWRITE = ("core/rules/", "core/templates/skills-router.md")  # textes injectés par le plugin : noms réécrits
 
 
+PLUGIN_ONLY_SKILLS = ("init",)  # n'a de sens qu'avec le plugin, qui met `kwa` dans le PATH de la session
+
+
 def plugin_skills() -> dict[str, list[tuple[str, str]]]:
     """Skills des modules, par nom court (commit, tdd…) : [(source, chemin dans le dossier de la skill)]."""
     out: dict[str, list[tuple[str, str]]] = {}
+    for name in PLUGIN_ONLY_SKILLS:
+        base = PACK / "core" / "skills" / name
+        out[name] = [(f.relative_to(PACK).as_posix(), f.relative_to(base).as_posix())
+                     for f in sorted(base.rglob("*")) if f.is_file()]
     for m in manifest().values():
         for src, spec in module_files(m):
             got = re.match(r"\.claude/skills/kwa-([a-z-]+)/(.+)$", spec["dest"])
