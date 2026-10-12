@@ -1,4 +1,4 @@
-"""Page « Skills qui délèguent » : comment /kwa-agents, /kwa-parallel et /kwa-review confient du travail à des agents
+"""Page « Skills qui délèguent » : comment /kwa:agents, /kwa:parallel et /kwa:review confient du travail à des agents
 neufs, à partir d'un modèle de prompt rempli. Le schéma est animé par src/delegation.js."""
 from __future__ import annotations
 
@@ -22,9 +22,9 @@ def widget() -> str:
         for k, p, t, s in STATIONS)
     return f"""<div class="dg" id="dg">
 <div class="dg-bar" role="group" aria-label="Choisir une skill">
-<button type="button" class="kd-copy" data-dg="agents" aria-pressed="true">/kwa-agents</button>
-<button type="button" class="kd-copy" data-dg="parallel" aria-pressed="false">/kwa-parallel</button>
-<button type="button" class="kd-copy" data-dg="review" aria-pressed="false">/kwa-review</button>
+<button type="button" class="kd-copy" data-dg="agents" aria-pressed="true">/kwa:agents</button>
+<button type="button" class="kd-copy" data-dg="parallel" aria-pressed="false">/kwa:parallel</button>
+<button type="button" class="kd-copy" data-dg="review" aria-pressed="false">/kwa:review</button>
 <span class="dg-sp"></span>
 <button type="button" class="kd-copy" data-dg-play>Lecture</button>
 <button type="button" class="kd-copy" data-dg-next>Étape suivante</button></div>
@@ -34,11 +34,11 @@ def widget() -> str:
 
 
 ROWS = [
-    ("/kwa-agents", "Un plan dont les tâches sont assez indépendantes", "implementer-prompt.md, puis spec-reviewer-prompt.md et quality-reviewer-prompt.md",
-     "Un implémenteur neuf par tâche, puis deux relectures par kwa-relecteur", "L'une après l'autre"),
-    ("/kwa-parallel", "Plusieurs problèmes sans fichier ni état en commun", "agent-prompt.md, un exemplaire par problème",
+    ("/kwa:agents", "Un plan dont les tâches sont assez indépendantes", "implementer-prompt.md, puis spec-reviewer-prompt.md et quality-reviewer-prompt.md",
+     "Un implémenteur neuf par tâche, puis deux relectures par kwa:relecteur", "L'une après l'autre"),
+    ("/kwa:parallel", "Plusieurs problèmes sans fichier ni état en commun", "agent-prompt.md, un exemplaire par problème",
      "Un agent par problème", "En même temps"),
-    ("/kwa-review", "Un diff ou une branche à relire", "reviewer-prompt.md", "kwa-relecteur, en lecture seule", "Un seul par passe"),
+    ("/kwa:review", "Un diff ou une branche à relire", "reviewer-prompt.md", "kwa:relecteur, en lecture seule", "Un seul par passe"),
 ]
 
 
@@ -62,9 +62,9 @@ dépend donc de ce prompt, et la skill garde toujours la vérification finale.</
 </div>
 <h2 class="kw-section-title dg-h">Sous Claude Code et sous Codex</h2>
 <div class="kd-wrap"><table class="dg-table"><thead><tr><th></th><th>Claude Code</th><th>Codex</th></tr></thead><tbody>
-<tr><td>Lancer un agent</td><td>Outil <code>Agent</code>, <code>subagent_type</code> (<code>general-purpose</code>, <code>kwa-relecteur</code>)</td><td>En clair : « lance un agent <code>worker</code> avec ce prompt », ou <code>kwa-relecteur</code></td></tr>
+<tr><td>Lancer un agent</td><td>Outil <code>Agent</code>, <code>subagent_type</code> (<code>general-purpose</code>, <code>kwa:relecteur</code>)</td><td>En clair : « lance un agent <code>worker</code> avec ce prompt », ou <code>kwa:relecteur</code></td></tr>
 <tr><td>Plusieurs à la fois</td><td>Plusieurs appels dans un seul message, en arrière-plan</td><td>Une demande qui lance plusieurs agents et attend tous les résultats</td></tr>
 <tr><td>Isoler les écritures</td><td><code>isolation: "worktree"</code> pour des zones voisines</td><td>Pas d'isolation documentée : les tâches voisines passent l'une après l'autre</td></tr>
 <tr><td>Relecture en lecture seule</td><td>Outils d'écriture retirés, shell filtré par un hook</td><td>Bac à sable en lecture seule</td></tr>
 </tbody></table></div>
-<p class="kd-note">Les modèles de prompt sont des fichiers de chaque skill : <a href="skill-map.html#view=pack&node=s:agents">/kwa-agents</a>, <a href="skill-map.html#view=pack&node=s:parallel">/kwa-parallel</a>, <a href="skill-map.html#view=pack&node=s:review">/kwa-review</a> sur la carte.</p>"""
+<p class="kd-note">Les modèles de prompt sont des fichiers de chaque skill : <a href="skill-map.html#view=pack&node=s:agents">/kwa:agents</a>, <a href="skill-map.html#view=pack&node=s:parallel">/kwa:parallel</a>, <a href="skill-map.html#view=pack&node=s:review">/kwa:review</a> sur la carte.</p>"""

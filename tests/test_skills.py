@@ -261,13 +261,13 @@ class Workflows(unittest.TestCase):
         self.assertEqual(len(workflows.WORKFLOWS), 5)
         skills = set(os.listdir(os.path.join(PACK, "core", "skills")))
         hooks = {f[:-3] for f in os.listdir(os.path.join(PACK, "core", "hooks")) if f.endswith(".py")}
-        agents = {"kwa-" + f[:-3] for f in os.listdir(os.path.join(PACK, "core", "agents"))}
+        agents = {"kwa:" + f[:-3] for f in os.listdir(os.path.join(PACK, "core", "agents"))}  # nom sous plugin
         for key, _p, _t, _promise, link, steps in workflows.WORKFLOWS:
             target = link.split("#")[0]
             self.assertTrue(os.path.isfile(os.path.join(PACK, "docs", "site", target)), link)
             for kind, name, _what in steps:
                 if kind == "skill":
-                    self.assertIn(name.replace("/kwa-", ""), skills, f"{key}: {name}")
+                    self.assertIn(re.sub(r"^/kwa[-:]", "", name), skills, f"{key}: {name}")
                 elif kind == "agent":
                     self.assertIn(name, agents, f"{key}: {name}")
                 elif kind in ("hook", "garde") and not name.startswith("refus"):

@@ -23,6 +23,9 @@ kwa = importlib.util.module_from_spec(_spec)
 _loader.exec_module(kwa)
 
 
+PLUGIN_ENV = {"KWA_RUNTIME": "plugin"}  # les exemples des gardes : messages tels que le plugin les affiche
+
+
 def verdict(guard, tool, tool_input, cwd, env=None):
     # GH=false : le garde ne doit jamais interroger le vrai GitHub, sinon la page dépend de l'état d'un dépôt réel
     e = {**os.environ, "GH": "false", "CLAUDE_PROJECT_DIR": cwd, **(env or {})}
@@ -66,7 +69,7 @@ def examples():
     ]
     out = []
     for cat, repo, cmd in bash_cases:
-        d, why = worst(cmd, repo)
+        d, why = worst(cmd, repo, PLUGIN_ENV)
         out.append({"cat": cat, "tool": "Bash", "input": cmd, "branch": "main" if repo == main else "feat/12-filtre", "decision": d, "why": why})
     write_cases = [
         ("Écriture", feat, "src/.env", None, "Edit"), ("Écriture", feat, "packages/db/prisma/migrations/2026_x/migration.sql", None, "Edit"),
@@ -77,7 +80,7 @@ def examples():
     ]
     for cat, repo, rel, content, tool in write_cases:
         ti = {"file_path": os.path.join(repo, rel), **({"content": content} if content else {"new_string": "x"})}
-        d, why = verdict("guard-write.py", tool, ti, repo)
+        d, why = verdict("guard-write.py", tool, ti, repo, PLUGIN_ENV)
         shown = rel if not content else f"{rel} ← {content.replace('a' * 24, '…').replace('s3cretpw', '…')}"
         out.append({"cat": cat, "tool": tool, "input": shown, "branch": "main" if repo == main else "feat/12-filtre", "decision": d, "why": why})
     return out
@@ -100,12 +103,31 @@ PARCOURS_TAIL = """<div class="pc-check"><h2>Vous avez compris si vous savez</h2
 <p class="kd-note" style="margin-top:18px">Pour les consignes de chaque outil, les documentations officielles font foi : <a href="https://code.claude.com/docs/en/memory">mémoire et instructions</a>, <a href="https://code.claude.com/docs/en/hooks">hooks</a>, <a href="https://code.claude.com/docs/en/settings">réglages</a>. Les commandes et les noms de réglages évoluent avec les versions : vérifiez avant une séance.</p></div>"""
 
 
+SKILL_NAME = None
+
+
+def plugin_names(text: str) -> str:
+    """Le site parle du plugin : /kwa-commit s'y écrit /kwa:commit (un chemin comme .claude/skills/kwa-commit reste)."""
+    global SKILL_NAME
+    if SKILL_NAME is None:
+        names = sorted(os.listdir(os.path.join(PACK, "core", "skills")), key=len, reverse=True)
+        SKILL_NAME = re.compile(r"(?<![\w./-])([/$])kwa-(" + "|".join(map(re.escape, names)) + r")(?![a-z-])")
+    text = SKILL_NAME.sub(r"\1kwa:\2", text)
+    text = re.sub(r"(?:python3 )?\.claude/kwa/bin/kwa-(memory|start)\b", r"kwa \1", text)
+    return re.sub(r"(?<![\w./-])kwa-relecteur(?![a-z.-])", "kwa:relecteur", text)
+
+
+COPY_PAGES = {"parcours-harness.html"}  # démonte une installation par copie : noms d'origine
+
+
 def main():
     man = json.load(open(os.path.join(PACK, "manifest.json")))["modules"]
+    sys.path.insert(0, os.path.join(HERE, "src"))
+    from tree import in_plugin  # noqa: E402  un fichier de module s'affiche où il vit : dans le plugin, ou au projet
     mods = []
     for name, m in man.items():
         mods.append({"name": name, "about": m["about"], "always": bool(m.get("always")),
-                     "files": [s["dest"] for _, s in kwa.module_files(m)],
+                     "files": [("plugin/" + in_plugin(s["dest"])) if in_plugin(s["dest"]) else s["dest"] for _, s in kwa.module_files(m)],
                      "seeds": [s["dest"] for _, s in kwa.module_files(m) if s.get("seed")],
                      "hooks": [f"{ev}{' ' + e['matcher'] if e.get('matcher') else ''}" for ev, es in m.get("hooks", {}).items() for e in es],
                      "policy": list(m.get("policy", {}).keys())})
@@ -239,6 +261,11 @@ $('#ver2').textContent = DATA.version;
 {mount_js}
 </script></body></html>"""
         open(os.path.join(HERE, fname), "w", encoding="utf-8").write(html)
+    for f in [x for x in os.listdir(HERE) if x.endswith(".html") and x != "template.html" and x not in COPY_PAGES] + ["data.js", os.path.join("src", "glossary-data.js")]:
+        path = os.path.join(HERE, f)
+        text = open(path, encoding="utf-8").read()
+        if plugin_names(text) != text:
+            open(path, "w", encoding="utf-8").write(plugin_names(text))
     # contrôle de syntaxe des scripts inline des pages générées (une apostrophe oubliée casse toute la page)
     import shutil, tempfile
     if shutil.which("node"):

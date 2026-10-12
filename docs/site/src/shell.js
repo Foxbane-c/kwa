@@ -33,14 +33,15 @@
     t.addEventListener('click', function () {
       Array.prototype.forEach.call(tabs, function (x) { x.setAttribute('aria-selected', String(x === t)); });
       Array.prototype.forEach.call(tree.querySelectorAll('[data-panel]'), function (p) { p.hidden = p.getAttribute('data-panel') !== t.getAttribute('data-tab'); });
+      var repo = t.getAttribute('data-tab') === 'repo';  // le dépôt n'a pas de modules : pas de filtre
+      Array.prototype.forEach.call(tree.querySelectorAll('.tr-bar, .tr-modnote'), function (x) { x.hidden = repo; });
     });
   });
   var chips = Array.prototype.slice.call(tree.querySelectorAll('.tr-chip'));
   function filter() {
     var on = {};
     chips.forEach(function (c) { if (c.getAttribute('aria-pressed') === 'true') on[c.getAttribute('data-m')] = true; });
-    var panel = tree.querySelector('[data-panel="project"]');
-    Array.prototype.forEach.call(panel.querySelectorAll('.tr-file, .tr-dir'), function (n) {
+    Array.prototype.forEach.call(tree.querySelectorAll('[data-panel="project"] .tr-file, [data-panel="project"] .tr-dir, [data-panel="plugin"] .tr-file, [data-panel="plugin"] .tr-dir'), function (n) {
       var mods = (n.getAttribute('data-mod') || '').split(' ');
       n.classList.toggle('tr-off', !mods.some(function (m) { return on[m]; }));
     });
