@@ -76,7 +76,7 @@ class DelegationPage(unittest.TestCase):
     def test_page_explains_the_three_delegating_skills_with_its_diagram(self):
         site = os.path.join(PACK, "docs", "site")
         page = open(os.path.join(site, "delegation.html"), encoding="utf-8").read()
-        for needle in ("/kwa-agents", "/kwa-parallel", "/kwa-review", "kwa-relecteur", 'id="dg"', "src/delegation.js",
+        for needle in ("/kwa:agents", "/kwa:parallel", "/kwa:review", "kwa:relecteur", 'id="dg"', "src/delegation.js",
                        "implementer-prompt.md", "agent-prompt.md", "reviewer-prompt.md"):
             self.assertIn(needle, page, needle)
         js = open(os.path.join(site, "src", "delegation.js"), encoding="utf-8").read()

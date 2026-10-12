@@ -731,9 +731,16 @@ PLUGIN_RUNTIME = ("VERSION", "manifest.json", "profiles", "bin/kwa", "core/hooks
 PLUGIN_REWRITE = ("core/rules/", "core/templates/skills-router.md")  # textes injectés par le plugin : noms réécrits
 
 
+PLUGIN_ONLY_SKILLS = ("init",)  # n'a de sens qu'avec le plugin, qui met `kwa` dans le PATH de la session
+
+
 def plugin_skills() -> dict[str, list[tuple[str, str]]]:
     """Skills des modules, par nom court (commit, tdd…) : [(source, chemin dans le dossier de la skill)]."""
     out: dict[str, list[tuple[str, str]]] = {}
+    for name in PLUGIN_ONLY_SKILLS:
+        base = PACK / "core" / "skills" / name
+        out[name] = [(f.relative_to(PACK).as_posix(), f.relative_to(base).as_posix())
+                     for f in sorted(base.rglob("*")) if f.is_file()]
     for m in manifest().values():
         for src, spec in module_files(m):
             got = re.match(r"\.claude/skills/kwa-([a-z-]+)/(.+)$", spec["dest"])
@@ -905,6 +912,8 @@ def migrate_copy(target: Path, dry: bool, legacy: bool = False) -> list[str]:
             continue
         before = json.dumps(settings, sort_keys=True)
         strip_kwa_hooks(settings)
+        if settings.get("hooks") == {}:  # plus aucun hook : la clé vide ne sert à rien
+            del settings["hooks"]
         if json.dumps(settings, sort_keys=True) != before and not dry:
             save_settings(path, settings)
     notes.append(f"installation par copie retirée ({len(state['files'])} fichier(s) gérés"
@@ -946,6 +955,9 @@ def apply_plugin_settings(target: Path, dry: bool) -> str:
     path = target / ".claude" / "settings.json"
     settings = read_json(path, {}) or {}
     before = json.dumps(settings, sort_keys=True)
+    strip_kwa_hooks(settings)  # des hooks copiés qui pointent encore vers .claude/kwa/hooks/ : le plugin les remplace
+    if settings.get("hooks") == {}:
+        del settings["hooks"]
     settings.setdefault("extraKnownMarketplaces", {})[MARKETPLACE["name"]] = {
         "source": {"source": "github", "repo": MARKETPLACE["repo"]}}
     settings.setdefault("enabledPlugins", {})[PLUGIN_ID] = True
@@ -1190,6 +1202,12 @@ def doctor_plugin(target: Path) -> int:
         problems.append(f".claude/settings.json : plugin {PLUGIN_ID} non activé pour le projet")
     if (target / ".claude" / "kwa" / "hooks").is_dir():
         problems.append(".claude/kwa/hooks/ existe encore : copie partielle, le plugin s'efface (relancer `kwa init`)")
+    for kind, table in OVERLAP.items():
+        folder = target / ".claude" / kind
+        if folder.is_dir():
+            for name, by in table.items():
+                if (folder / name).exists():
+                    notes.append(f".claude/{kind}/{name} fait doublon avec {by} : à retirer une fois la politique validée")
     have = plugin_installed()
     notes.append(f"plugin Claude Code sur cette machine : {'v' + have if have else 'non installé'}"
                  + ("" if have else f" (/plugin install {PLUGIN_ID})"))

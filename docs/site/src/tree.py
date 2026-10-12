@@ -1,4 +1,5 @@
-"""Arborescence de ce que Kwa installe dans un projet (et du dépôt de Kwa), générée à partir du manifeste.
+"""Arborescence de Kwa, générée à partir du manifeste : ce que `kwa init` écrit dans un projet (de la configuration),
+ce que contient le plugin (skills, gardes, hooks, règles, outils), et le dépôt de Kwa.
 
 Chaque fichier a une description d'une ligne, un type (couleur), les modules qui l'installent, un lien vers son code source
 et, pour les skills et les hooks, un lien vers la carte. Rien n'est écrit à la main sauf les descriptions : un test vérifie
@@ -39,7 +40,7 @@ DESC = {  # fichiers installés : une ligne chacun
     "format-after-edit.py": "Formate seulement les fichiers nouveaux, signale les autres.",
     "verify-stop.py": "Refuse de rendre la main sur du rouge (opt-in).",
     "kwa-start": "Ouvre l'issue, la branche et le worktree du workflow.",
-    "kwa-memory": "Notes, journal des sessions et digest pour /kwa-learn.",
+    "kwa-memory": "Notes, journal des sessions et digest pour /kwa:learn.",
     "kwa-hygiene": "Contrôle d'hygiène avant une remise (secrets, noms, mesures datées).",
     "router.md": "La table de routage des skills, injectée au démarrage.",
     "kwa-git-discipline.md": "Discipline git : branche de travail, commit et publication sur demande.",
@@ -49,28 +50,59 @@ DESC = {  # fichiers installés : une ligne chacun
     "pull_request_template.md": "Gabarit de PR : contexte, changements, vérification, risque.",
     "kwa-hygiene.yml": "Job CI du contrôle d'hygiène.",
     "kwa.hygiene.allow": "Exceptions datées au contrôle d'hygiène.",
-    "kwa-relecteur.md": "Agent relecteur en lecture seule, lancé par /kwa-review et /kwa-agents ; traduit pour Codex en bac à sable en lecture seule.",
+    "kwa-relecteur.md": "Agent relecteur en lecture seule, lancé par /kwa:review et /kwa:agents ; traduit pour Codex en bac à sable en lecture seule.",
     "readonly-bash.py": "Dans l'agent relecteur seulement : n'autorise que les commandes shell qui lisent.",
     "openai.yaml": "Réglage Codex : la skill ne se lance qu'à la demande, jamais d'elle-même.",
 }
-SYNTHETIC = [  # fichiers créés par l'installeur ou par l'usage, pas copiés depuis le pack
+SYNTHETIC = [  # fichiers créés par `kwa init` ou par l'usage, pas copiés depuis le pack
     ("AGENTS.md", "doc", ["core"], "Source unique des instructions de l'agent. Kwa ne gère que son bloc entre marqueurs, le reste est à vous."),
     ("CLAUDE.md", "doc", ["core"], "Un simple pointeur vers AGENTS.md."),
-    (".claude/settings.json", "config", ["core"], "Branche les hooks de Kwa sur les événements de Claude Code ; vos propres hooks restent."),
-    (".claude/kwa.policy.json", "config", ["core"], "La politique du projet : commandes interdites, environnements, vérifications. Propriété du projet."),
-    (".claude/kwa/state.json", "config", ["core"], "Version installée et empreintes des fichiers gérés, pour repérer les retouches locales."),
-    (".claude/kwa/local/inbox.md", "local", ["memory"], "Notes d'apprentissage en attente de /kwa-learn. Local, jamais versionné."),
+    (".claude/settings.json", "config", ["core"], "Propose le plugin Kwa à toute l'équipe (marketplace et plugin activé) ; vos réglages restent."),
+    (".claude/kwa.policy.json", "config", ["core"], "La politique du projet : modules actifs, commandes interdites, environnements, vérifications. Propriété du projet."),
+    (".codex/hooks.json", "config", ["core"], "Les hooks de Kwa pour Codex, lancés par la commande kwa hook."),
+    (".codex/rules/kwa.rules", "config", ["core"], "Ce que Codex fait confirmer lui-même : push, fusion, suppressions."),
+    (".codex/agents/kwa-relecteur.toml", "config", ["craft"], "L'agent relecteur pour Codex, en bac à sable en lecture seule."),
+    (".claude/kwa/local/inbox.md", "local", ["memory"], "Notes d'apprentissage en attente de /kwa:learn. Local, jamais versionné."),
     (".claude/kwa/local/journal", "local", ["memory"], "Une entrée par session : faits git et huit lignes de récit."),
     (".claude/kwa/local/signals.jsonl", "local", ["memory"], "Refus de garde et corrections repérées. Local."),
     (".claude/kwa/local/sessions", "local", ["memory"], "Début et base git de chaque session."),
 ]
+PROJECT_KEEP = (".github/", ".claude/kwa.hygiene.allow", ".claude/kwa/bin/kwa-hygiene")  # fichiers copiés qui restent au projet
+
+
+def in_plugin(dest: str) -> str:
+    """Chemin d'un fichier installé par copie, dans le plugin ; chaîne vide s'il reste un fichier du projet."""
+    if dest.startswith(PROJECT_KEEP):
+        return ""
+    for pat, rep in ((r"^\.claude/skills/kwa-([a-z-]+)/", r"skills/\1/"), (r"^\.claude/agents/kwa-", "agents/"),
+                     (r"^\.claude/kwa/hooks/", "core/hooks/"), (r"^\.claude/kwa/bin/", "core/bin/"),
+                     (r"^\.claude/rules/kwa-", "core/rules/"), (r"^\.claude/kwa/router\.md$", "core/templates/skills-router.md")):
+        if re.match(pat, dest):
+            return re.sub(pat, rep, dest)
+    return ""
+
+
+def split(files: list[dict]) -> tuple[list[dict], list[dict]]:
+    """(fichiers du projet, fichiers du plugin) ; un fichier du plugin garde sa source et ses modules."""
+    project, plugin = [], []
+    for f in files:
+        if f["dest"] == ".claude/kwa/state.json":
+            continue
+        where = in_plugin(f["dest"])
+        if where:
+            plugin.append({**f, "dest": where, "desc": f["desc"].replace("/kwa-", "/kwa:")})
+        else:
+            project.append(f)
+    return project, sorted(plugin, key=lambda f: f["dest"])
+
+
 KIND_LABEL = {"skill": "Skill", "guard": "Garde", "hook": "Hook", "rule": "Règle", "bin": "Outil", "config": "Configuration",
               "doc": "Document", "local": "Local", "other": "Autre"}
 
 
 def kind_of(dest: str) -> str:
     name = os.path.basename(dest)
-    if "/skills/" in dest:
+    if "/skills/" in dest or dest.startswith("skills/"):
         return "skill"
     if "/hooks/" in dest:
         return "guard" if name.startswith("guard-") else "hook"
@@ -120,7 +152,7 @@ ICONS = {
     "dir": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4l2 2.5h9A1.5 1.5 0 0 1 21 9v8.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>',
     "file": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4"/></svg>',
 }
-ORDER = {"AGENTS.md": 0, "CLAUDE.md": 1, ".claude": 2, ".github": 3}
+ORDER = {"AGENTS.md": 0, "CLAUDE.md": 1, ".claude": 2, ".codex": 3, ".github": 4, "skills": 0, "agents": 1, "core": 2}
 
 
 def _tree(files: list[dict]) -> dict:
@@ -150,7 +182,7 @@ def _link(f: dict) -> str:
         links.append(f'<a class="tr-l" href="{REPO}/blob/main/{html.escape(f["src"])}" title="Code source dans le dépôt">source</a>')
     name = os.path.basename(f["dest"])
     node = None
-    m = re.match(r"^\.claude/skills/kwa-([a-z-]+)/SKILL\.md$", f["dest"])
+    m = re.match(r"^(?:\.claude/skills/kwa-|skills/)([a-z-]+)/SKILL\.md$", f["dest"])
     if m:
         node = f"s:{m.group(1)}"
     elif name in HOOK_NODE and "/hooks/" in f["dest"]:
@@ -184,10 +216,12 @@ def render_project(files: list[dict]) -> str:
 
 
 REPO_TREE = [  # structure du dépôt de Kwa : (chemin, type, description)
-    ("bin/kwa", "bin", "L'installeur : detect, install, status, doctor, recommend."),
+    ("bin/kwa", "bin", "La commande kwa : detect, init, doctor, status, et build-plugin pour régénérer le plugin."),
+    ("plugin", "skill", "Le plugin, généré depuis core/ : c'est lui que Claude Code et Codex installent."),
+    (".claude-plugin/marketplace.json", "config", "La marketplace : le dépôt se déclare comme source du plugin kwa."),
     ("core/hooks", "guard", "Les gardes et les hooks, des scripts Python sans dépendance."),
     ("core/skills", "skill", "Une skill par dossier : SKILL.md et ses annexes."),
-    ("core/rules", "rule", "Les règles communes copiées dans les projets."),
+    ("core/rules", "rule", "Les règles communes, rappelées à l'agent au démarrage de chaque session."),
     ("core/bin", "bin", "kwa-start, kwa-memory, kwa-hygiene."),
     ("core/templates", "doc", "Bloc d'AGENTS.md, table de routage, gabarits GitHub."),
     ("manifest.json", "config", "Ce que chaque module installe, et les hooks qu'il branche."),
@@ -219,19 +253,19 @@ def render_repo() -> str:
 
 def section(files: list[dict], modules: list[str], about: dict | None = None) -> str:
     about = about or {}
+    project, plugin = split(files)
     mod_chips = "".join(f'<button type="button" class="tr-chip" aria-pressed="true" data-m="{html.escape(m)}" data-about="{html.escape(about.get(m, ""))}">{html.escape(m)}</button>' for m in modules)
     legend = "".join(f'<li><i class="tr-key tr-k-{k}"></i>{KIND_LABEL[k]}</li>' for k in ("skill", "guard", "hook", "rule", "bin", "config", "doc", "local"))
     return f"""<section class="kw-container kd-section kd-rv" id="arborescence">
-  <div class="kd-head"><div class="kd-eyebrow"><i class="kd-dot" style="--dot:var(--tr-config)"></i>Arborescence</div><h2 class="kw-section-title">Ce que Kwa installe dans un projet</h2>
-    <p class="kd-lead">Ouvrez un dossier pour voir ce qu'il contient. Chaque ligne renvoie à son code source ; les skills et les gardes renvoient aussi à la carte. Décochez un module pour voir ce qui disparaît : on n'installe que ce qui sert.</p></div>
+  <div class="kd-head"><div class="kd-eyebrow"><i class="kd-dot" style="--dot:var(--tr-config)"></i>Arborescence</div><h2 class="kw-section-title">Ce que Kwa ajoute, et où</h2>
+    <p class="kd-lead">Votre projet ne reçoit que de la configuration ; skills, gardes et hooks vivent dans le plugin, installé une fois par machine. Ouvrez un dossier pour voir ce qu'il contient. Chaque ligne renvoie à son code source ; les skills et les gardes renvoient aussi à la carte. Décochez un module pour voir ce qui disparaît.</p></div>
   <div class="tr" id="tree">
-    <div class="tr-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-tab="project">Dans votre projet</button><button type="button" role="tab" aria-selected="false" data-tab="repo">Dans le dépôt Kwa</button></div>
-    <div class="tr-panel" data-panel="project">
-      <div class="tr-bar"><div class="tr-mods" role="group" aria-label="Modules"><span class="tr-lbl">{pictos.svg("code")}Modules</span>{mod_chips}</div>
-        <div class="tr-act"><button type="button" class="tr-btn" data-act="open">Tout ouvrir</button><button type="button" class="tr-btn" data-act="close">Tout replier</button></div></div>
-      <p class="tr-modnote" id="tr-modnote">Survolez un module pour voir son rôle ; décochez-le pour voir ce qui disparaît.</p>
-      <div class="tr-body">{render_project(files)}</div>
-    </div>
+    <div class="tr-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-tab="project">Dans votre projet</button><button type="button" role="tab" aria-selected="false" data-tab="plugin">Dans le plugin</button><button type="button" role="tab" aria-selected="false" data-tab="repo">Dans le dépôt Kwa</button></div>
+    <div class="tr-bar"><div class="tr-mods" role="group" aria-label="Modules"><span class="tr-lbl">{pictos.svg("code")}Modules</span>{mod_chips}</div>
+      <div class="tr-act"><button type="button" class="tr-btn" data-act="open">Tout ouvrir</button><button type="button" class="tr-btn" data-act="close">Tout replier</button></div></div>
+    <p class="tr-modnote" id="tr-modnote">Survolez un module pour voir son rôle ; décochez-le pour voir ce qui disparaît.</p>
+    <div class="tr-panel" data-panel="project"><div class="tr-body">{render_project(project)}</div></div>
+    <div class="tr-panel" data-panel="plugin" hidden><div class="tr-body">{render_project(plugin)}</div></div>
     <div class="tr-panel" data-panel="repo" hidden><div class="tr-body">{render_repo()}</div></div>
     <ul class="tr-legend" aria-label="Légende des couleurs">{legend}</ul>
   </div>

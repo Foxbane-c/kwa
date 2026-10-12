@@ -11,25 +11,25 @@
   function chip(text, kind, extra) { return { text: text, kind: kind || '', extra: extra || {} }; }
   var S = {
     agents: [
-      ['skill', [chip('Le plan : 3 tâches', 'plan')], '/kwa-agents lit le plan validé. Les tâches sont assez indépendantes pour être confiées une à une.'],
+      ['skill', [chip('Le plan : 3 tâches', 'plan')], '/kwa:agents lit le plan validé. Les tâches sont assez indépendantes pour être confiées une à une.'],
       ['prompt', [chip('implementer-prompt.md', 'file', { fill: 'tâche 1 · critères · fichiers · format de retour' })], 'Elle remplit le modèle de prompt pour la tâche 1 : le contexte, les fichiers, les critères de réussite, le format de retour. L\'agent ne verra rien d\'autre.'],
       ['agents', [chip('impl-tâche-1', 'agent', { run: 1 })], 'Un agent neuf implémente la tâche, test d\'abord, dans sa propre fenêtre de contexte.'],
       ['report', [chip('fait · tests verts · 3 fichiers', 'report')], 'Seul un rapport court revient. La lecture des fichiers reste dans la fenêtre de l\'agent, qui est jetée.'],
-      ['check', [chip('kwa-relecteur · conformité', 'review', { lock: 1 }), chip('kwa-relecteur · qualité', 'review', { lock: 1 })], 'Deux relectures par un agent neuf, en lecture seule : la conformité à la tâche, puis la qualité. Jamais l\'implémenteur qui se relit.'],
+      ['check', [chip('kwa:relecteur · conformité', 'review', { lock: 1 }), chip('kwa:relecteur · qualité', 'review', { lock: 1 })], 'Deux relectures par un agent neuf, en lecture seule : la conformité à la tâche, puis la qualité. Jamais l\'implémenteur qui se relit.'],
       ['agents', [chip('impl-tâche-2', 'agent', { run: 1 })], 'Tâche suivante : un nouvel agent, le même circuit. Un blocage remonte au lieu d\'être contourné.'],
       ['check', [chip('vérifications du projet', 'proof')], 'À la fin, la session relance elle-même les vérifications du projet. Un rapport d\'agent n\'est pas une preuve.']
     ],
     parallel: [
-      ['skill', [chip('3 problèmes indépendants', 'plan')], '/kwa-parallel vérifie d\'abord que les problèmes n\'ont ni fichier ni état en commun.'],
+      ['skill', [chip('3 problèmes indépendants', 'plan')], '/kwa:parallel vérifie d\'abord que les problèmes n\'ont ni fichier ni état en commun.'],
       ['prompt', [chip('agent-prompt.md × 3', 'file', { fill: 'un prompt autonome par problème' })], 'Un prompt complet par problème : erreurs exactes collées, fichiers, contraintes, format de retour.'],
       ['agents', [chip('agent A · tests', 'agent', { run: 1 }), chip('agent B · API', 'agent', { run: 1 }), chip('agent C · doc', 'agent', { run: 1, wt: 1 })], 'Les trois agents partent en même temps. Celui qui touche une zone voisine travaille dans son propre worktree.'],
       ['report', [chip('A · fait', 'report'), chip('C · fait', 'report'), chip('B · bloqué, raison', 'report')], 'Les rapports arrivent dans l\'ordre où les agents finissent. Un blocage est un résultat, pas un échec à cacher.'],
       ['check', [chip('intégration · conflits · vérifications', 'proof')], 'La session intègre, cherche les conflits entre les changements, puis lance les vérifications du projet.']
     ],
     review: [
-      ['skill', [chip('le diff de la branche', 'plan')], '/kwa-review rassemble le diff, la demande d\'origine et ses critères.'],
+      ['skill', [chip('le diff de la branche', 'plan')], '/kwa:review rassemble le diff, la demande d\'origine et ses critères.'],
       ['prompt', [chip('reviewer-prompt.md', 'file', { fill: 'la tâche seulement : le rôle est dans l\'agent' })], 'Le prompt ne décrit que la tâche : le rôle, les axes et le format de retour sont dans la définition de l\'agent.'],
-      ['agents', [chip('kwa-relecteur', 'review', { run: 1, lock: 1 })], 'Un relecteur neuf, en lecture seule : sous Claude Code ses outils d\'écriture sont retirés, sous Codex il tourne dans un bac à sable en lecture seule.'],
+      ['agents', [chip('kwa:relecteur', 'review', { run: 1, lock: 1 })], 'Un relecteur neuf, en lecture seule : sous Claude Code ses outils d\'écriture sont retirés, sous Codex il tourne dans un bac à sable en lecture seule.'],
       ['report', [chip('IMPORTANT · fichier:ligne', 'report'), chip('verdict : prêt après corrections', 'report')], 'Il rend des constats classés par gravité et un verdict, pas des corrections.'],
       ['check', [chip('corrections, puis relecture ciblée', 'proof')], 'La session corrige, puis le même relecteur vérifie que chaque point est réglé, sans nouveau défaut.']
     ]

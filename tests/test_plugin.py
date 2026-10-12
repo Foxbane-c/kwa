@@ -218,7 +218,8 @@ class Init(unittest.TestCase):
                                                            ".agents/"))], left)
         saved = [f for f in self.files() if f.startswith(".claude/kwa/backup/") and f.endswith("kwa-commit/SKILL.md")]
         self.assertTrue(saved and "retouche locale" in read(os.path.join(self.t, saved[0])))
-        self.assertNotIn(".claude/kwa/hooks", read(os.path.join(self.t, ".claude", "settings.json")))
+        settings = json.loads(read(os.path.join(self.t, ".claude", "settings.json")))
+        self.assertNotIn("hooks", settings, "la clé hooks vidée par la migration disparaît")
         self.assertEqual(kwa("doctor", self.t).returncode, 0)
 
     def test_rerun_keeps_the_chosen_modules(self):
@@ -230,6 +231,15 @@ class Init(unittest.TestCase):
         self.assertIn("client-handover", first)
         self.assertTrue(os.access(os.path.join(self.t, ".claude", "kwa", "bin", "kwa-hygiene"), os.X_OK),
                         "la CI de remise lance kwa-hygiene : il reste un fichier du projet")
+
+    def test_init_unplugs_copy_hooks_left_in_settings(self):
+        kwa("install", self.t)
+        settings = read(os.path.join(self.t, ".claude", "settings.json"))
+        kwa("init", self.t)
+        with open(os.path.join(self.t, ".claude", "settings.json"), "w") as f:  # réglages restaurés après migration
+            f.write(settings)
+        kwa("init", self.t)
+        self.assertNotIn(".claude/kwa/hooks", read(os.path.join(self.t, ".claude", "settings.json")))
 
     def test_copy_install_leaves_no_python_cache_nor_codex_hooks(self):
         kwa("install", self.t)

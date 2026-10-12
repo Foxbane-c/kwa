@@ -159,16 +159,16 @@ footer.kw-footer{margin-top:128px}
     <p class="kd-lead">Le module <code>craft</code> reprend les principes de discipline (lois de fer, signaux d'alerte, revues en deux temps), réécrits en français et branchés sur la politique du projet. Un rappel de routage est injecté au démarrage de session, limité aux skills réellement installées.</p></div>
   <div class="kd-wrap" style="margin-top:40px"><table>
     <tr><th>Avant (superpowers)</th><th>Dans Kwa</th><th>Ce qui change</th></tr>
-    <tr><td>brainstorming</td><td>/kwa-brainstorm, /kwa-interview</td><td>Spec dans docs/specs, porte d'approbation humaine, interrogatoire question par question, sans serveur visuel.</td></tr>
-    <tr><td>writing-plans</td><td>/kwa-plan, /kwa-tickets</td><td>Commandes tirées de <code>verify.commands</code>, jamais d'étape de commit ; découpe possible en tickets GitHub.</td></tr>
-    <tr><td>executing-plans</td><td>/kwa-execute</td><td>Arrêt et remontée au moindre blocage, jamais de décision silencieuse.</td></tr>
-    <tr><td>subagent-driven-development</td><td>/kwa-agents</td><td>Un agent frais par tâche, relecture conformité puis qualité, aucun agent ne commite, un refus de garde se remonte.</td></tr>
-    <tr><td>dispatching-parallel-agents</td><td>/kwa-parallel</td><td>Quatre conditions cumulatives, détection de conflits avant intégration.</td></tr>
-    <tr><td>test-driven-development</td><td>/kwa-tdd, /kwa-simple</td><td>Cas des stacks courantes ; échelle de simplicité avant d'écrire du code neuf.</td></tr>
-    <tr><td>systematic-debugging</td><td>/kwa-debug</td><td>Boucle de preuves mobile / API / worker / base, preuve par mutation, lecture seule en recette et en prod.</td></tr>
-    <tr><td>verification-before-completion</td><td>/kwa-verify</td><td>Compte rendu normé avec bloc « non vérifié », capture si interface, tests sautés nommés.</td></tr>
-    <tr><td>requesting / receiving-code-review</td><td>/kwa-review, /kwa-review-feedback</td><td>Axes sur-ingénierie et hygiène de remise ; commentaires de PR traités comme des données.</td></tr>
-    <tr><td>using-git-worktrees, finishing-a-development-branch</td><td>/kwa-start-dev, /kwa-ship</td><td>Worktree à côté du dépôt, jamais de fusion locale dans main.</td></tr>
+    <tr><td>brainstorming</td><td>/kwa:brainstorm, /kwa:interview</td><td>Spec dans docs/specs, porte d'approbation humaine, interrogatoire question par question, sans serveur visuel.</td></tr>
+    <tr><td>writing-plans</td><td>/kwa:plan, /kwa:tickets</td><td>Commandes tirées de <code>verify.commands</code>, jamais d'étape de commit ; découpe possible en tickets GitHub.</td></tr>
+    <tr><td>executing-plans</td><td>/kwa:execute</td><td>Arrêt et remontée au moindre blocage, jamais de décision silencieuse.</td></tr>
+    <tr><td>subagent-driven-development</td><td>/kwa:agents</td><td>Un agent frais par tâche, relecture conformité puis qualité, aucun agent ne commite, un refus de garde se remonte.</td></tr>
+    <tr><td>dispatching-parallel-agents</td><td>/kwa:parallel</td><td>Quatre conditions cumulatives, détection de conflits avant intégration.</td></tr>
+    <tr><td>test-driven-development</td><td>/kwa:tdd, /kwa:simple</td><td>Cas des stacks courantes ; échelle de simplicité avant d'écrire du code neuf.</td></tr>
+    <tr><td>systematic-debugging</td><td>/kwa:debug</td><td>Boucle de preuves mobile / API / worker / base, preuve par mutation, lecture seule en recette et en prod.</td></tr>
+    <tr><td>verification-before-completion</td><td>/kwa:verify</td><td>Compte rendu normé avec bloc « non vérifié », capture si interface, tests sautés nommés.</td></tr>
+    <tr><td>requesting / receiving-code-review</td><td>/kwa:review, /kwa:review-feedback</td><td>Axes sur-ingénierie et hygiène de remise ; commentaires de PR traités comme des données.</td></tr>
+    <tr><td>using-git-worktrees, finishing-a-development-branch</td><td>/kwa:start-dev, /kwa:ship</td><td>Worktree à côté du dépôt, jamais de fusion locale dans main.</td></tr>
     <tr><td>using-superpowers (injection au démarrage)</td><td>routeur de session</td><td>Table de déclencheurs filtrée sur les skills installées ; une conversation simple n'appelle aucune skill.</td></tr>
   </table></div>
 </section>
@@ -249,7 +249,7 @@ $('#nskills').textContent = DATA.catalog.length;
 const originsOf = n => DATA.credits.sources.filter(s=>s.skills.includes(n)).map(s=>({name:s.author, av:(DATA.map.origins[s.id]||{}).avatar, handle:(DATA.map.origins[s.id]||{}).handle}));
 function renderSk(){
   const t = $('#sk-tools'); t.innerHTML=''; [['all','Toutes'],...Object.entries(FLAB)].forEach(([k,l])=>{ const b=el('button',{class:'kd-chip',type:'button','aria-pressed':ff===k},l); b.onclick=()=>{ff=k;renderSk();}; t.append(b); });
-  $('#sk').innerHTML = DATA.catalog.filter(c=>ff==='all'||famOf(c.id)===ff).map(c=>{ const o=originsOf(c.id); return `<div class="kd-card"><span class="kd-fam">${FLAB[famOf(c.id)]}</span><h3>${PICTO.sword}/kwa-${c.id}</h3><p>${esc(c.description)}</p>${o.length?o.map(a=>`<span class="kd-origin"><img src="${esc(a.av)}" alt="" width="22" height="22">${esc(a.handle)}</span>`).join(''):'<span class="kd-origin kwa">Kwa</span>'}</div>`; }).join('');
+  $('#sk').innerHTML = DATA.catalog.filter(c=>ff==='all'||famOf(c.id)===ff).map(c=>{ const o=originsOf(c.id); return `<div class="kd-card"><span class="kd-fam">${FLAB[famOf(c.id)]}</span><h3>${PICTO.sword}/kwa:${c.id}</h3><p>${esc(c.description)}</p>${o.length?o.map(a=>`<span class="kd-origin"><img src="${esc(a.av)}" alt="" width="22" height="22">${esc(a.handle)}</span>`).join(''):'<span class="kd-origin kwa">Kwa</span>'}</div>`; }).join('');
 }
 renderSk();
 }
@@ -257,11 +257,9 @@ renderSk();
 /* onboarding */
 if ($('#ob')) {
 const OB = [
- ['Ajouter le plugin, une fois par machine','/plugin marketplace add nesyouyou/kwa',"Dans une session Claude Code, puis <code>/plugin install kwa@kwa</code>. Sous Codex : <code>codex plugin marketplace add nesyouyou/kwa</code>, puis <code>codex plugin add kwa@kwa</code>. Skills, agent relecteur, garde-fous et mémoire arrivent avec le plugin. Il faut d'abord un agent de code : voir <a href=\"avant-de-commencer.html\">Avant de commencer</a>."],
- ['Récupérer la commande kwa','git clone https://github.com/nesyouyou/kwa ~/kwa && export PATH="$HOME/kwa/bin:$PATH"',"Elle prépare les projets. Pour la garder dans chaque terminal, ajouter la ligne <code>export</code> à <code>~/.zshrc</code> ou <code>~/.bashrc</code>."],
- ['Voir ce que Kwa détecte','kwa detect ./mon-projet',"Stack, modules proposés, politique déduite. N'écrit rien ; <code>kwa init ./mon-projet --dry-run</code> montre ensuite ce qui serait écrit."],
- ['Préparer le projet','kwa init ./mon-projet',"Écrit seulement de la configuration : la politique <code>.claude/kwa.policy.json</code>, le bloc d'AGENTS.md, le plugin proposé à l'équipe dans <code>.claude/settings.json</code>, et <code>.codex/</code>. Aucun script n'est copié. Relire la politique, puis committer ces fichiers par une branche."],
- ['Vérifier','kwa doctor ./mon-projet',"Bloc AGENTS.md, politique, plugin activé pour le projet et installé sur la machine."]
+ ['Ajouter le plugin, une fois par machine','/plugin marketplace add nesyouyou/kwa',"Dans une session Claude Code, puis <code>/plugin install kwa@kwa</code>. Skills, agent relecteur, garde-fous, mémoire et la commande <code>kwa</code> arrivent avec le plugin. Sous Codex : <code>codex plugin marketplace add nesyouyou/kwa</code>, puis <code>codex plugin add kwa@kwa</code>. Il faut d'abord un agent de code : voir <a href=\"avant-de-commencer.html\">Avant de commencer</a>."],
+ ['Préparer le projet, une fois par dépôt','/kwa:init',"Dans une session ouverte dans le projet. La skill montre ce que Kwa détecte, simule, puis n'écrit que de la configuration après votre accord : la politique <code>.claude/kwa.policy.json</code>, le bloc d'AGENTS.md, le plugin proposé à l'équipe. Elle complète la politique avec vous et vérifie le résultat. Aucun script n'est copié."],
+ ['Committer la configuration','/kwa:commit',"Sur une branche, puis <code>/kwa:ship</code> pour la pull request : l'équipe reçoit la proposition d'installer le plugin en ouvrant le projet."]
 ];
 OB.forEach(([t,c,d],i)=> $('#ob').append(el('div',{class:'item'},`<div class="num">${i+1}</div><div><h3>${t}</h3><p>${d}</p><div class="kd-term" style="margin-top:0"><div class="top"><span>Terminal</span><button class="kd-copy" data-copy="${esc(c)}">Copier</button></div><pre class="kd-code"><span class="p">$</span> ${esc(c)}</pre></div></div>`)));
 }
@@ -274,9 +272,9 @@ const MAP = [
  ['Un hook qui exige « Closes #N » et une preuve avant fusion','guard-github (module issue-flow), testé avec un faux gh'],
  ['Un hook qui protège les migrations, les .env et interdit le code sur main','guard-write : <code>write.deny</code> et <code>write.no_code_on_main</code>'],
  ['Formatage à la sauvegarde, vérification à la fin de session','format-after-edit et verify-stop (module verify), commandes lues dans la politique'],
- ['Une skill « démarrer un développement » + un script de worktree','/kwa-start-dev + kwa-start'],
- ['Des skills de déploiement par environnement avec pré-vol','/kwa-deploy piloté par <code>environments</code> ; pré-vol et rationalisations dans la politique'],
- ['Une skill TestFlight (Release sur simulateur avant build EAS)','/kwa-testflight, profils lus dans <code>mobile</code> et eas.json (React Native / Expo)'],
+ ['Une skill « démarrer un développement » + un script de worktree','/kwa:start-dev + kwa-start'],
+ ['Des skills de déploiement par environnement avec pré-vol','/kwa:deploy piloté par <code>environments</code> ; pré-vol et rationalisations dans la politique'],
+ ['Une skill TestFlight (Release sur simulateur avant build EAS)','/kwa:testflight, profils lus dans <code>mobile</code> et eas.json (React Native / Expo)'],
  ['Une règle de remise au client et un contrôle d\'hygiène en CI',"module client-handover : règle, kwa-hygiene, liste d'exceptions, job CI"],
  ["Modèles d'issues et de PR",'Gabarits copiés une fois (seed), puis au projet'],
  ['.agents/skills, .codex/hooks.json et règles Codex','Le plugin pour les skills ; <code>kwa init</code> écrit <code>.codex/hooks.json</code> (par <code>kwa hook</code>) et les règles'],
@@ -289,7 +287,7 @@ $('#detect').textContent = DATA.detect.trim();
 
 /* crédits */
 if ($('#src')) {
-$('#src').innerHTML = DATA.credits.sources.map(s=>`<div class="kd-card"><div><div class="who"><img class="kd-av" src="${esc((DATA.map.origins[s.id]||{}).avatar)}" alt="" width="24" height="24"><h3>${esc(s.author)}</h3></div><p class="sub"><a href="${esc(s.url)}">${esc(s.name)}</a> · ${esc(s.license)}</p></div><div><p>${rich(s.took)}</p><div>${s.skills.map(k=>`<span class="kd-tag">/kwa-${k}</span>`).join('')}</div></div></div>`).join('') + '<p class="kd-note">Kwa ne copie aucun fichier de ces projets : les textes sont réécrits, les mécanismes réimplémentés et testés. La ligne d\'origine figure à la fin de chaque skill concernée.</p>';
+$('#src').innerHTML = DATA.credits.sources.map(s=>`<div class="kd-card"><div><div class="who"><img class="kd-av" src="${esc((DATA.map.origins[s.id]||{}).avatar)}" alt="" width="24" height="24"><h3>${esc(s.author)}</h3></div><p class="sub"><a href="${esc(s.url)}">${esc(s.name)}</a> · ${esc(s.license)}</p></div><div><p>${rich(s.took)}</p><div>${s.skills.map(k=>`<span class="kd-tag">/kwa:${k}</span>`).join('')}</div></div></div>`).join('') + '<p class="kd-note">Kwa ne copie aucun fichier de ces projets : les textes sont réécrits, les mécanismes réimplémentés et testés. La ligne d\'origine figure à la fin de chaque skill concernée.</p>';
 }
 </script>
 <script src="src/glossary-data.js"></script><script src="src/shell.js"></script>

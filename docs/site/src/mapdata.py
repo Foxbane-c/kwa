@@ -168,17 +168,17 @@ def build(catalog_ids: list[str], credits: dict, wf_text: dict) -> dict:
     for k, (label, what, when) in H.items():
         add(f"h:{k}", "hook", label, what, when, DETAILS.get(label, ""), [f"core/hooks/{label}.py"])
     A = {
-        "impl": ("Implémenteur", "Un agent frais par tâche, modèle choisi selon la difficulté.", "/kwa-agents · outil Agent", "haiku pour le mécanique, sonnet pour l'intégration, opus pour la conception. Il ne commite pas et remonte tout refus de garde en BLOCKED.", ["core/skills/agents/implementer-prompt.md"]),
+        "impl": ("Implémenteur", "Un agent frais par tâche, modèle choisi selon la difficulté.", "/kwa:agents · outil Agent", "haiku pour le mécanique, sonnet pour l'intégration, opus pour la conception. Il ne commite pas et remonte tout refus de garde en BLOCKED.", ["core/skills/agents/implementer-prompt.md"]),
         "spec": ("Relecteur de conformité", "Le code fait-il exactement ce que la tâche demande, ni plus ni moins ?", "Après chaque tâche", "Agent neuf, jamais l'implémenteur. Passe avant la qualité.", ["core/skills/agents/spec-reviewer-prompt.md"]),
         "qual": ("Relecteur de qualité", "Lisibilité, tests, sécurité, simplicité, sur-ingénierie.", "Quand la conformité est verte", "Les retours critiques repartent vers l'implémenteur.", ["core/skills/agents/quality-reviewer-prompt.md"]),
-        "rev": ("Relecteur de branche", "Revue de toute la branche : correction, sécurité, régressions, tests manquants.", "/kwa-review · fin de plan", "Sortie de boucle : zéro critique et zéro important ouverts, sinon remontée après 3 tours.", ["core/skills/review/reviewer-prompt.md"]),
+        "rev": ("Relecteur de branche", "Revue de toute la branche : correction, sécurité, régressions, tests manquants.", "/kwa:review · fin de plan", "Sortie de boucle : zéro critique et zéro important ouverts, sinon remontée après 3 tours.", ["core/skills/review/reviewer-prompt.md"]),
         "explore": ("Explore (lecture seule)", "Cartographie large du code concerné.", "Si le périmètre est vaste", "Sous-agent Explore : ne peut rien écrire.", []),
     }
     for k, (label, what, when, how, src) in A.items():
         add(f"a:{k}", "agent", label, what, when, how, src, ["superpowers"] if k in ("impl", "spec", "qual", "rev") else ["kwa"])
     U = {
-        "spec": ("Vous approuvez la spec", "Porte d'approbation avant tout plan.", "", "Sans accord, on ne passe pas à /kwa-plan."),
-        "commit": ("Vous décidez du commit", "/kwa-commit puis /kwa-ship, jamais sans votre demande.", "", "Un commit par changement logique ; push de branche confirmé ; fusion = décision séparée."),
+        "spec": ("Vous approuvez la spec", "Porte d'approbation avant tout plan.", "", "Sans accord, on ne passe pas à /kwa:plan."),
+        "commit": ("Vous décidez du commit", "/kwa:commit puis /kwa:ship, jamais sans votre demande.", "", "Un commit par changement logique ; push de branche confirmé ; fusion = décision séparée."),
         "go": ("Vous donnez le GO", "La fusion est une décision séparée.", "", "Kwa annonce si elle déclenche un déploiement."),
         "preflight": ("Vous validez le pré-vol", "Chaque point du pré-vol est coché avec preuve, puis vous autorisez le déploiement.", "", "Un point non vérifiable reste non coché : on n'avance pas."),
         "learn": ("Vous validez ce qu'on retient", "Tableau de 7 lignes maximum ; rien n'est appliqué sans « tout », « 1 et 3 » ou « rien ».", "", "« Rien à capitaliser » est une réponse valable."),
@@ -186,7 +186,7 @@ def build(catalog_ids: list[str], credits: dict, wf_text: dict) -> dict:
     for k, (label, what, when, how) in U.items():
         add(f"u:{k}", "humain", label, what, when, how)
     add("p:policy", "policy", ".claude/kwa.policy.json", "La politique du projet : commandes interdites, chemins protégés, vérifications, environnements.",
-        "Créée une fois à partir de la détection, puis propriété du projet", "Lue par guard-policy, guard-write, /kwa-verify, /kwa-deploy, /kwa-start-dev. Jamais écrasée par kwa install.",
+        "Créée une fois à partir de la détection, puis propriété du projet", "Lue par guard-policy, guard-write, /kwa:verify, /kwa:deploy, /kwa:start-dev. Jamais écrasée par kwa init.",
         ["examples/expo-monorepo.policy.json"])
     add("r:request", "humain", "Votre demande", "Vous écrivez. L'agent choisit la skill qui correspond.", "", "Les consignes d'AGENTS.md et les tiennes priment toujours sur une skill.")
 

@@ -66,6 +66,9 @@ class Lint(unittest.TestCase):
         man = json.load(open(os.path.join(PACK, "manifest.json")))["modules"]
         dests = " ".join(s["dest"] for m in man.values() for s in m.get("files", {}).values())
         for d in self.skills():
+            if d == "init":  # livrée par le plugin seulement (elle lance la commande kwa que le plugin apporte)
+                self.assertTrue(os.path.isfile(os.path.join(PACK, "plugin", "skills", "init", "SKILL.md")))
+                continue
             self.assertIn(f".claude/skills/kwa-{d}", dests, f"kwa-{d} n'est dans aucun module")
 
 
@@ -261,13 +264,13 @@ class Workflows(unittest.TestCase):
         self.assertEqual(len(workflows.WORKFLOWS), 5)
         skills = set(os.listdir(os.path.join(PACK, "core", "skills")))
         hooks = {f[:-3] for f in os.listdir(os.path.join(PACK, "core", "hooks")) if f.endswith(".py")}
-        agents = {"kwa-" + f[:-3] for f in os.listdir(os.path.join(PACK, "core", "agents"))}
+        agents = {"kwa:" + f[:-3] for f in os.listdir(os.path.join(PACK, "core", "agents"))}  # nom sous plugin
         for key, _p, _t, _promise, link, steps in workflows.WORKFLOWS:
             target = link.split("#")[0]
             self.assertTrue(os.path.isfile(os.path.join(PACK, "docs", "site", target)), link)
             for kind, name, _what in steps:
                 if kind == "skill":
-                    self.assertIn(name.replace("/kwa-", ""), skills, f"{key}: {name}")
+                    self.assertIn(re.sub(r"^/kwa[-:]", "", name), skills, f"{key}: {name}")
                 elif kind == "agent":
                     self.assertIn(name, agents, f"{key}: {name}")
                 elif kind in ("hook", "garde") and not name.startswith("refus"):
@@ -294,11 +297,12 @@ class Beginners(unittest.TestCase):
         self.assertIn("Vous débutez ?", home)
         for target in ("parcours.html", "avant-de-commencer.html", "#demarrer"):
             self.assertIn(f'href="{target}"', home, target)
-        self.assertIn("git clone https://github.com/nesyouyou/kwa", home)
+        self.assertIn("/kwa:init", home)
+        self.assertNotIn("export PATH", home, "sous Claude Code, le plugin apporte la commande kwa : pas d'étape PATH")
 
     def test_install_page_covers_both_agents_and_kwa(self):
         page = self.read("avant-de-commencer.html")
-        for needle in ("claude.ai/install.sh", "chatgpt.com/codex/install.sh", "git clone", "kwa init ./mon-projet", "--dry-run",
+        for needle in ("claude.ai/install.sh", "chatgpt.com/codex/install.sh", "/plugin install kwa@kwa", "/kwa:init",
                        "Python 3", "/hooks"):
             self.assertIn(needle, page, needle)
 
