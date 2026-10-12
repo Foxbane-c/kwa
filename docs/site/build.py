@@ -205,17 +205,23 @@ def main():
     foot = re.search(r"<footer.*?</footer>", tpl, re.S).group(0)
     theme_js = re.search(r"/\* thème : clair par défaut.*?/\* fin du bloc thème \*/\n", tpl, re.S).group(0)
     # les cinq workflows en onglets, puis l'un d'eux déroulé en détail (le script des onglets vient des assets de la page)
+    import flows  # noqa: E402
+    for key, flow in flows.FLOWS.items():
+        errs = flows.check(flow)
+        if errs:
+            sys.exit(f"workflow {key} : " + "; ".join(errs))
     BOARD_HTML = (re.sub(r'\s*<script src="src/workflows.js"></script>', "", workflows.section())
                   .replace('class="kw-container kd-section kd-rv" id="workflows"', 'class="bd-wf" id="workflows"')
                   .replace('<div class="kd-eyebrow">Les workflows</div><h2 class="kw-section-title">Cinq workflows automatisés</h2>', '')
-                  + '<h2 class="kw-section-title bd-detail" id="detail">En détail : une demande de fonctionnalité</h2>'
-                  '<p class="kd-lead">Le workflow « Développer une fonctionnalité » déroulé pas à pas, avec ce que fait '
-                  'chaque pièce et ce que vous décidez.</p><div id="board-root"></div>')
+                  + '<h2 class="kw-section-title bd-detail" id="detail">En détail : développer une fonctionnalité</h2>'
+                  '<p class="kd-lead">Le workflow regroupé en briques. Le jeton suit le scénario : les boucles quand une '
+                  'condition n\'est pas remplie, vos décisions, les refus des gardes, les sous-agents qui partent et reviennent. '
+                  'Vous pouvez cliquer dans les fenêtres de décision.</p>' + flows.player("feature"))
     pages = {
         "skill-map.html": ("Carte des skills", "Carte interactive", "map", '<div id="map" data-deeplink></div>',
                            "DATA.map && KwaMap.mount($('#map'), DATA.map);"),
-        "board.html": ("Les workflows", "Fonctionnalité, bug, relecture, livraison, capitalisation", "board+circuit+workflows",
-                       BOARD_HTML, "KwaCircuit.mount($('#board-root'));"),
+        "board.html": ("Les workflows", "Fonctionnalité, bug, relecture, livraison, capitalisation", "workflows+flows",
+                       BOARD_HTML, ""),
         "terminal.html": ("Le terminal", "Comment on l'utilise", "terminal", '<div id="term-root"></div>', "KwaTerminal.mount($('#term-root'), DATA.terminal);"),
     }
     no_js = {  # ces trois pages n'existent qu'en JavaScript : sans lui, renvoyer vers leur équivalent statique

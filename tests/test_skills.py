@@ -360,6 +360,46 @@ class Beginners(unittest.TestCase):
             self.assertRegex(self.read(name), rf'<noscript>.*href="{re.escape(href)}".*</noscript>', name)
 
 
+class Flows(unittest.TestCase):
+    """Workflows animés : chaque pièce nommée existe, chaque événement vise une étape, le scénario est complet."""
+
+    def setUp(self):
+        sys.path.insert(0, os.path.join(PACK, "docs", "site", "src"))
+        import flows
+        self.flows = flows
+
+    def test_every_named_piece_exists(self):
+        skills = set(os.listdir(os.path.join(PACK, "core", "skills")))
+        hooks = {f[:-3] for f in os.listdir(os.path.join(PACK, "core", "hooks")) if f.endswith(".py")}
+        agents = {"kwa:" + f[:-3] for f in os.listdir(os.path.join(PACK, "core", "agents"))}
+        for key, flow in self.flows.FLOWS.items():
+            for brick, kind, name, _what in flow["steps"]:
+                with self.subTest(flow=key, step=name):
+                    self.assertIn(brick, {b[0] for b in self.flows.BRICKS})
+                    if kind in ("skill", "doc"):
+                        self.assertIn(re.sub(r"^/kwa:", "", name), skills)
+                    elif kind in ("garde", "hook"):
+                        self.assertIn(name, hooks)
+                    elif kind == "agent":
+                        self.assertIn(name, agents)
+
+    def test_script_is_consistent_and_shows_every_kind_of_event(self):
+        for key, flow in self.flows.FLOWS.items():
+            self.assertEqual(self.flows.check(flow), [], key)
+            kinds = {ev[0] for ev in flow["script"]}
+            self.assertTrue({"go", "ask", "loop", "guard", "delegate"} <= kinds, f"{key} : {kinds}")
+
+    def test_guard_messages_are_the_real_ones(self):
+        hooks = os.path.join(PACK, "core", "hooks")
+        for key, flow in self.flows.FLOWS.items():
+            for ev in flow["script"]:
+                if ev[0] == "guard":
+                    guard = flow["steps"][ev[1]][2]
+                    src = open(os.path.join(hooks, guard + ".py"), encoding="utf-8").read()
+                    start = ev[2].replace("Kwa — ", "").split("(")[0].strip()
+                    self.assertIn(start, src, f"{key} : message de {guard} introuvable")
+
+
 class Shell(unittest.TestCase):
     """Barre latérale de navigation et arborescence : générées, identiques partout, avec de vrais liens."""
     SITE = os.path.join(PACK, "docs", "site")
@@ -526,12 +566,12 @@ class Circuit(unittest.TestCase):
     def read(self, *p):
         return open(os.path.join(self.SITE, *p), encoding="utf-8").read()
 
-    def test_pages_mount_the_circuit_not_the_animated_board(self):
+    def test_workflows_page_mounts_the_animated_player(self):
         text = self.read("board.html")
-        self.assertIn("circuit.js", text)
-        self.assertIn("KwaCircuit.mount", text)
-        self.assertNotIn("KwaBoard.mount", text)
-        self.assertNotIn("circuit.js", self.read("index.html"), "l'accueil ne charge plus les widgets des pages dédiées")
+        self.assertIn("src/flows.js", text)
+        self.assertIn('class="fl-script"', text)
+        self.assertNotIn("KwaCircuit.mount", text)
+        self.assertNotIn("src/flows.js", self.read("index.html"), "l'accueil ne charge pas les widgets des pages dédiées")
 
     def test_no_autoplay_and_every_step_has_a_label(self):
         js = self.read("src", "circuit.js")
