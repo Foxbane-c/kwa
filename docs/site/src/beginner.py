@@ -50,5 +50,5 @@ il ne demande aucune installation.</p>
 <p class="kd-note">Sous Codex en ligne de commande, les hooks passent par la commande <code>kwa</code>, qui doit alors être dans le PATH : <code>git clone https://github.com/nesyouyou/kwa ~/kwa</code>, puis ajouter <code>export PATH="$HOME/kwa/bin:$PATH"</code> à <code>~/.zshrc</code>. Validez ensuite les hooks du projet avec <code>/hooks</code>.</p></li>
 
 <li><h2 class="kw-section-title">Et ensuite</h2>
-<p>Suivez les <a href="parcours.html">trois parcours</a> dans l'ordre : comprendre le modèle, lui donner le bon contexte, puis l'encadrer avec Kwa. Un mot vous échappe ? Le <a href="glossaire.html">glossaire</a> traduit chaque terme anglais.</p></li>
+<p>Faites le <a href="premier-pas.html">premier pas en 30 minutes</a> sur un projet d'exercice, puis suivez les <a href="parcours.html">trois parcours</a> dans l'ordre : comprendre le modèle, lui donner le bon contexte, puis l'encadrer avec Kwa. Un mot vous échappe ? Le <a href="glossaire.html">glossaire</a> traduit chaque terme anglais.</p></li>
 </ol>"""
