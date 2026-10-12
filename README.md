@@ -29,18 +29,55 @@ l'existant, limites, crédits), avec une feuille de style propre (polices dans
 calculés en exécutant les gardes.
 
 Il faut d'abord un agent de code (Claude Code ou Codex) : voir la page [Avant de commencer](https://nesyouyou.github.io/kwa/avant-de-commencer.html).
-Ensuite :
+
+## Installer
+
+Kwa est un **plugin** : skills, agent relecteur, garde-fous et mémoire s'installent une fois par machine. Le projet ne
+reçoit que sa configuration (politique, bloc d'AGENTS.md, plugin proposé à l'équipe), jamais de script.
+
+**1. Le plugin, une fois par machine**
+
+```bash
+# Claude Code (dans une session)
+/plugin marketplace add nesyouyou/kwa
+/plugin install kwa@kwa
+
+# Codex
+codex plugin marketplace add nesyouyou/kwa
+codex plugin add kwa@kwa
+```
+
+**2. Le projet, une fois par dépôt**
 
 ```bash
 git clone https://github.com/nesyouyou/kwa ~/kwa
 export PATH="$HOME/kwa/bin:$PATH"           # à ajouter à ~/.zshrc ou ~/.bashrc
-kwa detect    <projet>                  # stack, modules proposés, politique déduite ; n'écrit rien
-kwa install   <projet> --dry-run        # montre ce qui changerait ; n'écrit rien
-kwa install   <projet> [--with client-handover] [--no-codex]
-kwa doctor    <projet>                  # conformité, doublons avec l'outillage existant du projet
-kwa status    <projet>                  # version, modules, dérive locale
-kwa recommend <projet>                  # skills tierces utiles pour la stack (rien n'est installé)
-bash tests/run-safety.sh                     # suite hors-ligne
+kwa detect <projet>                         # stack, modules proposés, politique déduite ; n'écrit rien
+kwa init   <projet> --dry-run               # montre ce qui changerait ; n'écrit rien
+kwa init   <projet> [--with verify] [--no-codex]
+kwa doctor <projet>                         # conformité, plugin installé ou non
+```
+
+Puis committer ce que `kwa init` a écrit (`.claude/kwa.policy.json`, `.claude/settings.json`, `AGENTS.md`,
+`CLAUDE.md`, `.codex/`) : l'équipe reçoit la proposition d'installer le plugin en ouvrant le projet. Sous plugin, les
+skills se lancent avec `/kwa:commit` (Claude Code). Les hooks ne s'activent que dans un projet qui a une politique
+Kwa ; un worktree créé avant le commit de la configuration reprend celle du dépôt principal.
+
+Sous Codex, deux limites viennent de Codex lui-même : la ligne de commande ne charge pas les hooks d'un plugin, donc
+`.codex/hooks.json` les lance par `kwa hook` (la commande `kwa` doit être dans le PATH) ; et les noms des skills d'un
+plugin Codex n'ont pas encore été vérifiés en session.
+
+`kwa init` sur un projet déjà installé par copie le migre : fichiers gérés retirés (une retouche locale est mise de
+côté dans `.claude/kwa/backup/`), hooks copiés débranchés, mémoire locale conservée.
+
+**Installation par copie (ancienne méthode)** : `kwa install <projet>` copie toujours scripts et skills dans le projet,
+pour un usage sans plugin. Les fichiers copiés sont alors à committer, sinon les worktrees n'ont pas les garde-fous.
+
+```bash
+kwa status    <projet>                      # version, modules, dérive locale
+kwa recommend <projet>                      # skills tierces utiles pour la stack (rien n'est installé)
+kwa build-plugin [--check]                  # régénère plugin/ depuis les sources (mainteneurs)
+bash tests/run-safety.sh                    # suite hors-ligne
 ```
 
 ## Noyau + modules + politique

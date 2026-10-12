@@ -13,7 +13,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _kwa import load_payload, load_policy, project_dir  # noqa: E402
+from _kwa import cli, load_payload, load_policy, project_dir, skill  # noqa: E402
 
 DOC_EXT = (".md", ".mdx", ".txt")
 
@@ -49,10 +49,10 @@ def main() -> int:
     asks = []
     if want_journal:
         asks.append("écris l'entrée de journal de cette session, 8 lignes au plus (Objectif · Fait · Décisions · Reste à "
-                    "faire · Pièges), avec `python3 .claude/kwa/bin/kwa-memory journal \"<texte>\"`")
+                    f"faire · Pièges), avec `{cli('memory')} journal \"<texte>\"`")
     if want_learn:
         asks.append("y a-t-il un apprentissage durable (décision, piège, commande, règle à automatiser) ? Si oui, lance "
-                    "/kwa-learn pour le proposer ; sinon réponds « rien à capitaliser »")
+                    f"{skill('learn')} pour le proposer ; sinon réponds « rien à capitaliser »")
     print("Kwa mémoire : du travail substantiel a eu lieu dans cette session. Avant de conclure : " + ". Puis : ".join(asks)
           + ". (Une seule invitation par session.)", file=sys.stderr)
     return 2

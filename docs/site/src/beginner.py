@@ -40,14 +40,18 @@ il ne demande aucune installation.</p>
 </div>
 </li>
 
-<li><h2 class="kw-section-title">Récupérer et installer Kwa</h2>
-<p>Kwa se récupère en clonant son dépôt, puis en ajoutant sa commande au chemin du terminal :</p>
+<li><h2 class="kw-section-title">Installer Kwa</h2>
+<p>Kwa est un plugin : il s'installe une fois sur votre machine. Dans une session Claude Code :</p>
+{code("/plugin marketplace add nesyouyou/kwa")}{code("/plugin install kwa@kwa")}
+<p>Sous Codex :</p>
+{cmd("codex plugin marketplace add nesyouyou/kwa")}{cmd("codex plugin add kwa@kwa")}
+<p>Puis récupérez la commande <code>kwa</code>, qui prépare chaque projet :</p>
 {cmd("git clone https://github.com/nesyouyou/kwa ~/kwa")}
 {cmd(PATH_LINE)}
-<p class="kd-note">Avec bash, remplacez <code>~/.zshrc</code> par <code>~/.bashrc</code>. Sans cette ligne, la commande s'appelle <code>~/kwa/bin/kwa</code>.</p>
-<p>Puis, dans votre projet, regardez avant d'écrire :</p>
-{cmd("kwa detect ./mon-projet")}{cmd("kwa install ./mon-projet --dry-run")}{cmd("kwa install ./mon-projet")}
-<p>Les deux premières commandes n'écrivent rien. La troisième installe Kwa pour Claude Code et pour Codex ; aucune ne fait de commit ni de push. Sous Codex, validez une fois les hooks du projet avec <code>/hooks</code>.</p></li>
+<p class="kd-note">Avec bash, remplacez <code>~/.zshrc</code> par <code>~/.bashrc</code>.</p>
+<p>Dans votre projet, regardez avant d'écrire :</p>
+{cmd("kwa detect ./mon-projet")}{cmd("kwa init ./mon-projet --dry-run")}{cmd("kwa init ./mon-projet")}
+<p>Les deux premières commandes n'écrivent rien. La troisième n'écrit que de la configuration (politique, bloc d'AGENTS.md, plugin proposé à l'équipe) : aucun script, aucun commit. Committez ces fichiers par une branche. Sous Codex, validez une fois les hooks du projet avec <code>/hooks</code>.</p></li>
 
 <li><h2 class="kw-section-title">Et ensuite</h2>
 <p>Suivez les <a href="parcours.html">trois parcours</a> dans l'ordre : comprendre le modèle, lui donner le bon contexte, puis l'encadrer avec Kwa. Un mot vous échappe ? Le <a href="glossaire.html">glossaire</a> traduit chaque terme anglais.</p></li>

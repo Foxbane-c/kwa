@@ -11,6 +11,8 @@ import re
 import subprocess
 import time
 
+from _kwa import cli, skill
+
 BUDGET = 2000          # caractères injectés au démarrage d'une session
 BODY_LINES = 8         # lignes au plus dans le corps d'une entrée
 STALE_DAYS = 14        # au-delà, une entrée est signalée comme ancienne
@@ -342,8 +344,8 @@ def render_resume(root: str, sess: dict, policy: dict | None = None) -> str:
             lines += [f"  - {e.get('date', '?')} · {e.get('branch', '?')} · {_first(e)}" for e in rest]
     lines.append(f"État actuel : branche {branch or '?'}, {dirty} fichier(s) non committé(s).")
     if waiting:
-        lines.append(f"En attente : {waiting} note(s) d'apprentissage (`python3 .claude/kwa/bin/kwa-memory pending`, puis /kwa-learn, jamais appliqué sans accord).")
+        lines.append(f"En attente : {waiting} note(s) d'apprentissage (`{cli('memory')} pending`, puis {skill('learn')}, jamais appliqué sans accord).")
     lines.append("Si l'utilisateur reprend ce travail, partir du « Reste à faire » ; ne pas relire tout le journal "
-                 "(`python3 .claude/kwa/bin/kwa-memory journal --last 5` au besoin).")
+                 f"(`{cli('memory')} journal --last 5` au besoin).")
     text = "\n".join(lines)
     return text if len(text) <= BUDGET else text[:BUDGET - 1].rstrip() + "…"

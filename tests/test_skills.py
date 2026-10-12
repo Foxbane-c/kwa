@@ -298,7 +298,7 @@ class Beginners(unittest.TestCase):
 
     def test_install_page_covers_both_agents_and_kwa(self):
         page = self.read("avant-de-commencer.html")
-        for needle in ("claude.ai/install.sh", "chatgpt.com/codex/install.sh", "git clone", "kwa install ./mon-projet", "--dry-run",
+        for needle in ("claude.ai/install.sh", "chatgpt.com/codex/install.sh", "git clone", "kwa init ./mon-projet", "--dry-run",
                        "Python 3", "/hooks"):
             self.assertIn(needle, page, needle)
 

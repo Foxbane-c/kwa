@@ -1,0 +1,1304 @@
+#!/usr/bin/env python3
+"""kwa — uniformise les projets : AGENTS.md, garde-fous, règles, skills, politique projet.
+
+    kwa detect    <cible>                         stack détectée, modules proposés, politique déduite
+    kwa install   <cible> [--modules auto|a,b] [--with m ...] [--no-codex] [--dry-run]
+    kwa status    <cible>                         version, modules, dérive locale
+    kwa doctor    <cible>                         conformité (bloc, hooks, politique, doublons projet)
+    kwa recommend <cible>                         skills tierces utiles pour cette stack (rien n'est installé)
+
+Principes :
+  - Noyau + modules ; ce qui dépend du projet vit dans .claude/kwa.policy.json (propriété du projet,
+    créée une fois, jamais écrasée).
+  - AGENTS.md est la source unique ; CLAUDE.md devient un pointeur « @AGENTS.md ».
+  - Rien hors des marqueurs <!-- kwa:begin … --> / <!-- kwa:end --> n'est modifié.
+  - settings.json est fusionné sans doublon, sauvegardé, écrit de façon atomique.
+  - Une retouche locale d'un fichier géré est sauvegardée avant d'être écrasée ; un fichier « seed »
+    (gabarits GitHub, liste d'exceptions) n'est copié que s'il n'existe pas.
+  - Aucune action git : kwa n'ajoute, ne commite, ne pousse jamais.
+
+Codes de sortie : 0 ok, 1 vérification échouée, 2 refusé / entrée invalide.
+Python 3.9+, bibliothèque standard uniquement.
+"""
+from __future__ import annotations
+
+import argparse
+import copy
+import hashlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+PACK = Path(__file__).resolve().parent.parent
+BEGIN_RE = re.compile(r"^<!-- (?:kwa|kata):begin\b.*-->\s*$")  # « kata » : ancien nom, reconnu pour migrer
+END_RE = re.compile(r"^<!-- (?:kwa|kata):end -->\s*$")
+POINTER = "@AGENTS.md"
+POLICY_REL = ".claude/kwa.policy.json"
+LEGACY_POLICY_REL = ".claude/kata.policy.json"
+LEGACY_HOOKS = ".claude/kata/hooks/"
+SKIP_DIRS = {"node_modules", ".git", ".next", ".turbo", "dist", "build", ".expo", "ios", "android", "Pods", ".venv", "coverage"}
+OVERLAP = {  # fichiers du projet que Kwa remplace, une fois sa politique validée
+    "hooks": {"guard-bash.sh": "guard-policy + guard-git", "guard-github.sh": "guard-github (issue-flow)",
+              "guard-write.sh": "guard-write", "format-after-edit.sh": "format-after-edit (verify)",
+              "verify-stop.sh": "verify-stop (verify)"},
+    "skills": {"start-dev": "kwa-start-dev", "deploy-recette": "kwa-deploy", "deploy-prod": "kwa-deploy",
+               "testflight": "kwa-testflight"},
+}
+
+
+def state_path(target: Path) -> Path:
+    return target / ".claude" / "kwa" / "state.json"
+
+
+def legacy_state_path(target: Path) -> Path:
+    return target / ".claude" / "kata" / "state.json"
+
+
+def is_legacy(target: Path) -> bool:
+    """Installation faite sous l'ancien nom (dossier .claude/kata) et pas encore migrée."""
+    return legacy_state_path(target).exists() and not state_path(target).exists()
+
+
+def die(msg: str, code: int = 2) -> None:
+    print(f"kwa: {msg}", file=sys.stderr)
+    sys.exit(code)
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def atomic_write(path: Path, text: str, mode: int | None = None) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        if mode is not None:
+            os.chmod(tmp, mode)
+        elif path.exists():
+            shutil.copymode(path, tmp)
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+
+
+def atomic_write_raw(path: Path, text: str) -> None:
+    """Comme atomic_write, mais sans toucher aux fins de ligne (newline='')."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        shutil.copymode(path, tmp)
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+
+
+def version() -> str:
+    return (PACK / "VERSION").read_text().strip()
+
+
+def manifest() -> dict:
+    return json.loads((PACK / "manifest.json").read_text())["modules"]
+
+
+def module_files(module: dict) -> list[tuple[str, dict]]:
+    """Fichiers d'un module. Une clé se terminant par `/*` copie tout le dossier source vers `dest` (un dossier)."""
+    out = []
+    for src_rel, spec in module.get("files", {}).items():
+        if src_rel.endswith("/*"):
+            base = PACK / src_rel[:-2]
+            for f in sorted(p for p in base.rglob("*") if p.is_file()):
+                rel = f.relative_to(base).as_posix()
+                out.append((f.relative_to(PACK).as_posix(), {**spec, "dest": f"{spec['dest'].rstrip('/')}/{rel}"}))
+        else:
+            out.append((src_rel, spec))
+    return out
+
+
+def read_json(path: Path, default=None):
+    if not path.exists():
+        return default
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as e:
+        die(f"{path} n'est pas du JSON valide ({e}) ; laissé intact, corriger à la main")
+    if not isinstance(data, dict):
+        die(f"{path} n'est pas un objet JSON ; laissé intact")
+    return data
+
+
+# --------------------------------------------------------------------------- détection
+
+def walk(root: Path, max_depth: int = 4):
+    root = root.resolve()
+    for d, dirs, files in os.walk(root):
+        depth = len(Path(d).relative_to(root).parts)
+        dirs[:] = [x for x in dirs if x not in SKIP_DIRS and depth < max_depth]
+        yield Path(d), dirs, files
+
+
+def package_manager(target: Path) -> str:
+    for lock, pm in (("pnpm-lock.yaml", "pnpm"), ("yarn.lock", "yarn"), ("bun.lockb", "bun"), ("package-lock.json", "npm")):
+        if (target / lock).exists():
+            return pm
+    return "npm" if (target / "package.json").exists() else ""
+
+
+def detect(target: Path) -> dict:
+    found = {"tags": [], "modules": ["core"], "suggested": [], "inferred": {}}
+    pkg = read_json(target / "package.json", {}) or {}
+    pm = package_manager(target)
+    eas = [d / "eas.json" for d, _, fs in walk(target) if "eas.json" in fs]
+    prisma = [d for d, _, _ in walk(target) if d.name == "migrations" and d.parent.name == "prisma"]
+    all_pkgs = [read_json(d / "package.json", {}) or {} for d, _, fs in walk(target, 3) if "package.json" in fs]
+    all_deps = {k for p in all_pkgs for k in {**p.get("dependencies", {}), **p.get("devDependencies", {})}}
+    wf_dir = target / ".github" / "workflows"
+    wf = list(wf_dir.glob("*.y*ml")) if wf_dir.is_dir() else []
+    wf_text = "\n".join(f.read_text(errors="replace") for f in wf)
+
+    tags = []
+    if (target / "pnpm-workspace.yaml").exists() or pkg.get("workspaces"):
+        tags.append("monorepo")
+    for tag, dep in (("next", "next"), ("nest", "@nestjs/core"), ("expo", "expo"), ("react-native", "react-native"),
+                     ("payload", "payload"), ("prisma", "prisma"), ("playwright", "@playwright/test")):
+        if dep in all_deps:
+            tags.append(tag)
+    if any((target / f).exists() for f in ("pyproject.toml", "requirements.txt")):
+        tags.append("python")
+    found["tags"] = sorted(set(tags))
+
+    modules = ["core"]
+    if (target / ".git").exists():
+        modules += ["craft", "memory"]
+    if (target / ".git").exists() and (target / ".github").exists():
+        modules.append("issue-flow")
+    scripts = pkg.get("scripts", {})
+    verify = [f"{pm} {s}" for s in ("typecheck", "lint", "test") if s in scripts] if pm else []
+    if verify:
+        modules.append("verify")
+    if prisma:
+        modules.append("stack-prisma")
+    if eas:
+        modules.append("stack-expo")
+    if re.search(r"scw |scaleway|SCW_", wf_text, re.I):
+        modules.append("stack-scaleway")
+    if any("deploy" in f.name for f in wf):
+        modules.append("deploy")
+    found["modules"] = modules
+    found["suggested"] = ["client-handover"]  # dépend de l'intention : toujours proposé, jamais déduit
+
+    inferred: dict = {}
+    if verify:
+        inferred["verify"] = {"commands": verify}
+    if pm == "pnpm":
+        install = ["pnpm install --frozen-lockfile"]
+        if "db:generate" in scripts:
+            install.append("pnpm db:generate")
+        inferred["start"] = {"install": install}
+    elif pm:
+        inferred["start"] = {"install": [f"{pm} install"]}
+    if (target / ".env").is_file():  # fichier local ignoré : un worktree ne le reçoit pas, on le relie
+        inferred.setdefault("start", {})["link"] = [".env"]
+    code_dirs = [d + "/" for d in ("apps", "packages", "src", "app", "lib") if (target / d).is_dir()]
+    if code_dirs:
+        inferred["write"] = {"no_code_on_main": code_dirs}
+    if eas:
+        data = read_json(eas[0], {}) or {}
+        profiles = list((data.get("build") or {}).keys())
+        guess = next((p for p in profiles if "testflight" in p), None)
+        inferred["mobile"] = {"eas_config": str(eas[0].relative_to(target)), "profiles": profiles,
+                              "testflight_profile": guess, "release_check_before_build": True}
+    found["inferred"] = inferred
+    return found
+
+
+# --------------------------------------------------------------------------- politique
+
+def merge_policy(base: dict, extra: dict) -> dict:
+    """Fusion profonde ; les listes se concatènent (sans doublon d'`id`)."""
+    out = copy.deepcopy(base)
+    for k, v in extra.items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = merge_policy(out[k], v)
+        elif isinstance(v, list) and isinstance(out.get(k), list):
+            have = {x.get("id") for x in out[k] if isinstance(x, dict) and x.get("id")}
+            out[k] += [x for x in v if not (isinstance(x, dict) and x.get("id") in have)]
+        elif k not in out or out[k] in ({}, [], None):
+            out[k] = copy.deepcopy(v)
+    return out
+
+
+def build_policy(modules: list[str], inferred: dict) -> dict:
+    man = manifest()
+    pol: dict = {"kwa": 1, "protected_branches": ["main"], "git": {"push_branch": "ask"}}
+    for m in modules:
+        pol = merge_policy(pol, man[m].get("policy", {}))
+    return merge_policy(pol, inferred)
+
+
+def rule_ids(policy: dict) -> set[str]:
+    ids = set()
+    for kind in ("deny", "ask"):
+        ids |= {f"bash.{kind}:{r['id']}" for r in policy.get("bash", {}).get(kind, []) if "id" in r}
+    ids |= {f"write.deny:{r['id']}" for r in policy.get("write", {}).get("deny", []) if "id" in r}
+    return ids
+
+
+def apply_policy(target: Path, modules: list[str], inferred: dict, dry: bool) -> str:
+    path = target / POLICY_REL
+    if path.exists():
+        current = read_json(path, {})
+        missing = sorted(rule_ids(build_policy(modules, {})) - rule_ids(current))
+        return "conservée (propriété du projet)" + (f" — règles Kwa absentes : {', '.join(missing)}" if missing else "")
+    if not dry:
+        atomic_write(path, json.dumps(build_policy(modules, inferred), indent=2, ensure_ascii=False) + "\n")
+    return "créée à partir de la détection — à relire et compléter"
+
+
+# --------------------------------------------------------------------------- AGENTS.md
+
+def markers(lines: list[str]) -> list[tuple[int, int]]:
+    pairs, start = [], None
+    for i, line in enumerate(lines):
+        if BEGIN_RE.match(line):
+            start = i
+        elif END_RE.match(line) and start is not None:
+            pairs.append((start, i))
+            start = None
+    return pairs
+
+
+def render_block(profile: str, modules: list[str], target: Path | None = None, plugin: bool = False) -> list[str]:
+    body = (PACK / "core" / "templates" / "agents-block.md").read_text(encoding="utf-8").strip("\n")
+    body = body.replace("{{PROFILE_RULES}}", (PACK / "profiles" / f"{profile}.md").read_text(encoding="utf-8").strip("\n"))
+    body = body.replace("{{MODULES}}", ", ".join(modules))
+    kb = ((read_json(target / POLICY_REL, {}) if target else {}) or {}).get("knowledge_base")
+    line = f"- Contexte de l'entreprise (clients, décisions) : `{kb}` fait foi ; s'il est muet, le dire, ne pas inventer." if kb else ""
+    body = body.replace("{{KNOWLEDGE_LINE}}\n", line + "\n" if line else "").replace("{{KNOWLEDGE_LINE}}", line)
+    if plugin:
+        body = plugin_text(body, plugin_skills()).replace(
+            "{{KNOWLEDGE_LINE}}", "- Sous Codex, l'agent `kwa:relecteur` s'appelle `kwa-relecteur`.\n{{KNOWLEDGE_LINE}}", 1)
+    head = f"<!-- kwa:begin v{version()} profile={profile} (géré ; toute retouche ici est écrasée à la mise à jour) -->"
+    return [head] + body.splitlines() + ["<!-- kwa:end -->"]
+
+
+def split_keep(text: str) -> list[str]:
+    """Découpe aux seuls \\n, en gardant les fins de ligne : rien d'autre (CRLF, saut de page…) n'est touché."""
+    parts = text.split("\n")
+    return [x + "\n" for x in parts[:-1]] + ([parts[-1]] if parts[-1] else [])
+
+
+def apply_block(target: Path, profile: str, modules: list[str], dry: bool, plugin: bool = False) -> str:
+    """Écrit le bloc géré. Tout ce qui est hors des marqueurs reste identique octet pour octet :
+    même fins de ligne, mêmes espaces, même absence de retour final (seul un \\n de séparation peut être ajouté
+    avant un bloc neuf, jamais à l'intérieur du contenu existant)."""
+    path = target / "AGENTS.md"
+    block = render_block(profile, modules, target, plugin)
+    if not path.exists():
+        if not dry:
+            atomic_write(path, "# AGENTS.md\n\n" + "\n".join(block) + "\n")
+        return "créé"
+    with open(path, encoding="utf-8", newline="") as f:
+        text = f.read()
+    eol = "\r\n" if "\r\n" in text else "\n"
+    raw = split_keep(text)
+    probe = [x.rstrip("\r\n") for x in raw]
+    pairs = markers(probe)
+    if len(pairs) > 1:
+        die(f"{path} contient {len(pairs)} blocs kwa ; n'en garder qu'un puis relancer")
+    if any(BEGIN_RE.match(x) for x in probe) and not pairs:
+        die(f"{path} : marqueur kwa:begin sans kwa:end ; corriger à la main")
+    new_block = eol.join(block) + eol
+    if pairs:
+        bgn, end = pairs[0]
+        last_has_eol = raw[end].endswith("\n")
+        new_text = "".join(raw[:bgn]) + (new_block if last_has_eol else new_block.rstrip("\r\n")) + "".join(raw[end + 1:])
+        verdict = "mis à jour"
+    else:
+        sep = "" if (not text or text.endswith("\n")) else eol
+        gap = eol if text.strip() and not text.endswith(("\n\n", "\r\n\r\n")) else ""
+        new_text = text + sep + gap + new_block
+        verdict = "inséré"
+    if new_text == text:
+        return "inchangé"
+    if not dry:
+        atomic_write_raw(path, new_text)
+    return verdict
+
+
+def is_pointer(text: str) -> bool:
+    first = next((x.strip() for x in text.splitlines() if x.strip()), "")
+    return first == POINTER
+
+
+def apply_pointer(target: Path, dry: bool) -> str:
+    path = target / "CLAUDE.md"
+    if path.is_symlink():
+        return "lien symbolique conservé"
+    if path.exists():
+        if is_pointer(path.read_text(encoding="utf-8")):
+            return "inchangé"
+        return "À FUSIONNER : CLAUDE.md porte ses propres règles (kwa ne l'écrase pas)"
+    if not dry:
+        atomic_write(path, POINTER + "\n")
+    return "créé"
+
+
+# --------------------------------------------------------------------------- settings.json / hooks
+
+def merge_hooks(settings: dict, snippet: dict) -> list[str]:
+    hooks = settings.setdefault("hooks", {})
+    added = []
+    for event, entries in snippet.items():
+        current = hooks.setdefault(event, [])
+        for entry in entries:
+            matcher = entry.get("matcher")
+            have = {h.get("command") for e in current if e.get("matcher") == matcher for h in e.get("hooks", [])}
+            holder = next((e for e in current if e.get("matcher") == matcher), None)
+            for h in entry["hooks"]:
+                if h["command"] in have:
+                    continue
+                if holder is None:
+                    holder = {"matcher": matcher} if matcher is not None else {}
+                    holder["hooks"] = []
+                    current.append(holder)
+                holder["hooks"].append(h)
+                have.add(h["command"])
+                added.append(f"{event} {matcher or '*'}: {h['command']}")
+    return added
+
+
+def module_hooks(modules: list[str]) -> dict:
+    snippet: dict = {}
+    for m in modules:
+        for event, entries in manifest()[m].get("hooks", {}).items():
+            snippet.setdefault(event, []).extend(copy.deepcopy(entries))
+    return snippet
+
+
+def save_settings(path: Path, settings: dict) -> None:
+    if path.exists():
+        shutil.copy2(path, f"{path}.bak-{time.strftime('%Y%m%d%H%M%S')}")
+    atomic_write(path, json.dumps(settings, indent=2, ensure_ascii=False) + "\n")
+
+
+def apply_settings(target: Path, modules: list[str], dry: bool) -> list[str]:
+    path = target / ".claude" / "settings.json"
+    settings = read_json(path, {})
+    added = merge_hooks(settings, module_hooks(modules))
+    if added and not dry:
+        save_settings(path, settings)
+    return added
+
+
+CODEX_PREFIX = 'cd "$(git rev-parse --show-toplevel)" && KWA_AGENT=codex KWA_PROJECT_DIR="$PWD" '
+CODEX_MAX_TIMEOUT = {"SessionEnd": 3}  # Codex plafonne ces événements (secondes)
+
+
+def codex_hooks(modules: list[str]) -> dict:
+    """Les hooks de Claude Code traduits pour Codex : même script, lancé depuis la racine du dépôt avec KWA_AGENT=codex.
+    Le filtre « * » (tout) n'est pas une expression régulière valide chez Codex : on l'omet. Les filtres d'écriture
+    couvrent aussi apply_patch, l'outil d'édition de Codex."""
+    snippet = module_hooks(modules)
+    for event, entries in snippet.items():
+        for e in entries:
+            if e.get("matcher") == "*":
+                del e["matcher"]
+            elif "Edit" in e.get("matcher", "") and "apply_patch" not in e["matcher"]:
+                e["matcher"] += "|apply_patch"
+            for h in e["hooks"]:
+                h["command"] = CODEX_PREFIX + h["command"].replace('python3 "$CLAUDE_PROJECT_DIR"/', "python3 ")
+                if event in CODEX_MAX_TIMEOUT:
+                    h["timeout"] = min(h.get("timeout", CODEX_MAX_TIMEOUT[event]), CODEX_MAX_TIMEOUT[event])
+    return snippet
+
+
+def codex_rules_text(policy: dict) -> str:
+    """Règles de commandes de Codex (Starlark) : ce que les gardes font confirmer, Codex le demande lui-même."""
+    sys.path.insert(0, str(PACK / "core" / "hooks"))
+    import _kwa  # noqa: E402
+
+    out = ["# Géré par Kwa (kwa install) : régénéré à chaque installation, ne pas éditer.",
+           "# Sous Codex, ces commandes demandent confirmation : c'est l'équivalent des « demandes » des gardes sous",
+           "# Claude Code. Ajouter un motif propre au projet : champ codex_prompt d'une règle bash.ask de la politique.", ""]
+    for pattern, reason, example in _kwa.codex_prompts(policy):
+        out += ["prefix_rule(", f"    pattern = {json.dumps(pattern, ensure_ascii=False)},", '    decision = "prompt",',
+                f"    justification = {json.dumps(reason, ensure_ascii=False)},"]
+        if example:
+            out.append(f"    match = [{json.dumps(example, ensure_ascii=False)}],")
+        out += [")", ""]
+    return "\n".join(out)
+
+
+def codex_agent_toml(md: str, source: str) -> str:
+    """Un agent de Claude Code (Markdown à en-tête YAML) traduit en agent Codex (TOML). Un agent sans outil
+    d'écriture tourne dans un bac à sable en lecture seule : c'est la garantie que Codex sait donner."""
+    _, head, body = md.split("---", 2)
+    meta = {}
+    for line in head.splitlines():
+        if ":" in line and not line.startswith((" ", "\t", "-")):
+            k, v = line.split(":", 1)
+            meta[k.strip()] = v.strip()
+    writes = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
+    tools = {t.strip() for t in meta.get("tools", "").split(",") if t.strip()}
+    denied = {t.strip() for t in meta.get("disallowedTools", "").split(",") if t.strip()}
+    read_only = bool(tools) and not (tools - denied) & writes
+    body = body.strip() + "\n"
+    if "'''" in body:
+        die(f"{source} : le texte de l'agent contient ''', impossible en TOML littéral")
+    out = [f"# Géré par Kwa (kwa install) : généré depuis {source}, ne pas éditer.",
+           f"name = {json.dumps(meta['name'], ensure_ascii=False)}",
+           f"description = {json.dumps(meta['description'], ensure_ascii=False)}"]
+    if read_only:
+        out.append('sandbox_mode = "read-only"')
+    out.append("developer_instructions = '''\n" + body + "'''")
+    return "\n".join(out) + "\n"
+
+
+def strip_kwa_hooks(settings: dict) -> None:
+    """Retire les hooks de Kwa (pour les réécrire à neuf) ; garde ceux du projet."""
+    for event in list(settings.get("hooks", {})):
+        kept = []
+        for entry in settings["hooks"][event]:
+            hooks = [h for h in entry.get("hooks", []) if ".claude/kwa/hooks/" not in h.get("command", "")]
+            if hooks:
+                kept.append({**entry, "hooks": hooks})
+        if kept:
+            settings["hooks"][event] = kept
+        else:
+            del settings["hooks"][event]
+
+
+def apply_codex(target: Path, modules: list[str], dry: bool) -> list[str]:
+    """Parité Codex : mêmes skills (liens relatifs dans .agents/skills) et mêmes hooks (.codex/hooks.json)."""
+    notes = []
+    skills = sorted({Path(spec["dest"]).parts[2] for m in modules for _, spec in module_files(manifest()[m])
+                     if spec["dest"].startswith(".claude/skills/")})
+    for name in skills:
+        link = target / ".agents" / "skills" / name
+        if link.is_symlink() or link.exists():
+            continue
+        notes.append(f"lien .agents/skills/{name}")
+        if not dry:
+            link.parent.mkdir(parents=True, exist_ok=True)
+            link.symlink_to(f"../../.claude/skills/{name}")
+    path = target / ".codex" / "hooks.json"
+    settings = read_json(path, {})
+    before = json.dumps(settings, sort_keys=True)
+    strip_kwa_hooks(settings)
+    merge_hooks(settings, codex_hooks(modules))
+    changed = json.dumps(settings, sort_keys=True) != before
+    if changed and not dry:
+        save_settings(path, settings)
+    notes.append(".codex/hooks.json : " + ("hooks de Kwa écrits" if changed else "à jour"))
+    rules = target / ".codex" / "rules" / "kwa.rules"
+    text = codex_rules_text(read_json(target / POLICY_REL, {}) or {})
+    same = rules.exists() and rules.read_text(encoding="utf-8") == text
+    if not same and not dry:
+        rules.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write(rules, text)
+    notes.append(".codex/rules/kwa.rules : " + ("à jour" if same else "confirmations écrites"))
+    for m in modules:
+        for src, spec in module_files(manifest()[m]):
+            if not spec["dest"].startswith(".claude/agents/"):
+                continue
+            name = Path(spec["dest"]).stem
+            dest = target / ".codex" / "agents" / f"{name}.toml"
+            text = codex_agent_toml((PACK / src).read_text(encoding="utf-8"), spec["dest"])
+            if dest.exists() and dest.read_text(encoding="utf-8") == text:
+                continue
+            notes.append(f".codex/agents/{name}.toml")
+            if not dry:
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                atomic_write(dest, text)
+    notes.append("à faire une fois dans Codex : approuver le projet et valider ses hooks avec /hooks (à refaire après chaque mise à jour)")
+    return notes
+
+
+# --------------------------------------------------------------------------- fichiers gérés
+
+def sync_files(target: Path, modules: list[str], dry: bool) -> dict:
+    """Copie les fichiers des modules. Géré : retouche locale sauvegardée avant écrasement.
+    Seed : copié seulement s'il n'existe pas, puis laissé au projet."""
+    kwa_dir = target / ".claude" / "kwa"
+    state_file = state_path(target)
+    old = read_json(legacy_state_path(target) if is_legacy(target) else state_file, {"files": {}})
+    report = {"ajouté": [], "mis à jour": [], "sauvegardé": [], "inchangé": [], "retiré": [], "seed": []}
+    new_files = {}
+    backup_dir = kwa_dir / "backup" / time.strftime("%Y%m%d-%H%M%S")
+    for m in modules:
+        for src_rel, spec in module_files(manifest()[m]):
+            src, dest_rel = PACK / src_rel, spec["dest"]
+            dst = target / dest_rel
+            if src.is_symlink() or not src.is_file():
+                die(f"manifeste : {src_rel} absent ou lien symbolique")
+            if dst.is_symlink():
+                die(f"{dest_rel} est un lien symbolique ; kwa refuse d'écrire à travers")
+            if spec.get("seed"):
+                if not dst.exists():
+                    report["seed"].append(dest_rel)
+                    if not dry:
+                        dst.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(src, dst)
+                continue
+            new_sha = sha(src)
+            new_files[dest_rel] = new_sha
+            if not dst.exists():
+                report["ajouté"].append(dest_rel)
+            elif sha(dst) == new_sha:
+                report["inchangé"].append(dest_rel)
+                continue
+            else:
+                if sha(dst) != old["files"].get(dest_rel):
+                    report["sauvegardé"].append(dest_rel)
+                    if not dry:
+                        (backup_dir / dest_rel).parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(dst, backup_dir / dest_rel)
+                report["mis à jour"].append(dest_rel)
+            if not dry:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                os.chmod(dst, int(spec.get("mode", "644"), 8))
+    for rel in set(old["files"]) - set(new_files):
+        report["retiré"].append(rel)
+        if not dry and (target / rel).exists():
+            (target / rel).unlink()
+    if not dry:
+        atomic_write(state_file, json.dumps({"version": version(), "modules": modules, "files": new_files},
+                                            indent=2, sort_keys=True) + "\n")
+    return report
+
+
+def apply_local_excludes(target: Path, dry: bool) -> str:
+    """Notes locales et sauvegardes ne se versionnent pas : exclusion dans .git/info/exclude (local, hors historique)."""
+    git = target / ".git"
+    if not git.exists():
+        return "pas de dépôt git"
+    if git.is_dir():
+        path = git / "info" / "exclude"
+    else:  # worktree : le fichier d'exclusion vit dans le dépôt commun
+        r = subprocess.run(["git", "-C", str(target), "rev-parse", "--git-path", "info/exclude"], capture_output=True, text=True)
+        if r.returncode != 0 or not r.stdout.strip():
+            return "dépôt git illisible"
+        path = (target / r.stdout.strip()).resolve()
+    wanted = [".claude/kwa/local/", ".claude/kwa/backup/", ".claude/settings.json.bak-*"]
+    have = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    missing = [w for w in wanted if w not in have]
+    if missing and not dry:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(("\n" if have and have[-1] else "") + "# kwa\n" + "\n".join(missing) + "\n")
+    return f"{len(missing)} motif(s) ajouté(s)" if missing else "à jour"
+
+
+# --------------------------------------------------------------------------- migration depuis l'ancien nom
+
+def strip_legacy_hooks(settings: dict) -> int:
+    """Retire de settings.json les hooks de l'ancien dossier .claude/kata/hooks ; garde les hooks du projet."""
+    removed = 0
+    for event in list(settings.get("hooks", {})):
+        kept = []
+        for entry in settings["hooks"][event]:
+            hooks = [h for h in entry.get("hooks", []) if LEGACY_HOOKS not in h.get("command", "")]
+            removed += len(entry.get("hooks", [])) - len(hooks)
+            if hooks:
+                kept.append({**entry, "hooks": hooks})
+        if kept:
+            settings["hooks"][event] = kept
+        else:
+            del settings["hooks"][event]
+    return removed
+
+
+def migrate_legacy(target: Path, dry: bool) -> list[str]:
+    """Installation faite sous l'ancien nom : sauvegarde les retouches locales, déplace notes et sauvegardes,
+    renomme la politique, retire les anciens hooks. Les anciens fichiers gérés sont retirés par sync_files."""
+    if not is_legacy(target):
+        return []
+    notes = []
+    claude = target / ".claude"
+    old = read_json(legacy_state_path(target), {"files": {}})
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    modified = [r for r, h in old.get("files", {}).items() if (target / r).is_file() and sha(target / r) != h]
+    for rel in modified:
+        notes.append(f"retouche locale sauvegardée : {rel}")
+        if not dry:
+            dest = claude / "kwa" / "backup" / stamp / "legacy" / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(target / rel, dest)
+    for folder in ("local", "backup"):
+        src, dst = claude / "kata" / folder, claude / "kwa" / folder
+        if src.is_dir() and not dst.exists():
+            notes.append(f"déplacé : .claude/kata/{folder} → .claude/kwa/{folder}")
+            if not dry:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(src), str(dst))
+    old_pol, new_pol = target / LEGACY_POLICY_REL, target / POLICY_REL
+    if old_pol.is_file() and not new_pol.exists():
+        notes.append(f"politique renommée : {LEGACY_POLICY_REL} → {POLICY_REL}")
+        if not dry:
+            text = old_pol.read_text(encoding="utf-8")
+            new_pol.write_text(re.sub(r'^(\s*)"kata"(\s*:)', r'\1"kwa"\2', text, count=1, flags=re.M), encoding="utf-8")
+            old_pol.unlink()
+    elif old_pol.is_file():
+        notes.append(f"À FUSIONNER : {LEGACY_POLICY_REL} et {POLICY_REL} existent tous les deux")
+    for rel in (".claude/settings.json", ".codex/hooks.json"):
+        path = target / rel
+        data = read_json(path, None)
+        if data and any(LEGACY_HOOKS in h.get("command", "") for ev in data.get("hooks", {}).values()
+                        for e in ev for h in e.get("hooks", [])):
+            removed = strip_legacy_hooks(data)
+            notes.append(f"{rel} : {removed} ancien(s) hook(s) retiré(s)")
+            if not dry:
+                save_settings(path, data)
+    agents_skills = target / ".agents" / "skills"
+    if agents_skills.is_dir():
+        for link in sorted(agents_skills.glob("kata-*")):
+            if link.is_symlink():
+                notes.append(f"ancien lien retiré : .agents/skills/{link.name}")
+                if not dry:
+                    link.unlink()
+    return notes
+
+
+def finish_legacy(target: Path, dry: bool) -> list[str]:
+    """Après sync_files : retire l'ancien état et les dossiers vides laissés par l'ancien nom."""
+    notes = []
+    claude = target / ".claude"
+    if dry or not legacy_state_path(target).exists():
+        return notes
+    legacy_state_path(target).unlink()
+    for root in (claude / "skills", claude / "rules", claude / "kata"):
+        if not root.is_dir():
+            continue
+        for d in sorted((x for x in root.rglob("*") if x.is_dir()), key=lambda x: len(x.parts), reverse=True):
+            in_old_skill = any(part.startswith("kata-") for part in d.relative_to(root).parts)
+            if (root != claude / "skills" or in_old_skill) and not any(d.iterdir()):
+                d.rmdir()
+        if root == claude / "kata" and root.is_dir() and not any(root.iterdir()):
+            root.rmdir()
+    if (claude / "kata").is_dir():
+        notes.append("À VÉRIFIER : .claude/kata contient encore des fichiers qui ne sont pas à Kwa ; à supprimer à la main si inutiles")
+    return notes
+
+
+# --------------------------------------------------------------------------- recommandations
+
+def recommendations(tags: list[str], modules: list[str]) -> list[dict]:
+    data = json.loads((PACK / "core" / "recommended.json").read_text())
+    keys = ["all"] + [k for k in data if k != "all" and (k in tags or k in modules)]
+    seen, out = set(), []
+    for k in keys:
+        for item in data.get(k, []):
+            if item["name"] not in seen:
+                seen.add(item["name"])
+                out.append(item)
+    return out
+
+
+def skill_present(name: str, target: Path) -> bool:
+    home = Path(os.environ.get("KWA_HOME") or Path.home()) / ".claude"
+    if any((p / name).exists() for p in (home / "skills", target / ".claude" / "skills", target / ".agents" / "skills")):
+        return True
+    plugins = read_json(home / "plugins" / "installed_plugins.json", {}) or {}
+    return any(k.split("@")[0] == name for k in plugins.get("plugins", {}))
+
+
+# --------------------------------------------------------------------------- plugin
+
+PLUGIN_DIR = "plugin"
+MARKETPLACE = {"name": "kwa", "repo": "nesyouyou/kwa"}
+PLUGIN_ID = "kwa@kwa"
+PLUGIN_RUNTIME = ("VERSION", "manifest.json", "profiles", "bin/kwa", "core/hooks", "core/bin", "core/templates",
+                  "core/rules", "core/recommended.json", "core/agents", "core/skills")
+PLUGIN_REWRITE = ("core/rules/", "core/templates/skills-router.md")  # textes injectés par le plugin : noms réécrits
+
+
+def plugin_skills() -> dict[str, list[tuple[str, str]]]:
+    """Skills des modules, par nom court (commit, tdd…) : [(source, chemin dans le dossier de la skill)]."""
+    out: dict[str, list[tuple[str, str]]] = {}
+    for m in manifest().values():
+        for src, spec in module_files(m):
+            got = re.match(r"\.claude/skills/kwa-([a-z-]+)/(.+)$", spec["dest"])
+            if got:
+                out.setdefault(got.group(1), []).append((src, got.group(2)))
+    return out
+
+
+def plugin_text(text: str, skills) -> str:
+    """Un texte écrit pour l'installation par copie, réécrit pour le plugin : /kwa-commit devient /kwa:commit, les
+    outils se lancent par `kwa start` (le dossier bin du plugin est dans le PATH), règles et hooks vivent dans le
+    plugin."""
+    text = re.sub(r"(?:python3 )?\.claude/kwa/bin/kwa-([a-z]+)", r"kwa \1", text)
+    text = re.sub(r"(?<![/$\w-])kwa-(memory|start|hygiene)(?![a-z-])", r"kwa \1", text)
+    text = re.sub(r"^name: kwa-", "name: ", text, flags=re.M)
+    text = re.sub(r"^# kwa-", "# kwa:", text, flags=re.M)
+    text = text.replace("Garde-fous automatiques : `.claude/kwa/hooks/`", "Garde-fous automatiques : les hooks du plugin Kwa")
+    text = text.replace("(`kwa install`)", "(`kwa init`)")
+    text = text.replace("`.claude/rules/kwa-*.md`", "les règles communes de Kwa (rappelées au démarrage de session)")
+    text = re.sub(r"`\.claude/rules/kwa-([a-z-]+)\.md`", r"la règle Kwa « \1 » (rappelée au démarrage de session)", text)
+    text = re.sub(r"`\.claude/kwa/hooks/?`", "du plugin Kwa", text)
+    text = text.replace("kwa-relecteur", "kwa:relecteur")
+    names = "|".join(sorted(skills, key=len, reverse=True))
+    return re.sub(rf"([/$])kwa-({names})(?![a-z-])", r"\1kwa:\2", text)
+
+
+def plugin_agent(md: str, skills) -> str:
+    """L'agent pour le plugin : son nom perd le préfixe (le plugin le préfixe : kwa:relecteur), et ses hooks
+    d'en-tête, ignorés par Claude Code dans un plugin, passent dans les hooks du plugin (readonly-bash filtré par
+    agent dans run.py)."""
+    _, head, body = md.split("---", 2)
+    kept, skip = [], False
+    for line in head.strip("\n").splitlines():
+        if line.startswith("hooks:"):
+            skip = True
+            continue
+        if skip and line.startswith((" ", "\t")):
+            continue
+        skip = False
+        kept.append(line)
+    return plugin_text("---\n" + "\n".join(kept) + "\n---" + body, skills)
+
+
+def plugin_hooks() -> dict:
+    """Tous les hooks des modules, lancés par run.py qui vérifie la politique du projet et ses modules."""
+    out: dict = {}
+    for m in manifest().values():
+        for event, entries in m.get("hooks", {}).items():
+            for e in entries:
+                hooks = [{**h, "command": 'python3 "${CLAUDE_PLUGIN_ROOT}/core/hooks/run.py" '
+                          + re.search(r"hooks/([a-z-]+)\.py", h["command"]).group(1)} for h in e["hooks"]]
+                out.setdefault(event, []).append({**({"matcher": e["matcher"]} if "matcher" in e else {}), "hooks": hooks})
+    out["PreToolUse"].append({"matcher": "Bash", "hooks": [
+        {"type": "command", "command": 'python3 "${CLAUDE_PLUGIN_ROOT}/core/hooks/run.py" readonly-bash', "timeout": 10}]})
+    return {"description": "Garde-fous, mémoire et routage de Kwa ; actifs seulement dans un projet qui a une "
+                           "politique .claude/kwa.policy.json (kwa init)", "hooks": out}
+
+
+def plugin_files() -> dict[str, bytes]:
+    """Contenu complet du dossier plugin/, chemin relatif → octets."""
+    skills = plugin_skills()
+    files: dict[str, bytes] = {}
+    for rel in PLUGIN_RUNTIME:
+        src = PACK / rel
+        for f in ([src] if src.is_file() else sorted(p for p in src.rglob("*") if p.is_file())):
+            if "__pycache__" not in f.parts and not f.name.endswith(".pyc"):
+                rel_f = f.relative_to(PACK).as_posix()
+                data = f.read_bytes()
+                if rel_f.startswith(PLUGIN_REWRITE):
+                    data = plugin_text(data.decode("utf-8"), skills).encode("utf-8")
+                files[rel_f] = data
+    for name, items in skills.items():
+        for src, rel in items:
+            raw = (PACK / src).read_bytes()
+            if src.endswith((".md", ".yaml", ".yml")):
+                raw = plugin_text(raw.decode("utf-8"), skills).encode("utf-8")
+            files[f"skills/{name}/{rel}"] = raw
+    for m in manifest().values():
+        for src, spec in module_files(m):
+            if spec["dest"].startswith(".claude/agents/"):
+                name = Path(spec["dest"]).name.replace("kwa-", "", 1)
+                files[f"agents/{name}"] = plugin_agent((PACK / src).read_text(encoding="utf-8"), skills).encode("utf-8")
+    meta = {"name": "kwa", "version": version(),
+            "description": "Kit de workflows automatisés pour le dev agentique : garde-fous, skills de méthode, "
+                           "mémoire de session et workflow issue → PR.",
+            "author": {"name": "nesyouyou", "url": "https://github.com/nesyouyou"},
+            "homepage": "https://nesyouyou.github.io/kwa/", "repository": "https://github.com/nesyouyou/kwa",
+            "license": "MIT", "keywords": ["workflow", "guardrails", "skills", "tdd", "code-review"]}
+    dump = lambda d: (json.dumps(d, indent=2, ensure_ascii=False) + "\n").encode("utf-8")  # noqa: E731
+    files[".claude-plugin/plugin.json"] = dump({**meta, "hooks": "./hooks.claude.json"})
+    files[".codex-plugin/plugin.json"] = dump({**meta, "skills": "./skills/", "interface": {
+        "displayName": "Kwa", "shortDescription": "Workflows automatisés pour le dev agentique",
+        "developerName": "nesyouyou", "category": "Coding", "websiteURL": "https://nesyouyou.github.io/kwa/"}})
+    files["hooks.claude.json"] = dump(plugin_hooks())
+    return files
+
+
+def marketplace_text() -> str:
+    return json.dumps({"name": MARKETPLACE["name"], "owner": {"name": "nesyouyou", "url": "https://github.com/nesyouyou"},
+                       "description": "Kwa, kit de workflows automatisés pour le dev agentique.",
+                       "plugins": [{"name": "kwa", "source": f"./{PLUGIN_DIR}", "category": "development",
+                                    "description": "Garde-fous, skills de méthode, mémoire de session et workflow issue → PR."}]},
+                      indent=2, ensure_ascii=False) + "\n"
+
+
+def cmd_build_plugin(a) -> int:
+    """Régénère plugin/ et la marketplace depuis les sources. --check : échoue si le plugin publié a dérivé."""
+    want = plugin_files()
+    root = PACK / PLUGIN_DIR
+    have = {p.relative_to(root).as_posix(): p.read_bytes() for p in root.rglob("*") if p.is_file()} if root.is_dir() else {}
+    mk = PACK / ".claude-plugin" / "marketplace.json"
+    stale = sorted({k for k in want if have.get(k) != want[k]} | (set(have) - set(want)))
+    if not mk.exists() or mk.read_text(encoding="utf-8") != marketplace_text():
+        stale.append(".claude-plugin/marketplace.json")
+    if a.check:
+        if stale:
+            print("plugin à régénérer (kwa build-plugin) :" + "".join(f"\n  ~ {x}" for x in stale[:20]))
+            return 1
+        print(f"plugin à jour ({len(want)} fichiers)")
+        return 0
+    if root.is_dir():
+        shutil.rmtree(root)
+    for rel, data in want.items():
+        dst = root / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_bytes(data)
+        src = PACK / rel
+        os.chmod(dst, (src.stat().st_mode & 0o777) if src.exists() else 0o644)
+    atomic_write(mk, marketplace_text())
+    print(f"plugin/ régénéré : {len(want)} fichiers ({len(stale)} changé(s))")
+    return 0
+
+
+def migrate_copy(target: Path, dry: bool, legacy: bool = False) -> list[str]:
+    """Retire une installation par copie : fichiers gérés inchangés supprimés, retouchés mis de côté dans
+    .claude/kwa/backup/, hooks copiés débranchés (Claude Code et Codex), liens Codex retirés, caches Python effacés.
+    La mémoire locale reste."""
+    state = read_json(legacy_state_path(target) if legacy else state_path(target), {}) or {}
+    if not state.get("files"):
+        return []
+    notes, kept = [], 0
+    backup = target / ".claude" / "kwa" / "backup" / time.strftime("%Y%m%d-%H%M%S")
+    for rel, digest in sorted(state["files"].items()):
+        f = target / rel
+        if not f.is_file():
+            continue
+        if sha(f) != digest:
+            kept += 1
+            if not dry:
+                (backup / rel).parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(f), str(backup / rel))
+        elif not dry:
+            f.unlink()
+    for link in sorted((target / ".agents" / "skills").glob("kwa-*")) if (target / ".agents" / "skills").is_dir() else []:
+        if link.is_symlink() and not dry:
+            link.unlink()
+    if not dry:
+        (legacy_state_path(target) if legacy else state_path(target)).unlink()
+        for cache in [p for base in (".claude/kwa", ".claude/kata") for p in (target / base).rglob("__pycache__")
+                      if (target / base).is_dir()]:
+            shutil.rmtree(cache, ignore_errors=True)
+        for d in sorted({(target / r).parent for r in state["files"]}, key=lambda x: len(x.parts), reverse=True):
+            while d != target and d.is_dir() and not any(d.iterdir()):
+                d.rmdir()
+                d = d.parent
+    for path in (target / ".claude" / "settings.json", target / ".codex" / "hooks.json"):
+        settings = read_json(path, None)
+        if not settings:
+            continue
+        before = json.dumps(settings, sort_keys=True)
+        strip_kwa_hooks(settings)
+        if json.dumps(settings, sort_keys=True) != before and not dry:
+            save_settings(path, settings)
+    notes.append(f"installation par copie retirée ({len(state['files'])} fichier(s) gérés"
+                 + (f", {kept} retouché(s) mis de côté dans .claude/kwa/backup/" if kept else "") + ")")
+    return notes
+
+
+def apply_project_tools(target: Path, modules: list[str], dry: bool) -> str:
+    """Un outil que la CI du projet lance sans agent ni plugin reste un fichier du projet : kwa-hygiene
+    (client-handover), appelé par .github/workflows/kwa-hygiene.yml."""
+    if "client-handover" not in modules:
+        return ""
+    src, dst = PACK / "core" / "bin" / "kwa-hygiene", target / ".claude" / "kwa" / "bin" / "kwa-hygiene"
+    if dst.is_file() and sha(dst) == sha(src):
+        return "kwa-hygiene à jour"
+    if not dry:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        os.chmod(dst, 0o755)
+    return ".claude/kwa/bin/kwa-hygiene (lancé par la CI, à committer)"
+
+
+def apply_seeds(target: Path, modules: list[str], dry: bool) -> list[str]:
+    """Gabarits que le projet s'approprie (GitHub, exceptions) : copiés une fois, jamais écrasés."""
+    added = []
+    for m in modules:
+        for src, spec in module_files(manifest()[m]):
+            dst = target / spec["dest"]
+            if spec.get("seed") and not dst.exists():
+                added.append(spec["dest"])
+                if not dry:
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(PACK / src, dst)
+    return added
+
+
+def apply_plugin_settings(target: Path, dry: bool) -> str:
+    """.claude/settings.json versionné : la marketplace de Kwa et le plugin activé, proposés à toute l'équipe."""
+    path = target / ".claude" / "settings.json"
+    settings = read_json(path, {}) or {}
+    before = json.dumps(settings, sort_keys=True)
+    settings.setdefault("extraKnownMarketplaces", {})[MARKETPLACE["name"]] = {
+        "source": {"source": "github", "repo": MARKETPLACE["repo"]}}
+    settings.setdefault("enabledPlugins", {})[PLUGIN_ID] = True
+    if json.dumps(settings, sort_keys=True) == before:
+        return "à jour"
+    if not dry:
+        save_settings(path, settings)
+    return f"plugin {PLUGIN_ID} proposé à l'équipe"
+
+
+def apply_policy_modules(target: Path, modules: list[str], dry: bool) -> None:
+    """Le plugin lit les modules actifs dans la politique : seul ce champ est tenu à jour par Kwa."""
+    path = target / POLICY_REL
+    pol = read_json(path, {}) or {}
+    if pol.get("modules") != modules and not dry:
+        pol["modules"] = modules
+        atomic_write(path, json.dumps(pol, indent=2, ensure_ascii=False) + "\n")
+
+
+def plugin_codex_hooks(modules: list[str]) -> dict:
+    """Hooks de Codex en mode plugin : Codex en ligne de commande ne charge pas les hooks d'un plugin, ils passent
+    donc par la commande `kwa hook`, qui lance le même run.py depuis l'installation de Kwa."""
+    snippet = codex_hooks(modules)
+    for entries in snippet.values():
+        for e in entries:
+            for h in e["hooks"]:
+                h["command"] = re.sub(r"python3 \.claude/kwa/hooks/([a-z-]+)\.py", r"kwa hook \1", h["command"])
+    return snippet
+
+
+def apply_plugin_codex(target: Path, modules: list[str], dry: bool) -> list[str]:
+    notes = []
+    path = target / ".codex" / "hooks.json"
+    settings = read_json(path, {}) or {}
+    before = json.dumps(settings, sort_keys=True)
+    for event in list(settings.get("hooks", {})):  # les hooks de Kwa sont réécrits à neuf, ceux du projet restent
+        kept = [{**e, "hooks": [h for h in e.get("hooks", []) if "kwa hook " not in h.get("command", "")
+                                and ".claude/kwa/hooks/" not in h.get("command", "")]} for e in settings["hooks"][event]]
+        kept = [e for e in kept if e["hooks"]]
+        if kept:
+            settings["hooks"][event] = kept
+        else:
+            del settings["hooks"][event]
+    merge_hooks(settings, plugin_codex_hooks(modules))
+    changed = json.dumps(settings, sort_keys=True) != before
+    if changed and not dry:
+        save_settings(path, settings)
+    notes.append(".codex/hooks.json : " + ("hooks par `kwa hook`" if changed else "à jour"))
+    rules = target / ".codex" / "rules" / "kwa.rules"
+    text = codex_rules_text(read_json(target / POLICY_REL, {}) or {})
+    if not (rules.exists() and rules.read_text(encoding="utf-8") == text) and not dry:
+        atomic_write(rules, text)
+    for m in modules:
+        for src, spec in module_files(manifest()[m]):
+            if spec["dest"].startswith(".claude/agents/"):
+                dest = target / ".codex" / "agents" / f"{Path(spec['dest']).stem}.toml"
+                head, body = (PACK / src).read_text(encoding="utf-8").split("\n---", 1)
+                text = codex_agent_toml(head + "\n---" + plugin_text(body, plugin_skills()), spec["dest"])
+                if not (dest.exists() and dest.read_text(encoding="utf-8") == text) and not dry:
+                    atomic_write(dest, text)
+    return notes
+
+
+def cmd_init(a) -> int:
+    """Prépare un projet pour le plugin Kwa : rien que de la configuration, aucun script copié."""
+    target = Path(a.target).resolve()
+    if not target.is_dir():
+        die(f"cible introuvable : {target}")
+    if target == PACK:
+        die("la cible ne peut pas être le pack lui-même")
+    modules = resolve_modules(a, target)
+    found = detect(target)
+    tag = "[simulation] " if a.dry_run else ""
+    print(f"{tag}kwa v{version()} (plugin) → {target}")
+    print(f"  modules : {', '.join(modules)}")
+    notes = migrate_legacy(target, a.dry_run)
+    if is_legacy(target) and not a.dry_run:  # l'ancien nom : ses fichiers gérés passent par l'état, puis comme une copie
+        state_path(target).parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(legacy_state_path(target)), str(state_path(target)))
+    notes += migrate_copy(target, a.dry_run, legacy=is_legacy(target))
+    notes += finish_legacy(target, a.dry_run)
+    for note in notes:
+        print(f"  migration : {note}")
+    tools = apply_project_tools(target, modules, a.dry_run)
+    if tools:
+        print(f"  outils du projet : {tools}")
+    seeds = apply_seeds(target, modules, a.dry_run)
+    if seeds:
+        print("  gabarits copiés :" + "".join(f"\n    - {x}" for x in seeds))
+    print(f"  AGENTS.md : {apply_block(target, 'pr-flow', modules, a.dry_run, plugin=True)}")
+    print(f"  CLAUDE.md : {apply_pointer(target, a.dry_run)}")
+    print(f"  politique {POLICY_REL} : {apply_policy(target, modules, found['inferred'], a.dry_run)}")
+    apply_policy_modules(target, modules, a.dry_run)
+    print(f"  .git/info/exclude : {apply_local_excludes(target, a.dry_run)}")
+    print(f"  .claude/settings.json : {apply_plugin_settings(target, a.dry_run)}")
+    if not a.no_codex:
+        print("  codex : " + "; ".join(apply_plugin_codex(target, modules, a.dry_run)))
+    print("  git : rien n'a été ajouté, commité ni poussé.")
+    print("Ensuite :")
+    print(f"  Claude Code : /plugin marketplace add {MARKETPLACE['repo']}, puis /plugin install {PLUGIN_ID}"
+          " (ou accepter la proposition du projet au démarrage)")
+    if not a.no_codex:
+        print(f"  Codex : codex plugin marketplace add {MARKETPLACE['repo']}, puis codex plugin add {PLUGIN_ID} ;"
+              " la commande `kwa` doit être dans le PATH, puis valider les hooks avec /hooks")
+    return 0
+
+
+TOOLS = {"start": "kwa-start", "memory": "kwa-memory", "hygiene": "kwa-hygiene"}
+
+
+def run_tool(argv: list[str]) -> int:
+    """`kwa hook <nom>` (hooks de Codex) et `kwa start|memory|hygiene …` (outils appelés par les skills)."""
+    if argv[0] == "hook":
+        script = [str(PACK / "core" / "hooks" / "run.py")] + argv[1:2]
+    else:
+        script = [str(PACK / "core" / "bin" / TOOLS[argv[0]])] + argv[1:]
+    os.environ.setdefault("KWA_RUNTIME", "plugin")
+    os.execv(sys.executable, [sys.executable] + script)
+    return 0
+
+
+# --------------------------------------------------------------------------- commandes
+
+def resolve_modules(a, target: Path) -> list[str]:
+    man = manifest()
+    state = read_json(legacy_state_path(target) if is_legacy(target) else state_path(target), {}) or {}
+    known = state.get("modules") or (read_json(target / POLICY_REL, {}) or {}).get("modules")  # plugin : pas d'état
+    spec = a.modules or ("auto" if not known else ",".join(known))
+    chosen = ["core"] + [m for m in (detect(target)["modules"] if spec == "auto" else spec.split(",")) if m != "core"]
+    chosen += list(a.with_ or [])
+    unknown = [m for m in chosen if m not in man]
+    if unknown:
+        die(f"module(s) inconnu(s) : {', '.join(unknown)} (disponibles : {', '.join(man)})")
+    return list(dict.fromkeys(chosen))
+
+
+def cmd_detect(a) -> int:
+    target = Path(a.target).resolve()
+    d = detect(target)
+    man = manifest()
+    print(f"Stack détectée : {', '.join(d['tags']) or '—'}")
+    print("Modules proposés :")
+    for m in d["modules"]:
+        print(f"  ✓ {m:16} {man[m]['about']}")
+    for m in d["suggested"]:
+        print(f"  ? {m:16} {man[m]['about']}  (sur demande : --with {m})")
+    print("Politique déduite :")
+    print(json.dumps(d["inferred"], indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_install(a) -> int:
+    target = Path(a.target).resolve()
+    if not target.is_dir():
+        die(f"cible introuvable : {target}")
+    if target == PACK:
+        die("la cible ne peut pas être le pack lui-même")
+    modules = resolve_modules(a, target)
+    profile = "pr-flow"
+    found = detect(target)
+    tag = "[simulation] " if a.dry_run else ""
+    print(f"{tag}kwa v{version()} → {target}")
+    print(f"  modules : {', '.join(modules)}")
+    for note in migrate_legacy(target, a.dry_run):
+        print(f"  migration : {note}")
+    rep = sync_files(target, modules, a.dry_run)
+    for k, v in rep.items():
+        if v:
+            print(f"  fichiers {k} : {len(v)}" + ("".join(f"\n    - {x}" for x in v) if k in ("sauvegardé", "retiré", "seed") else ""))
+    for note in finish_legacy(target, a.dry_run):
+        print(f"  migration : {note}")
+    print(f"  AGENTS.md : {apply_block(target, profile, modules, a.dry_run)}")
+    print(f"  CLAUDE.md : {apply_pointer(target, a.dry_run)}")
+    pol_note = apply_policy(target, modules, found["inferred"], a.dry_run)
+    if a.dry_run and (target / LEGACY_POLICY_REL).is_file() and not (target / POLICY_REL).exists():
+        pol_note = "conservée (propriété du projet, renommée par la migration)"
+    print(f"  politique {POLICY_REL} : {pol_note}")
+    print(f"  .git/info/exclude : {apply_local_excludes(target, a.dry_run)}")
+    added = apply_settings(target, modules, a.dry_run)
+    print(f"  hooks settings.json : {len(added)} ajouté(s)" + "".join(f"\n    + {x}" for x in added))
+    if not a.no_codex:
+        print("  codex : " + "; ".join(apply_codex(target, modules, a.dry_run)))
+    recs = [r for r in recommendations(found["tags"], modules) if not skill_present(r["name"], target)]
+    if recs:
+        print("  skills recommandées, non installées (voir `kwa recommend`) : " + ", ".join(r["name"] for r in recs))
+    print("  git : rien n'a été ajouté, commité ni poussé.")
+    return 0
+
+
+def cmd_status(a) -> int:
+    target = Path(a.target).resolve()
+    if is_legacy(target):
+        print("installation faite sous l'ancien nom (kata) : lancer `kwa install` pour migrer")
+        return 1
+    state = read_json(state_path(target), {})
+    if not state and plugin_mode(target):
+        mods = (read_json(target / POLICY_REL, {}) or {}).get("modules") or []
+        have = plugin_installed()
+        print(f"Kwa par plugin — modules : {', '.join(mods) or '?'} — plugin Claude Code : "
+              + (f"v{have} (pack : v{version()})" if have else "non installé sur cette machine"))
+        return 0 if have else 1
+    if not state:
+        print("kwa n'est pas installé ici")
+        return 1
+    drift = [r for r, h in state["files"].items() if not (target / r).exists() or sha(target / r) != h]
+    print(f"installé : v{state['version']} (pack : v{version()}) — modules : {', '.join(state.get('modules', []))}")
+    print(f"dérive locale : {len(drift)} fichier(s)" + "".join(f"\n  ~ {x}" for x in drift))
+    return 0 if state["version"] == version() and not drift else 1
+
+
+def plugin_mode(target: Path) -> bool:
+    """Projet préparé par `kwa init` : une politique, aucune copie de Kwa."""
+    return (target / POLICY_REL).exists() and not state_path(target).exists() and not is_legacy(target)
+
+
+def plugin_installed() -> str:
+    """Version du plugin installée pour Claude Code sur cette machine, ou chaîne vide."""
+    home = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path(os.environ.get("KWA_HOME") or Path.home()) / ".claude")
+    data = read_json(home / "plugins" / "installed_plugins.json", {}) or {}
+    entries = (data.get("plugins") or {}).get(PLUGIN_ID) or []
+    entries = entries if isinstance(entries, list) else [entries]
+    return next((str(e.get("version", "?")) for e in entries if isinstance(e, dict)), "")
+
+
+def doctor_plugin(target: Path) -> int:
+    problems, notes = [], []
+    agents = target / "AGENTS.md"
+    if not agents.exists() or len(markers(agents.read_text(encoding="utf-8").splitlines())) != 1:
+        problems.append("AGENTS.md : bloc kwa absent ou en double (relancer `kwa init`)")
+    claude = target / "CLAUDE.md"
+    if claude.exists() and not claude.is_symlink() and not is_pointer(claude.read_text(encoding="utf-8")):
+        problems.append("CLAUDE.md porte des règles propres : fusionner dans AGENTS.md")
+    pol = read_json(target / POLICY_REL, {}) or {}
+    modules = pol.get("modules") or []
+    if not modules:
+        problems.append("politique : champ « modules » absent (relancer `kwa init`)")
+    missing = sorted(rule_ids(build_policy(modules or ["core"], {})) - rule_ids(pol))
+    if missing:
+        problems.append(f"politique : règles Kwa absentes ({', '.join(missing)})")
+    settings = read_json(target / ".claude" / "settings.json", {}) or {}
+    if not (settings.get("enabledPlugins") or {}).get(PLUGIN_ID):
+        problems.append(f".claude/settings.json : plugin {PLUGIN_ID} non activé pour le projet")
+    if (target / ".claude" / "kwa" / "hooks").is_dir():
+        problems.append(".claude/kwa/hooks/ existe encore : copie partielle, le plugin s'efface (relancer `kwa init`)")
+    have = plugin_installed()
+    notes.append(f"plugin Claude Code sur cette machine : {'v' + have if have else 'non installé'}"
+                 + ("" if have else f" (/plugin install {PLUGIN_ID})"))
+    if (target / ".codex" / "hooks.json").exists() and not shutil.which("kwa"):
+        notes.append("hooks Codex : la commande `kwa` n'est pas dans le PATH, ils ne tourneront pas")
+    for n in notes:
+        print(f"• {n}")
+    if problems:
+        print("\n".join(f"✗ {p}" for p in problems))
+        return 1
+    print("✓ cible conforme (plugin)")
+    return 0
+
+
+def cmd_doctor(a) -> int:
+    target = Path(a.target).resolve()
+    if plugin_mode(target):
+        return doctor_plugin(target)
+    legacy = is_legacy(target)
+    state = read_json(legacy_state_path(target) if legacy else state_path(target), {})
+    modules = state.get("modules", ["core"])
+    problems, notes = [], []
+    if legacy:
+        problems.append("installation faite sous l'ancien nom (kata) : lancer `kwa install` pour migrer")
+    agents = target / "AGENTS.md"
+    if not agents.exists():
+        problems.append("AGENTS.md absent")
+    else:
+        lines = agents.read_text(encoding="utf-8").splitlines()
+        if len(markers(lines)) != 1:
+            problems.append(f"AGENTS.md : {len(markers(lines))} bloc(s) kwa (attendu : 1)")
+        if len(lines) > 300:
+            problems.append(f"AGENTS.md : {len(lines)} lignes (> 300), déplacer le détail dans docs/")
+    claude = target / "CLAUDE.md"
+    if claude.exists() and not claude.is_symlink() and not is_pointer(claude.read_text(encoding="utf-8")):
+        problems.append("CLAUDE.md porte des règles propres : fusionner dans AGENTS.md")
+    settings = read_json(target / ".claude" / "settings.json", {})
+    missing_hooks = merge_hooks(json.loads(json.dumps(settings)), module_hooks(modules))
+    if missing_hooks:
+        problems.append(f"{len(missing_hooks)} hook(s) kwa non branchés dans settings.json")
+    pol_path = target / POLICY_REL
+    if not pol_path.exists():
+        problems.append(f"{POLICY_REL} absent")
+    else:
+        missing = sorted(rule_ids(build_policy(modules, {})) - rule_ids(read_json(pol_path, {})))
+        if missing:
+            problems.append(f"politique : règles Kwa absentes ({', '.join(missing)})")
+    for kind, table in OVERLAP.items():
+        folder = target / ".claude" / kind
+        if folder.is_dir():
+            for name, by in table.items():
+                if (folder / name).exists():
+                    notes.append(f".claude/{kind}/{name} fait doublon avec {by} : à retirer une fois la politique validée")
+    home_settings = read_json(Path(os.environ.get("KWA_HOME") or Path.home()) / ".claude" / "settings.json", {}) or {}
+    if "craft" in modules and any(k.startswith("superpowers@") and v for k, v in home_settings.get("enabledPlugins", {}).items()):
+        notes.append("le plugin superpowers est actif au niveau utilisateur : il fait doublon avec le module craft "
+                     "(deux routeurs de skills) ; le désactiver une fois Kwa validé")
+    foreign = [h["command"] for ev in settings.get("hooks", {}).values() for e in ev for h in e.get("hooks", [])
+               if "/.claude/kwa/" not in h.get("command", "")]
+    if foreign:
+        notes.append(f"{len(foreign)} hook(s) propres au projet dans settings.json (conservés)")
+    for n in notes:
+        print(f"• {n}")
+    if problems:
+        print("\n".join(f"✗ {p}" for p in problems))
+        return 1
+    print("✓ cible conforme")
+    return 0
+
+
+def cmd_recommend(a) -> int:
+    target = Path(a.target).resolve()
+    state = read_json(legacy_state_path(target) if is_legacy(target) else state_path(target), {})
+    d = detect(target)
+    recs = recommendations(d["tags"], state.get("modules", d["modules"]))
+    print(f"Stack : {', '.join(d['tags']) or '—'}")
+    for r in recs:
+        mark = "✓ présente" if skill_present(r["name"], target) else "✗ à installer"
+        print(f"  {mark:14} {r['name']:30} {r['why']}")
+    print("Kwa n'installe aucune skill tierce : relire la source, puis l'installer à la main.")
+    return 0
+
+
+def main() -> int:
+    if len(sys.argv) > 1 and (sys.argv[1] in TOOLS or sys.argv[1] == "hook"):
+        return run_tool(sys.argv[1:])
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("install")
+    p.add_argument("target")
+    p.add_argument("--modules")
+    p.add_argument("--with", dest="with_", action="append")
+    p.add_argument("--codex", action="store_true", help="sans effet : Codex est installé par défaut")
+    p.add_argument("--no-codex", action="store_true", help="ne pas installer la parité Codex")
+    p.add_argument("--dry-run", action="store_true")
+    p = sub.add_parser("init")
+    p.add_argument("target")
+    p.add_argument("--modules")
+    p.add_argument("--with", dest="with_", action="append")
+    p.add_argument("--no-codex", action="store_true", help="ne pas préparer Codex")
+    p.add_argument("--dry-run", action="store_true")
+    p = sub.add_parser("build-plugin")
+    p.add_argument("--check", action="store_true")
+    for name in ("detect", "status", "doctor", "recommend"):
+        p = sub.add_parser(name)
+        p.add_argument("target")
+    a = ap.parse_args()
+    return globals()[f"cmd_{a.cmd.replace('-', '_')}"](a)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
