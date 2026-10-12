@@ -78,15 +78,15 @@ bash tests/run-safety.sh                    # suite hors-ligne
 
 | Module | Apporte |
 |---|---|
-| `core` | gardes secrets / git / suppression / écriture / politique ; règles ; `/kwa-commit`, `/kwa-ship` |
-| `craft` | méthode : `/kwa-brainstorm`, `plan`, `execute`, `agents`, `parallel`, `tdd`, `debug`, `verify`, `review`, `review-feedback` + routage des skills au démarrage de session (remplace superpowers) |
-| `memory` | journal des sessions et reprise au démarrage, notes et signaux (corrections, « retiens : », refus de garde), invitation unique en fin de session, `/kwa-learn` (docs, politique, skill de projet, mémoire agent, base de connaissance) |
-| `issue-flow` | workflow issue → worktree → preuve → PR « Closes #N » → fusion gardée ; `/kwa-start-dev`, gabarits GitHub |
+| `core` | gardes secrets / git / suppression / écriture / politique ; règles ; `/kwa:commit`, `/kwa:ship` |
+| `craft` | méthode : `/kwa:brainstorm`, `plan`, `execute`, `agents`, `parallel`, `tdd`, `debug`, `verify`, `review`, `review-feedback` + routage des skills au démarrage de session (remplace superpowers) |
+| `memory` | journal des sessions et reprise au démarrage, notes et signaux (corrections, « retiens : », refus de garde), invitation unique en fin de session, `/kwa:learn` (docs, politique, skill de projet, mémoire agent, base de connaissance) |
+| `issue-flow` | workflow issue → worktree → preuve → PR « Closes #N » → fusion gardée ; `/kwa:start-dev`, gabarits GitHub |
 | `verify` | formatage des fichiers nouveaux ; garde Stop opt-in (`KWA_STOP_VERIFY=1`) |
-| `deploy` | `/kwa-deploy` : pré-vol, déploiement, vérification, pilotés par `environments` |
+| `deploy` | `/kwa:deploy` : pré-vol, déploiement, vérification, pilotés par `environments` |
 | `client-handover` | règle des 4 tests, `kwa-hygiene`, exceptions datées, job CI (jamais déduit : sur demande) |
 | `stack-prisma` | migrations append-only, pas de reset / db push |
-| `stack-expo` | `/kwa-testflight`, soumission EAS confirmée |
+| `stack-expo` | `/kwa:testflight`, soumission EAS confirmée |
 | `stack-scaleway` | déploiement direct confirmé |
 
 Le spécifique d'un projet vit dans `.claude/kwa.policy.json` (créé une fois à partir de la détection, jamais écrasé) :
@@ -105,10 +105,12 @@ Le spécifique d'un projet vit dans `.claude/kwa.policy.json` (créé une fois �
 
 ## Claude Code et Codex
 
-`kwa install <projet>` installe Kwa pour les deux agents (`--no-codex` pour s'en tenir à Claude Code). Claude Code
-lit `.claude/` et `CLAUDE.md` ; Codex lit `AGENTS.md`, les skills par les liens `.agents/skills/kwa-*`, les hooks dans
-`.codex/hooks.json` et les règles de commandes dans `.codex/rules/kwa.rules`. Les skills et les scripts des gardes
-sont les mêmes ; seules les différences de Codex sont traitées :
+Le même plugin sert les deux agents. Sous Claude Code, il apporte skills (`/kwa:commit`), agent relecteur
+(`kwa:relecteur`), hooks et la commande `kwa` ; le projet ne reçoit que sa configuration (`kwa init`, ou `/kwa:init`
+dans une session). Sous Codex, le plugin apporte les skills ; Codex lit `AGENTS.md`, les hooks dans
+`.codex/hooks.json` (lancés par `kwa hook`), les règles de commandes dans `.codex/rules/kwa.rules` et l'agent
+relecteur dans `.codex/agents/kwa-relecteur.toml`, écrits par `kwa init`. Les scripts des gardes sont les mêmes ;
+seules les différences de Codex sont traitées :
 
 | Différence de Codex | Ce que fait Kwa |
 |---|---|
@@ -116,7 +118,7 @@ sont les mêmes ; seules les différences de Codex sont traitées :
 | Il édite par `apply_patch`, sans chemin de fichier séparé | Les gardes d'écriture et le formatage lisent le patch (fichiers ajoutés, modifiés, supprimés, déplacés) |
 | Il ignore `disable-model-invocation` | Les skills à lancer à la main portent `agents/openai.yaml` (`allow_implicit_invocation: false`) |
 | Ses filtres sont des expressions régulières, fin de session limitée à 3 s | Pas de filtre `*`, l'écriture couvre `apply_patch`, délai de fin de session ramené à 3 s |
-| Une skill se mentionne avec `$` ; les sous-agents se lancent en langage naturel (`worker`, `explorer`) | Le rappel de routage écrit `$kwa-…` sous Codex ; les skills qui délèguent décrivent les deux façons de faire |
+| Une skill se mentionne avec `$` ; les sous-agents se lancent en langage naturel (`worker`, `explorer`) | Le rappel de routage écrit `$kwa:…` sous Codex ; les skills qui délèguent décrivent les deux façons de faire |
 
 Une règle de projet propre à Codex s'ajoute dans la politique, sur une règle `bash.ask` :
 `"codex_prompt": [["scw", "container", "container", ["update", "deploy"]]]` (mots de début de commande, une liste
