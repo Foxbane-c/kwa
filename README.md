@@ -47,25 +47,19 @@ codex plugin marketplace add nesyouyou/kwa
 codex plugin add kwa@kwa
 ```
 
-**2. Le projet, une fois par dépôt**
+**2. Le projet, une fois par dépôt** : dans une session Claude Code ouverte dans le projet, lancez `/kwa:init`.
+La skill montre ce que Kwa détecte, simule, prépare le dépôt après votre accord, complète la politique avec vous et
+vérifie (`kwa detect`, `kwa init --dry-run`, `kwa init`, `kwa doctor` : la commande `kwa` vient avec le plugin).
 
-```bash
-git clone https://github.com/nesyouyou/kwa ~/kwa
-export PATH="$HOME/kwa/bin:$PATH"           # à ajouter à ~/.zshrc ou ~/.bashrc
-kwa detect <projet>                         # stack, modules proposés, politique déduite ; n'écrit rien
-kwa init   <projet> --dry-run               # montre ce qui changerait ; n'écrit rien
-kwa init   <projet> [--with verify] [--no-codex]
-kwa doctor <projet>                         # conformité, plugin installé ou non
-```
-
-Puis committer ce que `kwa init` a écrit (`.claude/kwa.policy.json`, `.claude/settings.json`, `AGENTS.md`,
-`CLAUDE.md`, `.codex/`) : l'équipe reçoit la proposition d'installer le plugin en ouvrant le projet. Sous plugin, les
-skills se lancent avec `/kwa:commit` (Claude Code). Les hooks ne s'activent que dans un projet qui a une politique
-Kwa ; un worktree créé avant le commit de la configuration reprend celle du dépôt principal.
+Puis committez ce qu'elle a écrit (`.claude/kwa.policy.json`, `.claude/settings.json`, `AGENTS.md`, `CLAUDE.md`,
+`.codex/`) par une branche : l'équipe reçoit la proposition d'installer le plugin en ouvrant le projet. Sous plugin,
+les skills se lancent avec `/kwa:commit` (Claude Code). Les hooks ne s'activent que dans un projet qui a une
+politique Kwa ; un worktree créé avant le commit de la configuration reprend celle du dépôt principal.
 
 Sous Codex, deux limites viennent de Codex lui-même : la ligne de commande ne charge pas les hooks d'un plugin, donc
-`.codex/hooks.json` les lance par `kwa hook` (la commande `kwa` doit être dans le PATH) ; et les noms des skills d'un
-plugin Codex n'ont pas encore été vérifiés en session.
+`.codex/hooks.json` les lance par `kwa hook`, et la commande `kwa` doit alors être dans le PATH
+(`git clone https://github.com/nesyouyou/kwa ~/kwa`, puis `export PATH="$HOME/kwa/bin:$PATH"` dans `~/.zshrc`) ; et
+les noms des skills d'un plugin Codex n'ont pas encore été vérifiés en session.
 
 `kwa init` sur un projet déjà installé par copie le migre : fichiers gérés retirés (une retouche locale est mise de
 côté dans `.claude/kwa/backup/`), hooks copiés débranchés, mémoire locale conservée.
