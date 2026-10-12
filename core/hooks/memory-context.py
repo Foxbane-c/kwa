@@ -12,7 +12,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _kwa import load_payload, load_policy, project_dir  # noqa: E402
+from _kwa import cli, load_payload, load_policy, project_dir, skill  # noqa: E402
 
 
 def main() -> int:
@@ -30,8 +30,8 @@ def main() -> int:
         else:
             n = _journal.inbox_count(root)
             if n:
-                msg = (f"Kwa mémoire : {n} note(s) d'apprentissage en attente (`python3 .claude/kwa/bin/kwa-memory pending`). "
-                       "Proposer de les traiter avec /kwa-learn ; ne pas les appliquer sans l'accord de l'utilisateur.")
+                msg = (f"Kwa mémoire : {n} note(s) d'apprentissage en attente (`{cli('memory')} pending`). "
+                       f"Proposer de les traiter avec {skill('learn')} ; ne pas les appliquer sans l'accord de l'utilisateur.")
     except Exception:  # noqa: BLE001  un filet ne doit jamais empêcher une session de démarrer
         msg = ""
     if msg:

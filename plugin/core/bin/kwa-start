@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""kwa-start — démarre un développement selon le workflow issue-flow.
+
+    kwa-start <fix|feat|chore|docs> <slug> "<titre>" [--issue N | --no-issue] [--base B] [--body-file f]
+
+  <slug>         nom court de la branche, en anglais, kebab-case (ex. my-portfolio-filter)
+  <titre>        titre de l'issue, en français
+  --issue N      reprend une issue existante au lieu d'en ouvrir une
+  --no-issue     ne crée aucune issue : branche <type>/<slug> (défaut si la politique a flow.auto_issue: false)
+  --base B       branche de départ du worktree (défaut : base_branch de la politique, sinon main)
+  --body-file f  corps de la nouvelle issue (sinon un squelette à compléter)
+
+Ouvre l'issue, crée la branche <type>/<n°>-<slug> dans un worktree à côté du dépôt principal, relie au worktree les
+fichiers locaux listés dans start.link (par exemple un fichier d'environnement ignoré par git : lien symbolique vers
+celui du dépôt principal, jamais une copie), puis lance start.install de la politique (.claude/kwa.policy.json).
+Pourquoi un worktree : plusieurs sessions travaillent sur le même dépôt ; chacune garde sa copie et `main` reste
+propre. Ne pousse rien, ne commite rien.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+
+SKELETON = ("## Constat / besoin\n\n## Décisions\n\n## Critères de réussite\n\n- [ ] \n\n## Preuve\n\n"
+            "<!-- Captures jointes à la livraison : gh issue comment <n°> --attach … -->\n")
+
+
+def usage() -> None:
+    print(__doc__, file=sys.stderr)
+    sys.exit(2)
+
+
+def run(*cmd: str, cwd: str | None = None, check: bool = True) -> str:
+    r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    if check and r.returncode != 0:
+        print(f"échec : {' '.join(cmd)}\n{r.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
+    return r.stdout.strip()
+
+
+def link_shared(paths: list[str], main_root: str, wt: str) -> list[str]:
+    """Lien symbolique, dans le worktree, vers chaque fichier local du dépôt principal (start.link).
+    Ignore les chemins qui sortent du projet, ceux qui n'existent pas et ceux que le worktree a déjà."""
+    done = []
+    for rel in paths:
+        norm = os.path.normpath(rel)
+        if os.path.isabs(norm) or norm == ".." or norm.startswith(".." + os.sep):
+            print(f"attention : start.link ignore « {rel} » (chemin hors du projet)", file=sys.stderr)
+            continue
+        src, dst = os.path.join(main_root, norm), os.path.join(wt, norm)
+        if not os.path.exists(src) or os.path.lexists(dst):
+            continue
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        os.symlink(src, dst)
+        done.append(norm)
+    return done
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) < 3 or argv[0] not in {"fix", "feat", "chore", "docs"}:
+        usage()
+    typ, slug, title, rest = argv[0], argv[1], argv[2], argv[3:]
+    if not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", slug):
+        print(f"slug invalide : « {slug} » (attendu : kebab-case anglais, ex. my-portfolio-filter)", file=sys.stderr)
+        return 2
+    issue, body_file, no_issue, base_arg = "", "", False, ""
+    while rest:
+        if rest[0] == "--issue" and len(rest) > 1:
+            issue, rest = rest[1], rest[2:]
+        elif rest[0] == "--base" and len(rest) > 1:
+            base_arg, rest = rest[1], rest[2:]
+        elif rest[0] == "--no-issue":
+            no_issue, rest = True, rest[1:]
+        elif rest[0] == "--body-file" and len(rest) > 1:
+            body_file, rest = rest[1], rest[2:]
+        else:
+            usage()
+
+    root = run("git", "rev-parse", "--show-toplevel")
+    common = run("git", "rev-parse", "--path-format=absolute", "--git-common-dir", cwd=root)
+    main_root = os.path.dirname(common)  # le worktree naît à côté du dépôt PRINCIPAL
+    try:
+        policy = json.load(open(os.path.join(root, ".claude", "kwa.policy.json"), encoding="utf-8"))
+    except (OSError, ValueError):
+        policy = {}
+    start = policy.get("start", {})
+    base = base_arg or policy.get("base_branch", "main")
+    labels = {"fix": "bug", "feat": "enhancement", **start.get("labels", {})}
+    if not issue and not policy.get("flow", {}).get("auto_issue", True):
+        no_issue = True
+
+    if no_issue and not issue:
+        print("aucune issue créée (flow.auto_issue: false ou --no-issue)")
+    elif not issue:
+        tmp = None
+        if not body_file:
+            fd, tmp = tempfile.mkstemp(suffix=".md")
+            os.write(fd, SKELETON.encode())
+            os.close(fd)
+            body_file = tmp
+        cmd = ["gh", "issue", "create", "--title", f"{typ}: {title}", "--body-file", body_file]
+        if labels.get(typ):
+            cmd += ["--label", labels[typ]]
+        url = run(*cmd, cwd=root)
+        if tmp:
+            os.unlink(tmp)
+        issue = url.rstrip("/").rsplit("/", 1)[-1]
+        print(f"issue ouverte : {url}")
+    else:
+        run("gh", "issue", "view", issue, "--json", "number", cwd=root)
+        print(f"issue reprise : #{issue}")
+
+    ref = f"{issue}-{slug}" if issue else slug
+    branch = f"{typ}/{ref}"
+    wt = os.path.join(os.path.dirname(main_root), f"{os.path.basename(main_root)}-wt-{ref}")
+    run("git", "fetch", "-q", "origin", base, cwd=root)
+    run("git", "worktree", "add", "-q", "-b", branch, wt, f"origin/{base}", cwd=root)
+    print(f"branche : {branch}\nworktree : {wt}")
+    linked = link_shared(start.get("link", []), main_root, wt)
+    if linked:
+        print("liens vers le dépôt principal : " + ", ".join(linked))
+    for cmd in start.get("install", []):
+        r = subprocess.run(cmd, shell=True, cwd=wt, capture_output=True, text=True)
+        if r.returncode != 0:
+            print(f"attention : `{cmd}` a échoué dans le worktree ; à relancer à la main.\n{r.stderr.strip()[-400:]}", file=sys.stderr)
+    print(f"\nTravailler dans : {wt}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

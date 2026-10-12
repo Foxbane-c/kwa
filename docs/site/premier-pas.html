@@ -150,9 +150,9 @@ footer.kw-footer{margin-top:128px}
 <main class="kw-container pc-wrap" data-acc="premier-pas" style="padding-top:32px">
   <div class="kd-eyebrow">Kwa sur un projet d'exercice</div>
   <h1 class="kw-page-title">Premier pas en 30 minutes</h1>
-  <p class="kw-lead">Un exercice complet sur un petit projet jetable : installer Kwa, le voir refuser, corriger un
-vrai bug de bout en bout, livrer. Il vous faut un agent de code et Kwa récupéré (<a href="avant-de-commencer.html">Avant de
-commencer</a>), et la GitHub CLI connectée.</p>
+  <p class="kw-lead">Un exercice complet sur un petit projet jetable : préparer Kwa, le voir refuser, corriger un
+vrai bug de bout en bout, livrer. Il vous faut un agent de code, le plugin Kwa et la commande <code>kwa</code>
+(<a href="avant-de-commencer.html">Avant de commencer</a>), et la GitHub CLI connectée.</p>
 
 <ol class="bg-steps">
 <li><h2 class="kw-section-title">Créer votre copie du projet</h2>
@@ -160,43 +160,41 @@ commencer</a>), et la GitHub CLI connectée.</p>
 <pre class="kd-code"><span class="p">$</span> gh repo create kwa-demo <span class="sx-f">--template</span> nesyouyou/kwa-demo <span class="sx-f">--private</span> <span class="sx-f">--clone</span></pre><pre class="kd-code"><span class="p">$</span> cd kwa-demo &amp;&amp; python3 <span class="sx-f">-m</span> unittest</pre>
 <p>Quatre tests passent. Pourtant, avec le code <code>PROMO10</code>, un article à 20 € et un à 10 € coûtent 28 € au lieu de 27 €.</p></li>
 
-<li><h2 class="kw-section-title">Installer Kwa</h2>
-<pre class="kd-code"><span class="p">$</span> kwa install . <span class="sx-f">--with</span> verify</pre>
-<p>Kwa reconnaît un projet Python avec du code dans <code>src/</code>, qu'il protège sur <code>main</code>. Il ne devine pas la commande de test : dans <code>.claude/kwa.policy.json</code>, remplacez la ligne <code>"verify"</code> par :</p>
+<li><h2 class="kw-section-title">Préparer le projet pour Kwa</h2>
+<pre class="kd-code"><span class="p">$</span> kwa init . <span class="sx-f">--with</span> verify</pre>
+<p>Kwa reconnaît un projet Python avec du code dans <code>src/</code>, qu'il protège sur <code>main</code>. Il n'écrit que de la configuration : aucun script n'est copié, les garde-fous viennent du plugin. Il ne devine pas la commande de test : dans <code>.claude/kwa.policy.json</code>, remplacez la ligne <code>"verify"</code> par :</p>
 <pre class="kd-code">"verify": { "commands": ["python3 -m unittest"] }</pre>
-<pre class="kd-code"><span class="p">$</span> kwa doctor .</pre></li>
-
-<li><h2 class="kw-section-title">Committer l'installation</h2>
-<p>Les worktrees que Kwa crée partent de <code>main</code> : tant que l'installation n'y est pas, ils n'ont pas les garde-fous. Faites-le vous-même, par une branche, comme tout changement :</p>
-<pre class="kd-code"><span class="p">$</span> git switch <span class="sx-f">-c</span> chore/install-kwa &amp;&amp; git add <span class="sx-f">-A</span> &amp;&amp; git commit <span class="sx-f">-m</span> <span class="sx-s">'chore: installer Kwa'</span></pre>
-<pre class="kd-code"><span class="p">$</span> git push <span class="sx-f">-u</span> origin chore/install-kwa &amp;&amp; gh pr create <span class="sx-f">--fill</span> &amp;&amp; gh pr merge <span class="sx-f">--merge</span></pre>
+<pre class="kd-code"><span class="p">$</span> kwa doctor .</pre>
+<p>Committez ensuite cette configuration par une branche, comme tout changement, pour que l'équipe la reçoive :</p>
+<pre class="kd-code"><span class="p">$</span> git switch <span class="sx-f">-c</span> chore/kwa &amp;&amp; git add <span class="sx-f">-A</span> &amp;&amp; git commit <span class="sx-f">-m</span> <span class="sx-s">'chore: préparer Kwa'</span></pre>
+<pre class="kd-code"><span class="p">$</span> git push <span class="sx-f">-u</span> origin chore/kwa &amp;&amp; gh pr create <span class="sx-f">--fill</span> &amp;&amp; gh pr merge <span class="sx-f">--merge</span></pre>
 <pre class="kd-code"><span class="p">$</span> git switch main &amp;&amp; git pull</pre></li>
 
 <li><h2 class="kw-section-title">Voir un garde refuser</h2>
 <p>Lancez <code>claude</code> (ou <code>codex</code>, après <code>/hooks</code>) dans le projet et demandez :</p>
 <pre class="kd-code">Corrige directement src/panier.py sur main, sans branche.</pre>
 <p>L'agent essaie, et le garde l'arrête :</p>
-<pre class="kd-code">Kwa — Pas de code sur main : ouvrir d'abord l'issue et sa branche (kwa-start-dev), puis travailler dans le worktree créé.</pre>
+<pre class="kd-code">Kwa — Pas de code sur main : ouvrir d'abord l'issue et sa branche (/kwa:start-dev), puis travailler dans le worktree créé.</pre>
 <p>Même chose pour un <code>git commit</code> sur main : « git commit sur main refusé : travailler sur une branche dédiée et ouvrir une PR ». C'est voulu : chaque changement passe par une issue et une branche.</p></li>
 
 <li><h2 class="kw-section-title">Corriger le bug, de bout en bout</h2>
-<p>Décrivez le symptôme, pas la solution (sous Codex, les skills s'appellent avec <code>$</code> : <code>$kwa-debug</code>) :</p>
-<pre class="kd-code">/kwa-debug Avec PROMO10, un article à 20 € et un à 10 € coûtent 28 € au lieu de 27 €.</pre>
+<p>Décrivez le symptôme, pas la solution (sous Codex, une skill s'appelle avec <code>$</code> au lieu de <code>/</code>) :</p>
+<pre class="kd-code">/kwa:debug Avec PROMO10, un article à 20 € et un à 10 € coûtent 28 € au lieu de 27 €.</pre>
 <p>Ce que vous devez voir, dans cet ordre :</p>
 <ul class="pc-list">
 <li>l'agent <strong>reproduit</strong> le bug et nomme la cause avant de toucher au code ;</li>
-<li>il ouvre une <strong>issue</strong> sur votre copie et travaille dans un <strong>worktree</strong>, sur sa branche (<code>/kwa-start-dev</code>) ;</li>
-<li>il écrit d'abord un <strong>test qui échoue</strong>, puis le correctif le plus petit (<code>/kwa-tdd</code>) ;</li>
-<li>il lance <code>python3 -m unittest</code> et <strong>cite le résultat</strong> avant de dire « fait » (<code>/kwa-verify</code>).</li>
+<li>il ouvre une <strong>issue</strong> sur votre copie et travaille dans un <strong>worktree</strong>, sur sa branche (<code>/kwa:start-dev</code>) ;</li>
+<li>il écrit d'abord un <strong>test qui échoue</strong>, puis le correctif le plus petit (<code>/kwa:tdd</code>) ;</li>
+<li>il lance <code>python3 -m unittest</code> et <strong>cite le résultat</strong> avant de dire « fait » (<code>/kwa:verify</code>).</li>
 </ul>
-<p>S'il saute une étape, demandez-la par son nom (« passe par /kwa-start-dev ») ; dites-le-lui aussi : c'est aussi ce que la mémoire de Kwa retiendra.</p></li>
+<p>S'il saute une étape, demandez-la par son nom (« passe par /kwa:start-dev ») ; dites-le-lui aussi : c'est aussi ce que la mémoire de Kwa retiendra.</p></li>
 
 <li><h2 class="kw-section-title">Livrer</h2>
-<pre class="kd-code">/kwa-ship</pre>
+<pre class="kd-code">/kwa:ship</pre>
 <p>L'agent vous demande de confirmer le push de la branche, puis ouvre une PR qui commence par <code>Closes #</code> et le numéro de l'issue, avec la sortie des tests comme preuve. La fusion reste votre décision : relisez le diff, puis fusionnez sur GitHub.</p></li>
 
 <li><h2 class="kw-section-title">Capitaliser</h2>
-<pre class="kd-code">/kwa-learn</pre>
+<pre class="kd-code">/kwa:learn</pre>
 <p>L'agent propose ce qui mérite d'être retenu de la session (un piège, une décision) et l'endroit où l'écrire. Rien n'est écrit sans votre accord.</p></li>
 </ol>
 

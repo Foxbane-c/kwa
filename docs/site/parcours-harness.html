@@ -167,14 +167,14 @@ footer.kw-footer{margin-top:128px}
 <tr><td>Déploiement vérifié</td><td><code>/kwa-deploy</code></td></tr>
 <tr><td>Rétrospective</td><td><code>/kwa-learn</code>, mémoire de session</td></tr></tbody></table>
 <div class="pc-proof"><div><b>Preuve attendue</b><p>Placer cinq étapes de votre processus actuel et dire ce qui les remplace quand un agent travaille.</p></div><div><b>Piège</b><p>Un harness rend vérifiables par une machine des contrôles que l'équipe faisait déjà ; il ne doit pas en ajouter par réflexe.</p></div></div></div></section><section class="pc-stage" id="etape-1"><div class="pc-main"><p class="pc-kicker">Étape 1</p><h2 class="pc-h">Instructions et contrainte</h2><p class="pc-tag">Ce que l'agent lit, et ce qui l'oblige.</p><p>Installez Kwa dans un dépôt jetable. Regardez ce qui est écrit pour l'agent, puis demandez-vous : quelle ligne l'empêche de committer sur <code>main</code> ?</p>
-<pre class="kd-code"><span class="p">$</span> kwa install ./mon-projet <span class="sx-f">--modules</span> core,memory,craft,issue-flow</pre><pre class="kd-code">kwa v0.1.0 → mon-projet
+<pre class="kd-code"><span class="p">$</span> kwa install ./mon-projet <span class="sx-f">--modules</span> core,memory,craft,issue-flow</pre><pre class="kd-code">kwa v0.2.0 → mon-projet
   modules : core, memory, craft, issue-flow
   fichiers ajouté : 69
   fichiers seed : 4
     - .github/pull_request_template.md</pre>
 <p><code>CLAUDE.md</code> contient une ligne, un pointeur vers le fichier commun :</p><pre class="kd-code">@AGENTS.md</pre>
 <p>Début du bloc géré de <code>AGENTS.md</code> :</p><pre class="kd-code"><span class="sx-h"># AGENTS.md</span>
-&lt;!-- kwa:begin v0.1.0 profile=pr-flow (géré ; toute retouche ici est écrasée à la mise à jour) --&gt;
+&lt;!-- kwa:begin v0.2.0 profile=pr-flow (géré ; toute retouche ici est écrasée à la mise à jour) --&gt;
 <span class="sx-h">## Kwa — socle commun</span>
 Ce bloc est géré par Kwa (<span class="sx-s">`kwa install`</span>) : ne pas l'éditer ici, le modifier dans le pack.
 Tout ce qui est propre au projet va **au-dessus ou en dessous** des marqueurs, ou dans <span class="sx-s">`.claude/kwa.policy.json`</span>.

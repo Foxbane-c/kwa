@@ -177,14 +177,18 @@ il ne demande aucune installation.</p>
 </div>
 </li>
 
-<li><h2 class="kw-section-title">Récupérer et installer Kwa</h2>
-<p>Kwa se récupère en clonant son dépôt, puis en ajoutant sa commande au chemin du terminal :</p>
+<li><h2 class="kw-section-title">Installer Kwa</h2>
+<p>Kwa est un plugin : il s'installe une fois sur votre machine. Dans une session Claude Code :</p>
+<pre class="kd-code">/plugin marketplace add nesyouyou/kwa</pre><pre class="kd-code">/plugin install kwa@kwa</pre>
+<p>Sous Codex :</p>
+<pre class="kd-code"><span class="p">$</span> codex plugin marketplace add nesyouyou/kwa</pre><pre class="kd-code"><span class="p">$</span> codex plugin add kwa@kwa</pre>
+<p>Puis récupérez la commande <code>kwa</code>, qui prépare chaque projet :</p>
 <pre class="kd-code"><span class="p">$</span> git clone https://github.com/nesyouyou/kwa ~/kwa</pre>
 <pre class="kd-code"><span class="p">$</span> <span class="sx-b">echo</span> <span class="sx-s">'export PATH="$HOME/kwa/bin:$PATH"'</span> &gt;&gt; ~/.zshrc &amp;&amp; source ~/.zshrc</pre>
-<p class="kd-note">Avec bash, remplacez <code>~/.zshrc</code> par <code>~/.bashrc</code>. Sans cette ligne, la commande s'appelle <code>~/kwa/bin/kwa</code>.</p>
-<p>Puis, dans votre projet, regardez avant d'écrire :</p>
-<pre class="kd-code"><span class="p">$</span> kwa detect ./mon-projet</pre><pre class="kd-code"><span class="p">$</span> kwa install ./mon-projet <span class="sx-f">--dry-run</span></pre><pre class="kd-code"><span class="p">$</span> kwa install ./mon-projet</pre>
-<p>Les deux premières commandes n'écrivent rien. La troisième installe Kwa pour Claude Code et pour Codex ; aucune ne fait de commit ni de push. Sous Codex, validez une fois les hooks du projet avec <code>/hooks</code>.</p></li>
+<p class="kd-note">Avec bash, remplacez <code>~/.zshrc</code> par <code>~/.bashrc</code>.</p>
+<p>Dans votre projet, regardez avant d'écrire :</p>
+<pre class="kd-code"><span class="p">$</span> kwa detect ./mon-projet</pre><pre class="kd-code"><span class="p">$</span> kwa init ./mon-projet <span class="sx-f">--dry-run</span></pre><pre class="kd-code"><span class="p">$</span> kwa init ./mon-projet</pre>
+<p>Les deux premières commandes n'écrivent rien. La troisième n'écrit que de la configuration (politique, bloc d'AGENTS.md, plugin proposé à l'équipe) : aucun script, aucun commit. Committez ces fichiers par une branche. Sous Codex, validez une fois les hooks du projet avec <code>/hooks</code>.</p></li>
 
 <li><h2 class="kw-section-title">Et ensuite</h2>
 <p>Faites le <a href="premier-pas.html">premier pas en 30 minutes</a> sur un projet d'exercice, puis suivez les <a href="parcours.html">trois parcours</a> dans l'ordre : comprendre le modèle, lui donner le bon contexte, puis l'encadrer avec Kwa. Un mot vous échappe ? Le <a href="glossaire.html">glossaire</a> traduit chaque terme anglais.</p></li>

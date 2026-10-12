@@ -37,7 +37,8 @@ def _log_refusal(reason: str) -> None:
 
         root = project_dir(_LAST)
         # seulement là où Kwa est installé : un garde lancé hors installation (tests, essai à la main) n'écrit rien
-        installed = any(os.path.exists(os.path.join(r, ".claude", "kwa", "state.json")) for r in (root, _journal.main_root(root)))
+        installed = os.environ.get("KWA_RUNTIME") == "plugin" or any(
+            os.path.exists(os.path.join(r, ".claude", "kwa", "state.json")) for r in (root, _journal.main_root(root)))
         if not (_journal.enabled() and installed):
             return
         tool = _LAST.get("tool_input") or {}
@@ -82,6 +83,18 @@ def codex_covers(command: str, policy: dict) -> bool:
         if len(argv) >= len(pattern) and all(a == p or (isinstance(p, list) and a in p) for a, p in zip(argv, pattern)):
             return True
     return False
+
+
+def cli(tool: str) -> str:
+    """Comment l'agent lance un outil de Kwa (memory, start, hygiene) : `kwa <outil>` quand Kwa vient du plugin,
+    le script copié dans le projet sinon."""
+    return f"kwa {tool}" if os.environ.get("KWA_RUNTIME") == "plugin" else f"python3 .claude/kwa/bin/kwa-{tool}"
+
+
+def skill(name: str) -> str:
+    """Nom d'une skill tel que l'agent la lance : /kwa:learn (plugin), /kwa-learn (copie) ; $ au lieu de / sous Codex."""
+    sigil = "$" if is_codex() else "/"
+    return f"{sigil}kwa:{name}" if os.environ.get("KWA_RUNTIME") == "plugin" else f"{sigil}kwa-{name}"
 
 
 def is_codex() -> bool:
@@ -231,7 +244,7 @@ def heredoc_is_executed(line: str, m: "re.Match") -> bool:
 
 # --- politique projet : .claude/kwa.policy.json, propriété du projet (jamais écrasée par kwa)
 def load_policy(payload: dict) -> dict:
-    path = os.path.join(project_dir(payload), ".claude", "kwa.policy.json")
+    path = os.environ.get("KWA_POLICY") or os.path.join(project_dir(payload), ".claude", "kwa.policy.json")
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
