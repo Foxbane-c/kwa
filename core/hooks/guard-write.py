@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _kwa import decide, edits, glob_match, guarded, is_secret_path, load_payload, load_policy, project_dir  # noqa: E402
+from _kwa import decide, edits, glob_match, guarded, is_secret_path, load_payload, load_policy, project_dir, skill  # noqa: E402
 
 KEYS = [
     ("clé Anthropic", r"sk-ant-[A-Za-z0-9_-]{20,}"),
@@ -53,7 +53,7 @@ def check_path(path: str, d: dict, policy: dict) -> None:
             decide("deny", rule["reason"])
     if any(rel.startswith(p) for p in wr.get("no_code_on_main", [])) \
             and branch_of(os.path.realpath(path)) in ({"main", "master"} | set(policy.get("protected_branches", []))):
-        decide("deny", "Pas de code sur main : ouvrir d'abord l'issue et sa branche (kwa-start-dev), "
+        decide("deny", f"Pas de code sur main : ouvrir d'abord l'issue et sa branche ({skill('start-dev')}), "
                        "puis travailler dans le worktree créé.")
     if any(rel == p or rel.startswith(p) for p in PROTECTED):
         decide("ask", f"modification de {rel} : c'est la configuration des garde-fous, confirmer")
