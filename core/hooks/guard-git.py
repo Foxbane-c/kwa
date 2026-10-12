@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """PreToolUse Bash — flux PR. Commit/push direct sur main refusés ; tout push de branche demande
-validation ; les cas destructeurs (force, suppression) sont refusés sur les branches protégées."""
+validation ; les cas destructeurs (force, suppression) sont refusés sur les branches protégées.
+La branche jugée est celle du dépôt que vise la commande (git -C, cd plus tôt dans la ligne), pas forcément celle du
+projet de la session ; les branches protégées viennent de la politique du projet de la session."""
 from __future__ import annotations
 
 import os
@@ -22,6 +24,20 @@ def current_branch(cwd: str) -> str:
         return ""
 
 
+def resolve(path: str, base: str) -> str:
+    return os.path.normpath(os.path.join(base, os.path.expanduser(path)))
+
+
+def target_repo(words: list[str], here: str) -> str:
+    """Le dépôt que vise une commande git : ses options -C (cumulables, comme git), sinon le dossier courant."""
+    i = 1
+    while i < len(words) and words[i].startswith("-"):
+        if words[i] == "-C" and i + 1 < len(words):
+            here = resolve(words[i + 1], here)
+        i += 2 if words[i] in {"-C", "-c", "--git-dir", "--work-tree", "--namespace"} else 1
+    return here
+
+
 def git_args(words: list[str]) -> list[str]:
     """Retire les options globales de git (-C x, -c k=v, --git-dir=…) et les alias connus."""
     i = 1
@@ -39,15 +55,19 @@ def main() -> None:
     protected = PROTECTED | set(load_policy(d).get("protected_branches", []))
     push_branch = git_pol.get("push_branch", "ask")  # "ask" | "allow"
     direct_main_ok = os.environ.get("KWA_ALLOW_MAIN") == "1"
+    here = cwd  # un « cd » plus tôt dans la ligne change le dépôt des commandes git qui suivent
     for words in segments((d.get("tool_input") or {}).get("command", "")):
         prog = os.path.basename(words[0])
+        if prog == "cd" and len(words) > 1 and words[1] != "-":
+            here = resolve(words[1], here)
         if prog == "git":
             args = git_args(words)
             if not args:
                 continue
+            repo = target_repo(words, here)
             if args[0] in {"commit", "merge", "cherry-pick", "revert", "rebase"} and not direct_main_ok \
-                    and current_branch(cwd) in protected:
-                decide("deny", f"git {args[0]} sur {current_branch(cwd)} refusé : travailler sur une branche "
+                    and current_branch(repo) in protected:
+                decide("deny", f"git {args[0]} sur {current_branch(repo)} refusé : travailler sur une branche "
                                "dédiée et ouvrir une PR (KWA_ALLOW_MAIN=1 pour une exception assumée)")
             if args[0] == "push":
                 rest = args[1:]
@@ -62,7 +82,7 @@ def main() -> None:
                     decide("deny", "push forcé vers une branche protégée : refusé")
                 if lease:
                     decide("ask", "push forcé (--force-with-lease) : confirmer explicitement")
-                if not direct_main_ok and (targets & protected or (not targets and current_branch(cwd) in protected)):
+                if not direct_main_ok and (targets & protected or (not targets and current_branch(repo) in protected)):
                     decide("deny", "push direct vers main refusé : pousser la branche de travail et ouvrir une PR")
                 if push_branch == "ask":
                     decide("ask", "git push publie la branche : confirmer.")
