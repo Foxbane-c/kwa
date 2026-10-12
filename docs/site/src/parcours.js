@@ -33,9 +33,9 @@
       { text: 'Il était une fois', next: [[' un', .34], [',', .26], [' dans', .12], [' une', .09], [' deux', .04]] },
       { text: 'Pour limiter les hallucinations, il faut', next: [[' vérifier', .23], [' citer', .17], [' donner', .14], [' demander', .11], [' limiter', .09]] }
     ];
-    var cur = 0, temp = 1, tChips = $('#tk-chips'), tProbs = $('#tk-probs'), tDraws = $('#tk-draws');
+    var tkCur = 0, temp = 1, tChips = $('#tk-chips'), tProbs = $('#tk-probs'), tDraws = $('#tk-draws');
     var dist = function () {
-      var next = SENT[cur].next, rest = Math.max(0, 1 - next.reduce(function (a, n) { return a + n[1]; }, 0));
+      var next = SENT[tkCur].next, rest = Math.max(0, 1 - next.reduce(function (a, n) { return a + n[1]; }, 0));
       var all = next.concat([['autres jetons', rest]]);
       var w = all.map(function (n) { return Math.pow(Math.max(n[1], 1e-6), 1 / temp); }), tot = w.reduce(function (a, b) { return a + b; }, 0);
       return all.map(function (n, i) { return [n[0], w[i] / tot]; });
@@ -56,7 +56,7 @@
     };
     var drawChips = function (animate) {
       tChips.textContent = '';
-      cut(SENT[cur].text).forEach(function (t, i) {
+      cut(SENT[tkCur].text).forEach(function (t, i) {
         var c = document.createElement('span'); c.className = 'tk-chip';
         c.innerHTML = '<b class="pc-tok pc-t' + (i % 6) + '"></b><small></small>';
         c.firstChild.textContent = t.replace(/ /g, '·'); c.lastChild.textContent = fakeId(t);
@@ -66,12 +66,12 @@
     };
     var show = function (animate) {
       drawChips(animate); tDraws.textContent = '';
-      var delay = animate && !reduced ? cut(SENT[cur].text).length * 160 + 200 : 0;
+      var delay = animate && !reduced ? cut(SENT[tkCur].text).length * 160 + 200 : 0;
       setTimeout(function () { drawProbs(animate); }, delay);
     };
     Array.prototype.forEach.call(tk.querySelectorAll('[data-tk-s]'), function (b) {
       b.addEventListener('click', function () {
-        cur = Number(b.getAttribute('data-tk-s'));
+        tkCur = Number(b.getAttribute('data-tk-s'));
         Array.prototype.forEach.call(tk.querySelectorAll('[data-tk-s]'), function (o) { o.setAttribute('aria-pressed', String(o === b)); });
         show(true);
       });
@@ -213,7 +213,7 @@
   var gauge = $('#ctx-gauge');
   if (gauge) {
     var F = ['sys', 'rules', 'tools', 'hist', 'files', 'res', 'sum'], WIN = 200000;
-    var cur = { sys: 0, rules: 0, tools: 0, hist: 0, files: 0, res: 0, sum: 0 };
+    var fill = { sys: 0, rules: 0, tools: 0, hist: 0, files: 0, res: 0, sum: 0 };
     var gtxt = $('#ctx-txt'), gmsg = $('#ctx-msg'), gstack = $('#ctx-stack');
     var FRAMES = [
       [{ sys: 6000, rules: 3000, tools: 12000 }, 1100, 'Au démarrage, les consignes, les instructions et les outils occupent déjà la fenêtre, avant votre premier message.'],
@@ -225,20 +225,20 @@
     ];
     var gpaint = function (note) {
       var tot = 0;
-      F.forEach(function (f) { tot += cur[f]; $('#seg-' + f).style.width = (cur[f] / WIN * 100) + '%'; });
+      F.forEach(function (f) { tot += fill[f]; $('#seg-' + f).style.width = (fill[f] / WIN * 100) + '%'; });
       gstack.classList.toggle('pc-over', tot / WIN > 0.9);
       gtxt.textContent = fmt(tot) + ' jetons sur ' + fmt(WIN) + ' (' + Math.round(tot / WIN * 100) + ' %)';
       if (note) gmsg.textContent = note;
     };
     var gtween = function (target, ms, done) {
-      var from = {}; F.forEach(function (f) { from[f] = cur[f]; });
-      if (reduced || ms <= 0) { F.forEach(function (f) { if (f in target) cur[f] = target[f]; }); gpaint(); if (done) done(); return; }
+      var from = {}; F.forEach(function (f) { from[f] = fill[f]; });
+      if (reduced || ms <= 0) { F.forEach(function (f) { if (f in target) fill[f] = target[f]; }); gpaint(); if (done) done(); return; }
       var t0 = null;
       (function step(ts) {
         if (!gstate.on) return;
         if (t0 === null) t0 = ts;
         var k = Math.min(1, (ts - t0) / ms), e = 1 - Math.pow(1 - k, 3);
-        F.forEach(function (f) { if (f in target) cur[f] = from[f] + (target[f] - from[f]) * e; });
+        F.forEach(function (f) { if (f in target) fill[f] = from[f] + (target[f] - from[f]) * e; });
         gpaint();
         if (k < 1) requestAnimationFrame(step); else if (done) done();
       })(performance.now());
@@ -247,7 +247,7 @@
     var gnext = function () {
       if (!gstate.on) return;
       if (gstate.i >= FRAMES.length) {
-        gstate.timer = setTimeout(function () { F.forEach(function (f) { cur[f] = 0; }); gpaint(); gmsg.textContent = ''; gstate.i = 0; gstate.timer = setTimeout(gnext, 700); }, 3200);
+        gstate.timer = setTimeout(function () { F.forEach(function (f) { fill[f] = 0; }); gpaint(); gmsg.textContent = ''; gstate.i = 0; gstate.timer = setTimeout(gnext, 700); }, 3200);
         return;
       }
       var fr = FRAMES[gstate.i++];
@@ -256,7 +256,7 @@
     };
     gpaint();
     if (reduced || !('IntersectionObserver' in window)) {
-      FRAMES.slice(0, 5).forEach(function (fr) { F.forEach(function (f) { if (f in fr[0]) cur[f] = fr[0][f]; }); });
+      FRAMES.slice(0, 5).forEach(function (fr) { F.forEach(function (f) { if (f in fr[0]) fill[f] = fr[0][f]; }); });
       gpaint(FRAMES[4][2]);
     } else {
       new IntersectionObserver(function (es) {
