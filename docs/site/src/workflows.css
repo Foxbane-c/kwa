@@ -25,7 +25,8 @@
 .wf-hook { --wf-c: var(--kd-amber); }
 .wf-agent { --wf-c: var(--kd-violet); }
 .wf-vous { --wf-c: var(--kd-green); }
-.wf-skill, .wf-garde, .wf-hook, .wf-agent, .wf-vous { --wf-c-bg: color-mix(in srgb, var(--wf-c) 14%, transparent); }
+.wf-doc { --wf-c: var(--kd-teal); }
+.wf-skill, .wf-garde, .wf-hook, .wf-agent, .wf-vous, .wf-doc { --wf-c-bg: color-mix(in srgb, var(--wf-c) 14%, transparent); }
 .wf-vous b { color: var(--kd-green); }
 .wf-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; list-style: none; margin: 18px 0 0; padding: 0; font-size: 13px; color: var(--kw-mut); }
 .wf-legend li { display: inline-flex; align-items: center; gap: 6px; }

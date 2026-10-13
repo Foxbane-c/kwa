@@ -46,7 +46,7 @@ il ne demande aucune installation.</p>
 {cmd("codex plugin marketplace add nesyouyou/kwa")}{cmd("codex plugin add kwa@kwa")}
 <p>Puis, dans une session ouverte dans votre projet :</p>
 {code("/kwa:init")}
-<p>La skill montre ce que Kwa détecte, simule, puis prépare le dépôt après votre accord. Elle n'écrit que de la configuration (politique, bloc d'AGENTS.md, plugin proposé à l'équipe) : aucun script, aucun commit. Committez ces fichiers par une branche.</p>
+<p>La skill montre ce que Kwa détecte, simule, puis prépare le dépôt après votre accord. Elle n'écrit que de la configuration (politique, bloc d'AGENTS.md, plugin proposé à l'équipe) : aucun script, aucun commit. Committez ces fichiers sur une branche et livrez-les par une PR : avec le module issue-flow, la PR doit porter « Closes #N », où N est le numéro d'une issue, à ouvrir d'abord (« Installer Kwa »).</p>
 <p class="kd-note">Sous Codex en ligne de commande, les hooks passent par la commande <code>kwa</code>, qui doit alors être dans le PATH : <code>git clone https://github.com/nesyouyou/kwa ~/kwa</code>, puis ajouter <code>export PATH="$HOME/kwa/bin:$PATH"</code> à <code>~/.zshrc</code>. Validez ensuite les hooks du projet avec <code>/hooks</code>.</p></li>
 
 <li><h2 class="kw-section-title">Et ensuite</h2>
