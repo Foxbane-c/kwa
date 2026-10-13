@@ -17,16 +17,15 @@
 .fl-row { display: flex; gap: 10px; align-items: stretch; min-height: 340px; }
 
 /* une brique, fermée : un titre, son numéro, les pictogrammes de ses étapes */
-.fl-brick { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; border: 1px solid var(--kw-rule); border-radius: 16px;
-  padding: 14px 12px; background: var(--kw-bg); overflow: hidden;
+.fl-brick { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; border: 1px solid var(--kw-rule);
+  border-radius: 16px; padding: 16px 14px; background: var(--kw-bg); overflow: hidden;
   transition: flex-grow var(--fl-morph) var(--fl-ease), border-color .3s ease, background-color .3s ease, box-shadow var(--fl-morph) ease; }
-.fl-brick header { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 10px; }
-.fl-n { grid-row: span 2; display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+.fl-brick header { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.fl-n { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
   font: 600 12px 'Geist Mono', monospace; color: var(--kw-mut); border: 1px solid var(--kw-rule); transition: all .3s ease; }
-.fl-brick h3 { margin: 0; font: 600 15px/1.25 Geist, system-ui, sans-serif; color: var(--kw-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fl-brick header p { grid-column: 2; margin: 0; font-size: 12.5px; line-height: 1.35; color: var(--kw-mut); max-height: 0; opacity: 0; overflow: hidden;
-  transition: max-height var(--fl-morph) var(--fl-ease), opacity .3s ease; }
-.fl-minis { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; transition: opacity .3s ease; }
+.fl-brick h3 { margin: 0; font: 600 16px/1.25 Geist, system-ui, sans-serif; color: var(--kw-fg); overflow-wrap: break-word; hyphens: auto; }
+.fl-brick header p { margin: 0; font-size: 13px; line-height: 1.4; color: var(--kw-body); }
+.fl-minis { display: flex; flex-wrap: wrap; gap: 4px; transition: opacity .3s ease; }
 .fl-mini { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--fl-c) 14%, transparent); }
 .fl-mini .kd-pic { width: 12px; height: 12px; margin: 0; color: var(--fl-c); }
 .fl-body { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows var(--fl-morph) var(--fl-ease), opacity .25s ease; }
@@ -34,10 +33,9 @@
 .fl-body ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 
 /* la brique ouverte : elle grossit et montre ses étapes */
-.fl-brick.is-open { flex-grow: 3.6; border-color: color-mix(in srgb, var(--kw-fg) 30%, transparent); background: var(--kw-raise);
+.fl-brick.is-open { flex-grow: 2.3; justify-content: flex-start; border-color: color-mix(in srgb, var(--kw-fg) 30%, transparent); background: var(--kw-raise);
   box-shadow: 0 18px 40px -22px rgba(0, 0, 0, .35); }
 .fl-brick.is-open .fl-n { background: var(--kw-invert-bg); color: var(--kw-invert-fg); border-color: transparent; }
-.fl-brick.is-open header p { max-height: 3em; opacity: 1; transition-delay: .15s; }
 .fl-brick.is-open .fl-minis { opacity: 0; height: 0; margin: 0; overflow: hidden; }
 .fl-brick.is-open .fl-body { grid-template-rows: 1fr; opacity: 1; margin-top: 14px; transition-delay: 0s, .25s; }
 .fl-brick.is-done .fl-n { color: var(--kd-green); border-color: color-mix(in srgb, var(--kd-green) 55%, transparent); }
@@ -122,11 +120,11 @@
   .fl-row { flex-direction: column; min-height: 0; }
   .fl-brick { flex: none; padding: 12px; }
   .fl-brick.is-open { flex-grow: 0; }
-  .fl-minis { grid-column: 2; margin-top: 4px; }
+  .fl-brick { justify-content: flex-start; }
   .fl-ctl { width: 100%; }
   .fl-ctl .fl-play { flex: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fl-brick, .fl-body, .fl-node, .fl-fill, .fl-token, .fl-arc, .fl-tray, .fl-hand, .fl-brick header p { transition: none !important; }
+  .fl-brick, .fl-body, .fl-node, .fl-fill, .fl-token, .fl-arc, .fl-tray, .fl-hand { transition: none !important; }
   .fl-token.is-on, .fl-node.is-deny, .fl-pop, .fl-sub, .fl-hand { animation: none; }
 }
