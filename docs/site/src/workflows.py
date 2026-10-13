@@ -15,7 +15,7 @@ KIND = {  # type d'étape -> (pictogramme, libellé)
 }
 
 WORKFLOWS = [  # (clé, pictogramme, titre, promesse, lien, [(type, nom, ce qui se passe)])
-    ("feature", "code", "Développer une fonctionnalité", "De l'idée floue à une PR prouvée.", "board.html#detail", [
+    ("feature", "code", "Développer une fonctionnalité", "De l'idée floue à une PR prouvée.", "board.html#feature", [
         ("skill", "/kwa:brainstorm", "cadrer l'intention, écrire une spec courte"),
         ("vous", "validation", "vous approuvez la spec"),
         ("skill", "/kwa:plan", "découper en tâches de quelques minutes"),
@@ -25,7 +25,7 @@ WORKFLOWS = [  # (clé, pictogramme, titre, promesse, lien, [(type, nom, ce qui 
         ("agent", "kwa:reviewer", "relit en lecture seule"),
         ("skill", "/kwa:ship", "PR liée à son issue, avec la preuve"),
     ]),
-    ("bug", "bug", "Corriger un bug", "Pas de correctif avant la cause.", "skill-map.html#view=bug", [
+    ("bug", "bug", "Corriger un bug", "Pas de correctif avant la cause.", "board.html#bug", [
         ("skill", "/kwa:debug", "reproduire, remonter à la cause racine"),
         ("skill", "/kwa:start-dev", "issue et branche dédiée"),
         ("skill", "/kwa:tdd", "un test rouge qui montre le bug"),
@@ -33,14 +33,14 @@ WORKFLOWS = [  # (clé, pictogramme, titre, promesse, lien, [(type, nom, ce qui 
         ("skill", "/kwa:verify", "preuve : le test repasse au rouge sans le correctif"),
         ("hook", "verify-stop", "refuse de finir sur des tests rouges"),
     ]),
-    ("review", "eye", "Relire", "Un regard neuf qui ne peut rien modifier.", "delegation.html", [
+    ("review", "eye", "Relire", "Un regard neuf qui ne peut rien modifier.", "board.html#review", [
         ("skill", "/kwa:review", "rassembler le diff et les critères"),
         ("agent", "kwa:reviewer", "constats classés et verdict, en lecture seule"),
         ("skill", "/kwa:review-feedback", "trier les retours avant d'en appliquer un"),
         ("agent", "kwa:reviewer", "relecture ciblée des corrections"),
         ("vous", "décision", "vous jugez que c'est prêt"),
     ]),
-    ("ship", "send", "Livrer", "Chaque publication est une décision.", "skill-map.html#view=delivery", [
+    ("ship", "send", "Livrer", "Chaque publication est une décision.", "board.html#ship", [
         ("skill", "/kwa:verify", "vérifications du projet, sorties citées"),
         ("skill", "/kwa:commit", "un commit par changement logique"),
         ("garde", "guard-git", "pas de push sur main, push de branche confirmé"),
@@ -48,7 +48,7 @@ WORKFLOWS = [  # (clé, pictogramme, titre, promesse, lien, [(type, nom, ce qui 
         ("vous", "fusion", "vous donnez le feu vert"),
         ("skill", "/kwa:deploy", "pré-vol, déploiement, vérification"),
     ]),
-    ("learn", "book", "Capitaliser", "Chaque session enrichit la suivante.", "memoire.html", [
+    ("learn", "book", "Capitaliser", "Chaque session enrichit la suivante.", "board.html#learn", [
         ("hook", "signal-prompt", "note vos corrections et vos « retiens : »"),
         ("garde", "refus d'un garde", "devient un signal d'apprentissage"),
         ("hook", "memory-nudge", "propose de capitaliser, une fois par session"),

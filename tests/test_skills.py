@@ -387,7 +387,7 @@ class Flows(unittest.TestCase):
         for key, flow in self.flows.FLOWS.items():
             self.assertEqual(self.flows.check(flow), [], key)
             kinds = {ev[0] for ev in flow["script"]}
-            self.assertTrue({"go", "ask", "loop", "guard", "delegate"} <= kinds, f"{key} : {kinds}")
+            self.assertTrue({"go", "ask", "loop", "guard"} <= kinds, f"{key} : {kinds}")  # chaque workflow : boucles, décisions, refus
 
     def test_guard_messages_are_the_real_ones(self):
         hooks = os.path.join(PACK, "core", "hooks")
@@ -396,7 +396,7 @@ class Flows(unittest.TestCase):
                 if ev[0] == "guard":
                     guard = flow["steps"][ev[1]][2]
                     src = open(os.path.join(hooks, guard + ".py"), encoding="utf-8").read()
-                    start = ev[2].replace("Kwa — ", "").split("(")[0].strip()
+                    start = re.split(r"[`(]", ev[2].replace("Kwa — ", ""))[0][:26].strip()  # la partie fixe du message
                     self.assertIn(start, src, f"{key} : message de {guard} introuvable")
 
 
@@ -571,6 +571,10 @@ class Circuit(unittest.TestCase):
         self.assertIn("src/flows.js", text)
         self.assertIn('class="fl-script"', text)
         self.assertNotIn("KwaCircuit.mount", text)
+        sys.path.insert(0, os.path.join(PACK, "docs", "site", "src"))
+        import flows
+        for name in flows.FLOWS:
+            self.assertIn(f'data-flow-tab="{name}"', text, name)
         self.assertNotIn("src/flows.js", self.read("index.html"), "l'accueil ne charge pas les widgets des pages dédiées")
 
     def test_no_autoplay_and_every_step_has_a_label(self):

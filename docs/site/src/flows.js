@@ -119,7 +119,7 @@
 
     /* un pas du scénario ; done() quand son animation est finie */
     function run(ev, done) {
-      if (!st.fast) { clearPops(); say.textContent = ev.say || ''; }
+      if (!st.fast) { clearPops(); say.textContent = ev.t === 'ask' ? ev.q : (ev.say || ''); }  // une décision : la question d'abord, sa suite après
       if (ev.t === 'go') return goTo(ev.at, done);
       if (ev.t === 'guard') return goTo(ev.at, function () {
         if (st.fast) return done();
@@ -161,6 +161,7 @@
         done();
       };
       st.pending = function () { resolve(ev.pick); };  // « Suivant » répond comme le scénario
+      sync();  // « Suivant » redevient actif pendant que la question attend
       ev.opts.forEach(function (o, k) {
         var b = h('button', 'fl-opt' + (k === 0 ? ' is-main' : ''), o.label);
         b.type = 'button';
@@ -209,7 +210,7 @@
     }
     function finished() {
       st.playing = false;
-      say.textContent = 'Fin du workflow : de l\'intention floue à la PR fusionnée, puis la leçon rangée.';
+      say.textContent = 'Fin du workflow. ' + (root.getAttribute('data-end') || '');
       sync();
     }
     /* joue le pas suivant (animé) ; en lecture automatique, enchaîne */
@@ -298,7 +299,7 @@
       bricks.forEach(function (x) { x.classList.toggle('is-open', x === st.open); });
       void row.offsetHeight;
       root.classList.remove('fl-instant');
-      row.style.minHeight = Math.ceil(max) + 'px';
+      row.style.minHeight = Math.ceil(max) + 16 + 'px';  // marge : pendant une morphose, deux briques sont brièvement hautes
       if (st.at != null && token.classList.contains('is-on')) { token.classList.remove('is-on'); place(st.at); }  // la mise en page a pu bouger
     }
     reserve();
@@ -314,6 +315,8 @@
     var defs = document.createElementNS(NS, 'defs');
     defs.innerHTML = '<marker id="fl-head-' + root.id + '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker>';
     arcs.appendChild(defs);
+    root.flPause = function () { if (st.playing) pause(); };  // le sélecteur met en pause le workflow qu'on quitte
+    root.flShow = function () { reserve(); };  // mesuré caché, un lecteur se remesure quand le sélecteur l'affiche
     playBtn.addEventListener('click', play);
     nextBtn.addEventListener('click', stepNext);
     prevBtn.addEventListener('click', stepPrev);
@@ -336,4 +339,36 @@
   }
 
   each(document.querySelectorAll('.fl'), mount);
+
+  /* sélecteur des workflows : un onglet par workflow, l'adresse suit (board.html#bug) */
+  each(document.querySelectorAll('.fl-picker'), function (picker) {
+    var tabs = Array.prototype.slice.call(picker.querySelectorAll('[data-flow-tab]'));
+    function select(name, focus) {
+      if (!tabs.some(function (t) { return t.getAttribute('data-flow-tab') === name; })) return;
+      tabs.forEach(function (t) {
+        var on = t.getAttribute('data-flow-tab') === name;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        if (on && focus) t.focus();
+      });
+      each(picker.querySelectorAll('[data-flow-panel]'), function (p) {
+        var on = p.getAttribute('data-flow-panel') === name, fl = p.querySelector('.fl');
+        if (!on && !p.hidden && fl && fl.flPause) fl.flPause();
+        var shown = on && p.hidden;
+        p.hidden = !on;
+        if (shown && fl && fl.flShow) fl.flShow();
+      });
+      if (history.replaceState) history.replaceState(null, '', '#' + name);
+    }
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { select(t.getAttribute('data-flow-tab')); });
+      t.addEventListener('keydown', function (ev) {
+        var d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return;
+        ev.preventDefault();
+        select(tabs[(i + d + tabs.length) % tabs.length].getAttribute('data-flow-tab'), true);
+      });
+    });
+    if (location.hash.length > 1) select(location.hash.slice(1));
+  });
 })();

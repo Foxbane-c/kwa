@@ -43,6 +43,7 @@ KIND = {  # type d'étape -> (pictogramme, libellé)
 FLOWS = {
     "feature": {
         "title": "Développer une fonctionnalité",
+        "end": "De l'intention floue à la PR fusionnée, puis la leçon rangée.",
         "steps": [
             ("cadrer", "skill", "/kwa:brainstorm", "explorer, comparer deux ou trois approches, écrire une spec courte"),
             ("cadrer", "vous", "validation", "vous approuvez la spec"),
@@ -95,6 +96,125 @@ FLOWS = {
              "Vous fusionnez."),
             ("go", 13, "/kwa:learn propose ce qui mérite d'être retenu ; rien n'est écrit sans votre accord."),
             ("handoff", 14, "/kwa:handoff écrit un document de reprise : la prochaine session repart de là."),
+        ],
+    },
+    "bug": {
+        "title": "Corriger un bug",
+        "end": "Cause trouvée avant le correctif, preuve qu'il tient, piège rangé pour la suite.",
+        "steps": [
+            ("cadrer", "skill", "/kwa:debug", "reproduire, remonter à la cause racine"),
+            ("cadrer", "vous", "cause", "vous validez la cause avant tout correctif"),
+            ("faire", "skill", "/kwa:start-dev", "issue du bug et branche dédiée"),
+            ("prouver", "skill", "/kwa:tdd", "un test rouge qui montre le bug"),
+            ("prouver", "skill", "/kwa:simple", "le correctif le plus petit possible"),
+            ("prouver", "hook", "verify-stop", "refuse de rendre la main sur du rouge"),
+            ("prouver", "skill", "/kwa:verify", "le test repasse au rouge sans le correctif"),
+            ("livrer", "skill", "/kwa:commit", "un commit qui dit pourquoi"),
+            ("livrer", "garde", "guard-github", "une PR se rattache à son issue"),
+            ("livrer", "skill", "/kwa:ship", "la PR, avec la preuve"),
+            ("capitaliser", "skill", "/kwa:learn", "le piège rangé pour la suite"),
+        ],
+        "script": [
+            ("go", 0, "Symptôme : avec PROMO10, un panier de 30 € coûte 28 € au lieu de 27 €. /kwa:debug reproduit avant de toucher au code."),
+            ("loop", 0, 0, "Première hypothèse fausse : l'arrondi n'y est pour rien. On remonte plus loin."),
+            ("go", 0, "Cause trouvée : la remise ne s'applique qu'au premier article."),
+            ("ask", 1, "La cause vous paraît juste ?", [("Valider", "next"), ("Creuser", ("loop", 0, "On reprend le diagnostic."))], 0,
+             "Cause validée : on peut corriger."),
+            ("go", 2, "/kwa:start-dev ouvre l'issue du bug et sa branche."),
+            ("go", 3, "Un test reproduit le bug : il est rouge, comme attendu."),
+            ("go", 4, "Le correctif tient en une ligne."),
+            ("guard", 5, "STOP BLOQUÉ — `python3 -m unittest` est rouge. Corriger avant de rendre la main.",
+             "L'agent veut rendre la main, mais un test voisin casse : le hook l'en empêche."),
+            ("loop", 5, 4, "Un test voisin casse : le correctif est revu."),
+            ("go", 6, "/kwa:verify : le test passe, et repasse au rouge si on retire le correctif."),
+            ("go", 7, "Un commit, avec la raison du changement."),
+            ("guard", 8, "Kwa — Une PR se rattache à son issue : le corps doit porter « Closes #N ».",
+             "La PR part sans « Closes #N » : refusée."),
+            ("go", 9, "/kwa:ship ouvre la PR liée à l'issue, avec la sortie des tests."),
+            ("go", 10, "/kwa:learn propose de ranger le piège : la remise s'applique ligne par ligne."),
+        ],
+    },
+    "review": {
+        "title": "Relire",
+        "end": "Un regard neuf qui n'a rien modifié, des constats triés, une décision qui reste la vôtre.",
+        "steps": [
+            ("relire", "skill", "/kwa:review", "rassembler le diff, la demande et ses critères"),
+            ("relire", "agent", "kwa:reviewer", "un regard neuf, en lecture seule"),
+            ("relire", "hook", "readonly-bash", "le relecteur ne peut rien modifier"),
+            ("relire", "skill", "/kwa:review-feedback", "trier les constats avant d'en appliquer un"),
+            ("faire", "skill", "/kwa:tdd", "corriger les constats retenus, test d'abord"),
+            ("prouver", "skill", "/kwa:verify", "les vérifications repassent"),
+            ("livrer", "vous", "décision", "vous jugez que c'est prêt"),
+        ],
+        "script": [
+            ("go", 0, "/kwa:review rassemble le diff de la branche, la demande d'origine et ses critères de réussite."),
+            ("delegate", 1, [("kwa:reviewer", "le diff et les critères", "1 constat critique, 2 mineurs")],
+             "Un relecteur neuf relit sans connaître la conversation : il ne voit que ce qu'on lui donne."),
+            ("guard", 2, "Kwa — relecteur en lecture seule : sed -i modifie le fichier. Rapporter le besoin au lieu de modifier.",
+             "Le relecteur tente de corriger lui-même un fichier : refusé, il doit seulement rapporter."),
+            ("go", 3, "/kwa:review-feedback trie : le constat critique et un mineur sont fondés, l'autre est écarté avec sa raison."),
+            ("go", 4, "Les constats retenus sont corrigés, chacun avec son test."),
+            ("go", 5, "Les vérifications repassent au vert."),
+            ("loop", 5, 1, "Les corrections repassent en relecture."),
+            ("delegate", 1, [("kwa:reviewer", "les seules corrections", "rien à redire")], "Relecture ciblée des corrections : rien à redire."),
+            ("ask", 6, "La branche vous paraît prête ?", [("Prête", "next"), ("Encore une passe", ("loop", 1, "Une passe de relecture de plus."))], 0,
+             "Vous jugez que c'est prêt : la livraison peut commencer."),
+        ],
+    },
+    "ship": {
+        "title": "Livrer",
+        "end": "Chaque publication a été une décision : push, fusion, déploiement vérifié.",
+        "steps": [
+            ("prouver", "skill", "/kwa:verify", "vérifications du projet, sorties citées"),
+            ("livrer", "skill", "/kwa:commit", "un commit par changement logique"),
+            ("livrer", "garde", "guard-git", "pas de push sur main"),
+            ("livrer", "vous", "push", "vous autorisez la publication de la branche"),
+            ("livrer", "garde", "guard-github", "pas de fusion sans preuve"),
+            ("livrer", "vous", "fusion", "vous donnez le feu vert"),
+            ("livrer", "skill", "/kwa:deploy", "pré-vol, déploiement, vérification"),
+            ("capitaliser", "skill", "/kwa:learn", "ce que le déploiement a appris"),
+        ],
+        "script": [
+            ("go", 0, "/kwa:verify lance les vérifications du projet et cite leur sortie."),
+            ("loop", 0, 0, "Le lint est rouge : on corrige, puis on relance."),
+            ("go", 1, "/kwa:commit fait un commit par changement logique, jamais deux sujets dans le même."),
+            ("guard", 2, "Kwa — push direct vers main refusé : pousser la branche de travail et ouvrir une PR",
+             "L'agent tente de pousser sur main : refusé."),
+            ("go", 3, "Il pousse la branche de travail : la publication sort de votre machine."),
+            ("ask", 3, "Autoriser git push sur la branche ?", [("Autoriser", "next"), ("Refuser", ("loop", 1, "Vous voulez revoir les commits."))], 0,
+             "Push autorisé : la PR s'ouvre, liée à son issue."),
+            ("guard", 4, "Kwa — Aucune preuve sur la PR ni sur ses issues (#14). Joindre les captures ou la sortie des tests.",
+             "La fusion est demandée sans preuve : refusée."),
+            ("go", 4, "Les captures et la sortie des tests sont jointes : la fusion devient possible."),
+            ("ask", 5, "Fusionner la PR ?", [("Fusionner", "next"), ("Pas encore", ("loop", 4, "La PR attend votre relecture."))], 0,
+             "Vous fusionnez : la production va être déployée."),
+            ("go", 6, "/kwa:deploy fait le pré-vol, déploie, puis vérifie la révision réellement servie."),
+            ("go", 7, "/kwa:learn range ce que ce déploiement a appris."),
+        ],
+    },
+    "learn": {
+        "title": "Capitaliser",
+        "end": "Ce que la session a appris est rangé, et la suivante repart de là.",
+        "steps": [
+            ("cadrer", "hook", "memory-context", "au démarrage, la reprise de la session précédente"),
+            ("faire", "hook", "signal-prompt", "note vos corrections et vos « retiens : »"),
+            ("faire", "garde", "guard-write", "un refus devient un signal d'apprentissage"),
+            ("capitaliser", "hook", "memory-nudge", "propose de faire le point, une fois par session"),
+            ("capitaliser", "skill", "/kwa:learn", "range chaque leçon au bon endroit"),
+            ("capitaliser", "vous", "accord", "rien n'est écrit sans vous"),
+            ("capitaliser", "doc", "/kwa:handoff", "un document de reprise pour la session suivante"),
+        ],
+        "script": [
+            ("go", 1, "Vous corrigez l'agent : « retiens : les tests se lancent avec pytest ». Le hook note la phrase."),
+            ("guard", 2, "Kwa — Pas de code sur main : ouvrir d'abord l'issue et sa branche (/kwa:start-dev), puis travailler dans le worktree créé.",
+             "Un garde refuse une écriture sur main : ce refus devient aussi un signal."),
+            ("go", 3, "En fin de session, le hook propose une seule fois de faire le point."),
+            ("go", 4, "/kwa:learn trie notes et signaux : deux leçons valent d'être gardées."),
+            ("ask", 5, "Ranger ces deux leçons ?", [("Tout ranger", "next"), ("Seulement la première", ("loop", 4, "On n'en garde qu'une."))], 0,
+             "Vous validez : chaque leçon va à sa place (pièges du projet, politique)."),
+            ("handoff", 6, "/kwa:handoff écrit le document de reprise de la session."),
+            ("loop", 6, 0, "Session suivante : on repart du cadrage, avec ce qui a été appris."),
+            ("go", 0, "Au démarrage, le hook remet le journal et les leçons dans le contexte de l'agent."),
         ],
     },
 }
@@ -155,7 +275,7 @@ def player(key: str) -> str:
                         f'<h3>{html.escape(label)}</h3><p>{html.escape(promise)}</p><span class="fl-minis">{minis}</span></header>'
                         f'<div class="fl-body"><ol>{items}</ol><div class="fl-tray" aria-hidden="true"></div></div></section>')
     legend = "".join(f'<li class="fl-{k}"><span class="fl-dot">{pictos.svg(p)}</span>{lab}</li>' for k, (p, lab) in KIND.items())
-    return f"""<div class="fl" id="fl-{key}" data-flow="{key}">
+    return f"""<div class="fl" id="fl-{key}" data-flow="{key}" data-end="{html.escape(flow["end"])}">
   <div class="fl-bar">
     {shell.player("Lecture du workflow")}
     <p class="fl-say" aria-live="polite">Lisez le workflow d'une traite, ou pas à pas avec les flèches : ses boucles, vos décisions et les refus des gardes.</p>
@@ -165,3 +285,18 @@ def player(key: str) -> str:
   <ul class="fl-legend" aria-label="Légende">{legend}</ul>
   <script type="application/json" class="fl-script">{_json(key)}</script>
 </div>"""
+
+
+def section() -> str:
+    """Les cinq workflows : un onglet par workflow, chacun avec son lecteur (un seul visible à la fois)."""
+    import workflows
+    icon = {key: pic for key, pic, *_ in workflows.WORKFLOWS}
+    keys = [k for k, *_ in workflows.WORKFLOWS if k in FLOWS]
+    tabs = "".join(
+        f'<button type="button" class="wf-tab" role="tab" id="fl-tab-{k}" aria-controls="fl-panel-{k}" aria-selected="{"true" if i == 0 else "false"}" '
+        f'data-flow-tab="{k}">{pictos.svg(icon[k])}<span>{html.escape(FLOWS[k]["title"])}</span></button>'
+        for i, k in enumerate(keys))
+    panels = "".join(
+        f'<div class="fl-panel" role="tabpanel" id="fl-panel-{k}" aria-labelledby="fl-tab-{k}" data-flow-panel="{k}"{"" if i == 0 else " hidden"}>{player(k)}</div>'
+        for i, k in enumerate(keys))
+    return f'<div class="fl-picker"><div class="wf-tabs" role="tablist" aria-label="Choisir un workflow">{tabs}</div>{panels}</div>'

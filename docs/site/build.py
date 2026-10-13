@@ -210,13 +210,9 @@ def main():
         errs = flows.check(flow)
         if errs:
             sys.exit(f"workflow {key} : " + "; ".join(errs))
-    BOARD_HTML = (re.sub(r'\s*<script src="src/workflows.js"></script>', "", workflows.section())
-                  .replace('class="kw-container kd-section kd-rv" id="workflows"', 'class="bd-wf" id="workflows"')
-                  .replace('<div class="kd-eyebrow">Les workflows</div><h2 class="kw-section-title">Cinq workflows automatisés</h2>', '')
-                  + '<h2 class="kw-section-title bd-detail" id="detail">En détail : développer une fonctionnalité</h2>'
-                  '<p class="kd-lead">Le workflow regroupé en briques. Le jeton suit le scénario : les boucles quand une '
-                  'condition n\'est pas remplie, vos décisions, les refus des gardes, les sous-agents qui partent et reviennent. '
-                  'Vous pouvez cliquer dans les fenêtres de décision.</p>' + flows.player("feature"))
+    BOARD_HTML = ('<p class="kd-lead bd-lead">Chaque workflow est regroupé en briques. Le jeton suit son scénario : les boucles quand '
+                  'une condition n\'est pas remplie, vos décisions, les refus des gardes, les sous-agents qui partent et reviennent. '
+                  'Lisez-le d\'une traite ou pas à pas.</p>' + flows.section())
     pages = {
         "skill-map.html": ("Carte des skills", "Carte interactive", "map", '<div id="map" data-deeplink></div>',
                            "DATA.map && KwaMap.mount($('#map'), DATA.map);"),
@@ -226,7 +222,7 @@ def main():
     }
     no_js = {  # ces trois pages n'existent qu'en JavaScript : sans lui, renvoyer vers leur équivalent statique
         "skill-map.html": ('skills.html', "la liste des skills"),
-        "board.html": ('index.html#workflows', "les cinq workflows de l'accueil"),  # le déroulé détaillé est en JS
+        "board.html": ('index.html#workflows', "les cinq workflows de l'accueil"),  # le déroulé animé est en JS
         "terminal.html": ('index.html#demarrer', "les commandes de démarrage"),
     }
     for fname, (href, label) in no_js.items():
