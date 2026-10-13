@@ -1,16 +1,16 @@
 {
-  "kwa_version": "0.1.0",
+  "kwa_version": "0.2.2",
   "scenarios": [
     {
       "id": "install",
       "title": "Détecter et installer",
-      "summary": "De `detect` à `doctor` : installer le socle sur un monorepo pnpm, sans rien committer.",
+      "summary": "De `detect` à `doctor` : préparer un monorepo pnpm pour le plugin, sans rien committer.",
       "prep": "Projet jetable : monorepo pnpm (scripts typecheck / lint / test), `apps/web` Next + Prisma, `apps/mobile` Expo avec `eas.json`, `prisma/migrations`, workflow de déploiement Scaleway, un ancien garde `.claude/hooks/guard-bash.sh`. Dépôt git initialisé sur `main`.",
       "steps": [
         {
           "cwd": "~",
           "cmd": "kwa detect ./mon-projet",
-          "output": "Stack détectée : expo, monorepo, next, prisma\nModules proposés :\n  ✓ core             Garde-fous (secrets, git, suppression, écriture, politique), règles, /kwa-commit, /kwa-ship\n  ✓ craft            Méthode de travail (cadrer, faire, prouver, relire) : brainstorm, interview, plan, execute, agents, parallel, tdd, debug, verify, review, simple, audit, architecture, prototype, handoff, questionnaire, conflits de fusion, recherche sourcée, vocabulaire du domaine, enseignement… + routage des skills au démarrage\n  ✓ memory           Mémoire des sessions : journal et reprise au démarrage, notes et signaux (corrections, refus de garde), invitation unique en fin de session, /kwa-learn range décisions, pièges et règles au bon endroit après accord\n  ✓ issue-flow       Workflow issue → branche/worktree → preuve → PR « Closes #N » → fusion gardée ; /kwa-start-dev, gabarits GitHub\n  ✓ verify           Formatage des fichiers nouveaux seulement ; garde Stop opt-in (KWA_STOP_VERIFY=1) qui refuse de finir sur du rouge\n  ✓ stack-prisma     Migrations append-only, pas de reset / db push\n  ✓ stack-expo       /kwa-testflight (Release sur simulateur avant build EAS), soumission EAS soumise à confirmation\n  ✓ stack-scaleway   Déploiement Scaleway en direct soumis à confirmation\n  ✓ deploy           /kwa-deploy : pré-vol, déploiement et vérification avec preuve, pilotés par les environnements de la politique\n  ? client-handover  Dépôt remis au client : règle des 4 tests, contrôle d'hygiène (secrets, comptes perso, noms, mesures datées) + job CI  (sur demande : --with client-handover)\nPolitique déduite :\n{\n  \"verify\": {\n    \"commands\": [\n      \"pnpm typecheck\",\n      \"pnpm lint\",\n      \"pnpm test\"\n    ]\n  },\n  \"start\": {\n    \"install\": [\n      \"pnpm install --frozen-lockfile\",\n      \"pnpm db:generate\"\n    ]\n  },\n  \"write\": {\n    \"no_code_on_main\": [\n      \"apps/\"\n    ]\n  },\n  \"mobile\": {\n    \"eas_config\": \"apps/mobile/eas.json\",\n    \"profiles\": [\n      \"development\",\n      \"preview\",\n      \"production-testflight\"\n    ],\n    \"testflight_profile\": \"production-testflight\",\n    \"release_check_before_build\": true\n  }\n}",
+          "output": "Stack détectée : expo, monorepo, next, prisma\nModules proposés :\n  ✓ core             Garde-fous (secrets, git, suppression, écriture, politique), règles, /kwa:commit, /kwa:ship\n  ✓ craft            Méthode de travail (cadrer, faire, prouver, relire) : brainstorm, interview, plan, execute, agents, parallel, tdd, debug, verify, review, simple, audit, architecture, prototype, handoff, questionnaire, conflits de fusion, recherche sourcée, vocabulaire du domaine, enseignement… + routage des skills au démarrage\n  ✓ memory           Mémoire des sessions : journal et reprise au démarrage, notes et signaux (corrections, refus de garde), invitation unique en fin de session, /kwa:learn range décisions, pièges et règles au bon endroit après accord\n  ✓ issue-flow       Workflow issue → branche/worktree → preuve → PR « Closes #N » → fusion gardée ; /kwa:start-dev, gabarits GitHub\n  ✓ verify           Formatage des fichiers nouveaux seulement ; garde Stop opt-in (KWA_STOP_VERIFY=1) qui refuse de finir sur du rouge\n  ✓ stack-prisma     Migrations append-only, pas de reset / db push\n  ✓ stack-expo       /kwa:testflight (Release sur simulateur avant build EAS), soumission EAS soumise à confirmation\n  ✓ stack-scaleway   Déploiement Scaleway en direct soumis à confirmation\n  ✓ deploy           /kwa:deploy : pré-vol, déploiement et vérification avec preuve, pilotés par les environnements de la politique\n  ? client-handover  Dépôt remis au client : règle des 4 tests, contrôle d'hygiène (secrets, comptes perso, noms, mesures datées) + job CI  (sur demande : --with client-handover)\nPolitique déduite :\n{\n  \"verify\": {\n    \"commands\": [\n      \"pnpm typecheck\",\n      \"pnpm lint\",\n      \"pnpm test\"\n    ]\n  },\n  \"start\": {\n    \"install\": [\n      \"pnpm install --frozen-lockfile\",\n      \"pnpm db:generate\"\n    ]\n  },\n  \"write\": {\n    \"no_code_on_main\": [\n      \"apps/\"\n    ]\n  },\n  \"mobile\": {\n    \"eas_config\": \"apps/mobile/eas.json\",\n    \"profiles\": [\n      \"development\",\n      \"preview\",\n      \"production-testflight\"\n    ],\n    \"testflight_profile\": \"production-testflight\",\n    \"release_check_before_build\": true\n  }\n}",
           "code": 0,
           "explain": {
             "title": "Lire le projet, **sans rien écrire**",
@@ -22,27 +22,27 @@
         },
         {
           "cwd": "~",
-          "cmd": "kwa install ./mon-projet --dry-run",
-          "output": "[simulation] kwa v0.1.0 → ~/mon-projet\n  modules : core, craft, memory, issue-flow, verify, stack-prisma, stack-expo, stack-scaleway, deploy\n  fichiers ajouté : 65\n  fichiers seed : 4\n    - .github/pull_request_template.md\n    - .github/ISSUE_TEMPLATE/bug.md\n    - .github/ISSUE_TEMPLATE/feature.md\n    - .github/ISSUE_TEMPLATE/config.yml\n  AGENTS.md : créé\n  CLAUDE.md : créé\n  politique .claude/kwa.policy.json : créée à partir de la détection — à relire et compléter\n  .git/info/exclude : 3 motif(s) ajouté(s)\n  hooks settings.json : 14 ajouté(s)\n    + PreToolUse Bash|Read|Grep: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-secrets.py\n    + PreToolUse Bash: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-git.py\n    + PreToolUse Bash: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-delete.py\n    + PreToolUse Bash: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-policy.py\n    + PreToolUse Edit|Write|MultiEdit|NotebookEdit: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-write.py\n    + PreToolUse Bash: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-github.py\n    + SessionStart startup|clear|compact: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/skills-router.py\n    + SessionStart *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/memory-context.py\n    + Stop *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/memory-nudge.py\n    + Stop *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/verify-stop.py\n    + PreCompact *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/journal-compact.py\n    + SessionEnd *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/journal-end.py\n    + UserPromptSubmit *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/signal-prompt.py\n    + PostToolUse Edit|Write: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/format-after-edit.py\n  skills recommandées, non installées (voir `kwa recommend`) : expo-react-native-typescript, eas-app-stores, app-store-screenshots, aso, impeccable, design-taste-frontend\n  git : rien n'a été ajouté, commité ni poussé.",
+          "cmd": "kwa init ./mon-projet --dry-run",
+          "output": "[simulation] kwa v0.2.2 (plugin) → ~/mon-projet\n  modules : core, craft, memory, issue-flow, verify, stack-prisma, stack-expo, stack-scaleway, deploy\n  gabarits copiés :\n    - .github/pull_request_template.md\n    - .github/ISSUE_TEMPLATE/bug.md\n    - .github/ISSUE_TEMPLATE/feature.md\n    - .github/ISSUE_TEMPLATE/config.yml\n  AGENTS.md : créé\n  CLAUDE.md : créé\n  politique .claude/kwa.policy.json : créée à partir de la détection — à relire et compléter\n  .git/info/exclude : 3 motif(s) ajouté(s)\n  .claude/settings.json : plugin kwa@kwa proposé à l'équipe\n  codex : .codex/hooks.json : hooks par `kwa hook`\n  git : rien n'a été ajouté, commité ni poussé.\nEnsuite :\n  Claude Code : /plugin marketplace add nesyouyou/kwa, puis /plugin install kwa@kwa (ou accepter la proposition du projet au démarrage)\n  Codex : codex plugin marketplace add nesyouyou/kwa, puis codex plugin add kwa@kwa ; la commande `kwa` doit être dans le PATH, puis valider les hooks avec /hooks",
           "code": 0,
           "explain": {
             "title": "**Simuler** avant de toucher",
             "body": [
-              "Même calcul que l'installation, mais **rien n'est écrit**. On voit les fichiers qui seraient ajoutés, le bloc géré d'`AGENTS.md`, la politique créée, les hooks branchés dans `settings.json`.",
+              "Même calcul que la préparation, mais **rien n'est écrit**. On voit les gabarits qui seraient copiés, le bloc géré d'`AGENTS.md`, la politique créée, le plugin proposé dans `settings.json`.",
               "C'est le moment de relire : le préfixe `[simulation]` rappelle que le dépôt est intact."
             ]
           }
         },
         {
           "cwd": "~",
-          "cmd": "kwa install ./mon-projet",
-          "output": "kwa v0.1.0 → ~/mon-projet\n  modules : core, craft, memory, issue-flow, verify, stack-prisma, stack-expo, stack-scaleway, deploy\n  fichiers ajouté : 65\n  fichiers seed : 4\n    - .github/pull_request_template.md\n    - .github/ISSUE_TEMPLATE/bug.md\n    - .github/ISSUE_TEMPLATE/feature.md\n    - .github/ISSUE_TEMPLATE/config.yml\n  AGENTS.md : créé\n  CLAUDE.md : créé\n  politique .claude/kwa.policy.json : créée à partir de la détection — à relire et compléter\n  .git/info/exclude : 3 motif(s) ajouté(s)\n  hooks settings.json : 14 ajouté(s)\n    + PreToolUse Bash|Read|Grep: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-secrets.py\n    + PreToolUse Bash: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-git.py\n    + PreToolUse Bash: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-delete.py\n    + PreToolUse Bash: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-policy.py\n    + PreToolUse Edit|Write|MultiEdit|NotebookEdit: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-write.py\n    + PreToolUse Bash: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/guard-github.py\n    + SessionStart startup|clear|compact: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/skills-router.py\n    + SessionStart *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/memory-context.py\n    + Stop *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/memory-nudge.py\n    + Stop *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/verify-stop.py\n    + PreCompact *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/journal-compact.py\n    + SessionEnd *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/journal-end.py\n    + UserPromptSubmit *: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/signal-prompt.py\n    + PostToolUse Edit|Write: python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/format-after-edit.py\n  skills recommandées, non installées (voir `kwa recommend`) : expo-react-native-typescript, eas-app-stores, app-store-screenshots, aso, impeccable, design-taste-frontend\n  git : rien n'a été ajouté, commité ni poussé.",
+          "cmd": "kwa init ./mon-projet",
+          "output": "kwa v0.2.2 (plugin) → ~/mon-projet\n  modules : core, craft, memory, issue-flow, verify, stack-prisma, stack-expo, stack-scaleway, deploy\n  gabarits copiés :\n    - .github/pull_request_template.md\n    - .github/ISSUE_TEMPLATE/bug.md\n    - .github/ISSUE_TEMPLATE/feature.md\n    - .github/ISSUE_TEMPLATE/config.yml\n  AGENTS.md : créé\n  CLAUDE.md : créé\n  politique .claude/kwa.policy.json : créée à partir de la détection — à relire et compléter\n  .git/info/exclude : 3 motif(s) ajouté(s)\n  .claude/settings.json : plugin kwa@kwa proposé à l'équipe\n  codex : .codex/hooks.json : hooks par `kwa hook`\n  git : rien n'a été ajouté, commité ni poussé.\nEnsuite :\n  Claude Code : /plugin marketplace add nesyouyou/kwa, puis /plugin install kwa@kwa (ou accepter la proposition du projet au démarrage)\n  Codex : codex plugin marketplace add nesyouyou/kwa, puis codex plugin add kwa@kwa ; la commande `kwa` doit être dans le PATH, puis valider les hooks avec /hooks",
           "code": 0,
           "explain": {
-            "title": "Installer le **socle**",
+            "title": "Préparer le projet pour le **plugin**",
             "body": [
-              "Les gardes, règles et skills sont copiés dans `.claude/`. `AGENTS.md` reçoit un bloc balisé (`kwa:begin` / `kwa:end`) : rien en dehors des marqueurs n'est modifié. `CLAUDE.md` devient un pointeur vers `@AGENTS.md`.",
-              "La politique `.claude/kwa.policy.json` est **créée une fois** puis appartient au projet : une réinstallation ne l'écrase jamais.",
+              "Aucun script n'est copié : gardes, règles et skills viennent du plugin, installé une fois par machine. `AGENTS.md` reçoit un bloc balisé (`kwa:begin` / `kwa:end`) : rien en dehors des marqueurs n'est modifié. `CLAUDE.md` devient un pointeur vers `@AGENTS.md`. `.claude/settings.json` propose le plugin à toute l'équipe.",
+              "La politique `.claude/kwa.policy.json` est **créée une fois** puis appartient au projet : une relance ne l'écrase jamais, elle ne tient à jour que la liste des modules.",
               "La dernière ligne le dit : Kwa n'ajoute, ne commite et ne pousse rien."
             ]
           }
@@ -50,13 +50,13 @@
         {
           "cwd": "~",
           "cmd": "kwa doctor ./mon-projet",
-          "output": "• .claude/hooks/guard-bash.sh fait doublon avec guard-policy + guard-git : à retirer une fois la politique validée\n✓ cible conforme",
+          "output": "• .claude/hooks/guard-bash.sh fait doublon avec guard-policy + guard-git : à retirer une fois la politique validée\n• plugin Claude Code sur cette machine : non installé (/plugin install kwa@kwa)\n✓ cible conforme (plugin)",
           "code": 0,
           "explain": {
             "title": "Vérifier la **conformité**",
             "body": [
-              "`doctor` contrôle le bloc `AGENTS.md`, les hooks, la politique, et signale les **doublons** avec l'outillage maison du projet.",
-              "Ici, le `guard-bash.sh` préexistant fait doublon avec les gardes de Kwa : c'est une note, pas une erreur. Code de sortie 0 : la cible est conforme."
+              "`doctor` contrôle le bloc `AGENTS.md`, la politique, le plugin activé pour le projet et installé sur la machine, et signale les **doublons** avec l'outillage maison du projet.",
+              "Ici, le `guard-bash.sh` préexistant fait doublon avec les gardes de Kwa, et le plugin n'est pas installé dans ce dossier de démonstration : ce sont des notes, pas des erreurs. Code de sortie 0."
             ]
           }
         }
@@ -66,11 +66,11 @@
       "id": "guards",
       "title": "Un garde en action",
       "summary": "Les vrais gardes, alimentés par la charge utile que leur envoie Claude Code.",
-      "prep": "Projet jetable sur la branche `main`, avec un `.env` factice, après `kwa install --modules core`. La variable `CLAUDE_PROJECT_DIR` (posée par Claude Code) désigne le projet ; elle n'apparaît pas à l'écran. La sortie passe par `json.tool` pour rester lisible.",
+      "prep": "Projet jetable sur la branche `main`, avec un `.env` factice, après `kwa init --modules core`. `kwa hook` lance un garde comme le plugin le fait (le plugin appelle le même `run.py`). La variable `CLAUDE_PROJECT_DIR` (posée par Claude Code) désigne le projet ; elle n'apparaît pas à l'écran. La sortie passe par `json.tool` pour rester lisible.",
       "steps": [
         {
           "cwd": "~/mon-projet",
-          "cmd": "echo '{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"cat .env\"}, \"cwd\": \"~/mon-projet\"}' | python3 .claude/kwa/hooks/guard-secrets.py | python3 -m json.tool --no-ensure-ascii",
+          "cmd": "echo '{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"cat .env\"}, \"cwd\": \"~/mon-projet\"}' | kwa hook guard-secrets | python3 -m json.tool --no-ensure-ascii",
           "output": "{\n    \"hookSpecificOutput\": {\n        \"hookEventName\": \"PreToolUse\",\n        \"permissionDecision\": \"deny\",\n        \"permissionDecisionReason\": \"Kwa — commande refusée : touche un fichier de secrets (.env)\"\n    }\n}",
           "code": 0,
           "explain": {
@@ -83,7 +83,7 @@
         },
         {
           "cwd": "~/mon-projet",
-          "cmd": "echo '{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"git push origin main\"}, \"cwd\": \"~/mon-projet\"}' | python3 .claude/kwa/hooks/guard-git.py | python3 -m json.tool --no-ensure-ascii",
+          "cmd": "echo '{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"git push origin main\"}, \"cwd\": \"~/mon-projet\"}' | kwa hook guard-git | python3 -m json.tool --no-ensure-ascii",
           "output": "{\n    \"hookSpecificOutput\": {\n        \"hookEventName\": \"PreToolUse\",\n        \"permissionDecision\": \"deny\",\n        \"permissionDecisionReason\": \"Kwa — push direct vers main refusé : pousser la branche de travail et ouvrir une PR\"\n    }\n}",
           "code": 0,
           "explain": {
@@ -96,7 +96,7 @@
         },
         {
           "cwd": "~/mon-projet",
-          "cmd": "echo '{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"git push origin feat/ma-branche\"}, \"cwd\": \"~/mon-projet\"}' | python3 .claude/kwa/hooks/guard-git.py | python3 -m json.tool --no-ensure-ascii",
+          "cmd": "echo '{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"git push origin feat/ma-branche\"}, \"cwd\": \"~/mon-projet\"}' | kwa hook guard-git | python3 -m json.tool --no-ensure-ascii",
           "output": "{\n    \"hookSpecificOutput\": {\n        \"hookEventName\": \"PreToolUse\",\n        \"permissionDecision\": \"ask\",\n        \"permissionDecisionReason\": \"Kwa — git push publie la branche : confirmer.\"\n    }\n}",
           "code": 0,
           "explain": {
@@ -109,7 +109,7 @@
         },
         {
           "cwd": "~/mon-projet",
-          "cmd": "echo '{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"rm -rf /usr/local/x\"}, \"cwd\": \"~/mon-projet\"}' | python3 .claude/kwa/hooks/guard-delete.py | python3 -m json.tool --no-ensure-ascii",
+          "cmd": "echo '{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"rm -rf /usr/local/x\"}, \"cwd\": \"~/mon-projet\"}' | kwa hook guard-delete | python3 -m json.tool --no-ensure-ascii",
           "output": "{\n    \"hookSpecificOutput\": {\n        \"hookEventName\": \"PreToolUse\",\n        \"permissionDecision\": \"deny\",\n        \"permissionDecisionReason\": \"Kwa — suppression hors du projet refusée : /usr/local/x\"\n    }\n}",
           "code": 0,
           "explain": {
@@ -121,7 +121,7 @@
         },
         {
           "cwd": "~/mon-projet",
-          "cmd": "echo '{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"cat .env.example\"}, \"cwd\": \"~/mon-projet\"}' | python3 .claude/kwa/hooks/guard-secrets.py",
+          "cmd": "echo '{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"cat .env.example\"}, \"cwd\": \"~/mon-projet\"}' | kwa hook guard-secrets",
           "output": "",
           "code": 0,
           "explain": {
@@ -139,24 +139,24 @@
       "id": "memory",
       "title": "Mémoire de session",
       "summary": "Capturer les apprentissages en passant, les trier à la fin.",
-      "prep": "Dépôt git jetable avec un commit, sur la branche `feat/export`, un fichier non commité. Le dossier de notes est exclu de git, comme après `kwa install`.",
+      "prep": "Dépôt git jetable avec un commit, sur la branche `feat/export`, un fichier non commité. Le dossier de notes est exclu de git, comme après `kwa init`.",
       "steps": [
         {
           "cwd": "~/mon-projet",
-          "cmd": "kwa-memory capture gotcha \"Le seed Prisma échoue si la base n'est pas migrée\"",
+          "cmd": "kwa memory capture gotcha \"Le seed Prisma échoue si la base n'est pas migrée\"",
           "output": "noté.",
           "code": 0,
           "explain": {
             "title": "Noter un **piège**, sans quitter le travail",
             "body": [
               "Une note rapide, rangée par type : `gotcha` (piège), `decision`, `rule`, `pref` ou `vault`. Elle est datée et ajoutée à `.claude/kwa/local/inbox.md`.",
-              "Ce dossier est **local** : exclu de git par `kwa install`. Rien n'est écrit dans la documentation du projet à ce stade."
+              "Ce dossier est **local** : exclu de git par `kwa init`. Rien n'est écrit dans la documentation du projet à ce stade."
             ]
           }
         },
         {
           "cwd": "~/mon-projet",
-          "cmd": "kwa-memory capture decision \"Pagination par curseur plutôt que par offset\"",
+          "cmd": "kwa memory capture decision \"Pagination par curseur plutôt que par offset\"",
           "output": "noté.",
           "code": 0,
           "explain": {
@@ -168,7 +168,7 @@
         },
         {
           "cwd": "~/mon-projet",
-          "cmd": "kwa-memory pending",
+          "cmd": "kwa memory pending",
           "output": "2 note(s) en attente\n- [2026-10-07] [gotcha] Le seed Prisma échoue si la base n'est pas migrée\n- [2026-10-07] [decision] Pagination par curseur plutôt que par offset",
           "code": 0,
           "explain": {
@@ -180,20 +180,20 @@
         },
         {
           "cwd": "~/mon-projet",
-          "cmd": "kwa-memory digest",
+          "cmd": "kwa memory digest",
           "output": "## Notes en attente\n- [2026-10-07] [gotcha] Le seed Prisma échoue si la base n'est pas migrée\n- [2026-10-07] [decision] Pagination par curseur plutôt que par offset\n\n## Journal des dernières sessions\n(aucune entrée)\n\n## Signaux des 30 derniers jours\n(aucun refus de garde)\n- 0 correction(s) ou marqueur(s) « retiens : » (déjà dans les notes en attente)\n\n## Branche : feat/export\n## Commits depuis la base\n(aucun)\n## Fichiers modifiés (non commités)\n?? src/export.ts\n## Fichiers modifiés (commités sur la branche)\n(aucun)\n\n## Destinations\n- décisions : docs/decisions\n- pièges : docs/gotchas.md\n- règles / garde-fous : .claude/kwa.policy.json\n- base de connaissance de l'équipe (capture seulement) : (KWA_VAULT_INBOX non défini → ne pas écrire dans la base de connaissance)",
           "code": 0,
           "explain": {
-            "title": "Tout pour **/kwa-learn**",
+            "title": "Tout pour **/kwa:learn**",
             "body": [
               "Le digest réunit les notes, la branche, les commits et les fichiers modifiés, puis rappelle les **destinations** : décisions, pièges, politique.",
-              "C'est `/kwa-learn` qui propose les écritures et l'humain qui valide. La base de connaissance de l'équipe n'est touchée que si `KWA_VAULT_INBOX` est défini."
+              "C'est `/kwa:learn` qui propose les écritures et l'humain qui valide. La base de connaissance de l'équipe n'est touchée que si `KWA_VAULT_INBOX` est défini."
             ]
           }
         },
         {
           "cwd": "~/mon-projet",
-          "cmd": "kwa-memory clear",
+          "cmd": "kwa memory clear",
           "output": "notes archivées.",
           "code": 0,
           "explain": {
@@ -205,7 +205,7 @@
         },
         {
           "cwd": "~/mon-projet",
-          "cmd": "kwa-memory pending",
+          "cmd": "kwa memory pending",
           "output": "0 note(s) en attente",
           "code": 0,
           "explain": {
@@ -225,7 +225,7 @@
       "steps": [
         {
           "cwd": "~/mon-projet",
-          "cmd": "kwa-hygiene",
+          "cmd": "kwa hygiene",
           "output": "Hygiène de remise — périmètre produit (hors tests, hors docs/)\n\n  SECRET      identifiant en dur                       1\n      src/config.ts:1:export const apiKey = \"demo_0123456789abcdefghij\"\n  PERSONNEL   compte personnel ou prestataire          2\n      src/admin.ts:1:export const admin = 'jea***@gmail.com'\n      src/legacy.ts:1:export const contact = 'sup***@gmail.com'\n  NOMINATIF   personne nommée (préférer un rôle)       aucun\n  PÉRISSABLE  mesure datée dans une instruction        aucun\n\nBLOQUANT : 3 occurrence(s) à traiter.",
           "code": 1,
           "explain": {
@@ -262,7 +262,7 @@
         },
         {
           "cwd": "~/mon-projet",
-          "cmd": "kwa-hygiene",
+          "cmd": "kwa hygiene",
           "output": "Hygiène de remise — périmètre produit (hors tests, hors docs/)\n\n  SECRET      identifiant en dur                       aucun\n  PERSONNEL   compte personnel ou prestataire          1 (+1 reporté(s))\n      src/admin.ts:1:export const admin = 'jea***@gmail.com'\n  NOMINATIF   personne nommée (préférer un rôle)       aucun\n  PÉRISSABLE  mesure datée dans une instruction        aucun\n\nExceptions assumées — 1 occurrence(s) écartée(s), cf. .claude/kwa.hygiene.allow :\n      PERSONNEL src/legacy.ts à passer en variable d'env avant la remise\n\nBLOQUANT : 1 occurrence(s) à traiter.",
           "code": 1,
           "explain": {
@@ -275,7 +275,7 @@
         },
         {
           "cwd": "~/mon-projet",
-          "cmd": "echo \"export const admin = 'admin@exemple-client.fr'\" > src/admin.ts && git add -A && kwa-hygiene",
+          "cmd": "echo \"export const admin = 'admin@exemple-client.fr'\" > src/admin.ts && git add -A && kwa hygiene",
           "output": "Hygiène de remise — périmètre produit (hors tests, hors docs/)\n\n  SECRET      identifiant en dur                       aucun\n  PERSONNEL   compte personnel ou prestataire          aucun (+1 reporté(s))\n  NOMINATIF   personne nommée (préférer un rôle)       aucun\n  PÉRISSABLE  mesure datée dans une instruction        aucun\n\nExceptions assumées — 1 occurrence(s) écartée(s), cf. .claude/kwa.hygiene.allow :\n      PERSONNEL src/legacy.ts à passer en variable d'env avant la remise\n\nRien à signaler dans le périmètre produit.",
           "code": 0,
           "explain": {

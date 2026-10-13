@@ -613,7 +613,7 @@ def history() -> str:
 <p>Chaque étape du processus d'équipe a donc son équivalent autour de l'agent :</p>
 <table class="pc-table"><thead><tr><th>Étape du processus</th><th>Dans le harness (Kwa)</th></tr></thead><tbody>
 <tr><td>Cadrer le besoin</td><td><code>/kwa:brainstorm</code>, <code>/kwa:plan</code></td></tr>
-<tr><td>Ticket et branche dédiée</td><td><code>/kwa:start-dev</code> et <code>kwa-start</code></td></tr>
+<tr><td>Ticket et branche dédiée</td><td><code>/kwa:start-dev</code> et <code>kwa start</code></td></tr>
 <tr><td>Tests d'abord</td><td><code>/kwa:tdd</code></td></tr>
 <tr><td>Revue de code</td><td><code>/kwa:review</code>, retours traités par <code>/kwa:review-feedback</code></td></tr>
 <tr><td>Branches protégées, pas de force-push</td><td>Gardes <code>guard-git</code>, <code>guard-write</code></td></tr>
@@ -625,7 +625,7 @@ def history() -> str:
 
 
 def harness(practice_html: str) -> str:
-    return (intro("De l'histoire du processus de développement jusqu'à un harness complet, puis dix étapes sur un dépôt jetable, avec les vrais gardes : les sorties affichées sont celles de l'exécution, recalculées à chaque génération du site. Pour voir chaque pièce, la pratique installe Kwa par copie (<code>kwa install</code>) dans un dépôt jetable : les gardes y sont de simples fichiers que l'on lance à la main ; dans vos projets, le plugin apporte les mêmes scripts. Prérequis : les parcours Culture et Contexte, Python 3 et Kwa récupéré (voir <a href='avant-de-commencer.html'>Avant de commencer</a>). Les exercices tournent sans agent, sans compte ni clé ; Claude Code ou Codex sert pour les essais en situation, et jq pour l'exemple de hook en bash. Environ quatre heures, à calibrer en séance.") +
+    return (intro("De l'histoire du processus de développement jusqu'à un harness complet, puis dix étapes sur un dépôt jetable, avec les vrais gardes : les sorties affichées sont celles de l'exécution, recalculées à chaque génération du site. La pratique prépare un dépôt jetable pour le plugin, puis lance les gardes à la main : ce sont de simples scripts, les mêmes que ceux que Claude Code appelle. Prérequis : les parcours Culture et Contexte, Python 3 et le plugin Kwa installé (voir <a href='avant-de-commencer.html'>Avant de commencer</a>). Les exercices tournent sans agent, sans compte ni clé ; Claude Code ou Codex sert pour les essais en situation, et jq pour l'exemple de hook en bash. Environ quatre heures, à calibrer en séance.") +
             nav(HARNESS_NAV) +
             history() + practice_html)
 

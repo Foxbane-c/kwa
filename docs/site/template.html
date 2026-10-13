@@ -219,7 +219,7 @@ footer.kw-footer{margin-top:128px}
   <div class="kd-head"><div class="kd-eyebrow">{{pic:book}}Mémoire</div><h2 class="kw-section-title">Chaque session enrichit la suivante</h2>
     <p class="kd-lead">D'autres projets captent des corrections ou des découvertes. Kwa y ajoute le <strong>journal des sessions</strong>, qui dit au démarrage où l'on en était, le <strong>refus d'un garde comme signal d'apprentissage</strong>, et le rangement dans la documentation partagée du projet. Rien n'est écrit sans votre accord.</p></div>
   <div class="kd-loop" style="margin-top:40px">
-    <div class="kd-node"><b>1. Capture</b><span>Sans y penser : vos corrections, vos « retiens : » et chaque refus de garde deviennent des candidats. Ou à la main : <code>kwa-memory capture gotcha "…"</code></span></div>
+    <div class="kd-node"><b>1. Capture</b><span>Sans y penser : vos corrections, vos « retiens : » et chaque refus de garde deviennent des candidats. Ou à la main : <code>kwa memory capture gotcha "…"</code></span></div>
     <div class="kd-node"><b>2. Journal</b><span>En fin de session substantielle, huit lignes : objectif, fait, décisions, reste à faire, pièges. Si vous fermez sans rien dire, un filet écrit au moins les faits.</span></div>
     <div class="kd-node"><b>3. Filtre</b><span>Seulement le non-dérivable du code et de git. Chaque affirmation est revérifiée.</span></div>
     <div class="kd-node"><b>4. Tri</b><span>Chaque apprentissage est routé vers la bonne destination, avec le diff exact.</span></div>
@@ -266,7 +266,7 @@ footer.kw-footer{margin-top:128px}
   <div style="margin-top:40px">
   <details open><summary>Les gardes ne sont pas une frontière de sécurité</summary><p><strong>Un agent peut</strong> en théorie éditer ses propres hooks ; <code>guard-write</code> demande confirmation avant de toucher à <code>.claude/kwa/</code> et <code>settings.json</code>, rien de plus. Pour une vraie barrière : règles de protection de branche GitHub et <code>permissions.deny</code>.</p></details>
   <details><summary>Les gardes analysent du texte</summary><p>Un script écrit dans un fichier puis exécuté, ou une commande assemblée à l'exécution, échappent à l'analyse. Les cibles calculées (<code>$(…)</code>, variables) déclenchent une demande plutôt qu'un passage.</p></details>
-  <details><summary>Feuille de route</summary><p>1. Essai sur un projet pilote, toujours en simulation d'abord. 2. <code>kwa sync</code> : installer sur tous les projets listés dans un fichier de configuration. 3. Packaging en plugin Claude Code (skills seulement ; les hooks passent par l'installeur). 4. Évals de skills avec <code>claude plugin eval</code>, à vérifier sur la version en place. 5. Fusion guidée d'un <code>CLAUDE.md</code> existant dans <code>AGENTS.md</code>, avec contrôle de couverture. 6. Profil « projet client » : compte machine, politique de fusion humaine.</p></details>
+  <details><summary>Feuille de route</summary><p>1. Essai sur un projet pilote, toujours en simulation d'abord. 2. <code>kwa sync</code> : installer sur tous les projets listés dans un fichier de configuration. 3. Évals de skills avec <code>claude plugin eval</code>, à vérifier sur la version en place. 4. Fusion guidée d'un <code>CLAUDE.md</code> existant dans <code>AGENTS.md</code>, avec contrôle de couverture. 5. Profil « projet client » : compte machine, politique de fusion humaine.</p></details>
   <details><summary>Ce que Kwa ne décide pas pour vous</summary><p>Le contenu de la politique d'un projet (commandes interdites, environnements, pré-vols) vient de vos incidents. Kwa pré-remplit ce qu'il peut déduire et vous laisse le reste. Le module <code>client-handover</code> n'est jamais déduit : il dépend de l'intention.</p></details>
   </div>
 </section>
@@ -364,9 +364,9 @@ if ($('#ob')) {
 const OB = [
  ['Ajouter le plugin, une fois par machine','/plugin marketplace add nesyouyou/kwa',"Dans une session Claude Code, puis <code>/plugin install kwa@kwa</code>. Skills, agent relecteur, garde-fous, mémoire et la commande <code>kwa</code> arrivent avec le plugin. Sous Codex : <code>codex plugin marketplace add nesyouyou/kwa</code>, puis <code>codex plugin add kwa@kwa</code>. Il faut d'abord un agent de code : voir <a href=\"avant-de-commencer.html\">Avant de commencer</a>."],
  ['Préparer le projet, une fois par dépôt','/kwa:init',"Dans une session ouverte dans le projet. La skill montre ce que Kwa détecte, simule, puis n'écrit que de la configuration après votre accord : la politique <code>.claude/kwa.policy.json</code>, le bloc d'AGENTS.md, le plugin proposé à l'équipe. Elle complète la politique avec vous et vérifie le résultat. Aucun script n'est copié."],
- ['Committer la configuration','/kwa:commit',"Sur une branche, puis <code>/kwa:ship</code> pour la pull request : l'équipe reçoit la proposition d'installer le plugin en ouvrant le projet."]
+ ['Livrer la configuration par une PR','git switch -c chore/kwa-setup',"La configuration est écrite mais pas committée. Sur une branche, committez avec <code>/kwa:commit</code>. Avec le module issue-flow, une PR doit porter « Closes #N », où N est le numéro d'une issue GitHub : ouvrez une issue « Installer Kwa » (<code>gh issue create</code>), puis <code>/kwa:ship</code>. À la fusion, l'équipe reçoit la proposition d'installer le plugin en ouvrant le projet."]
 ];
-OB.forEach(([t,c,d],i)=> $('#ob').append(el('div',{class:'item'},`<div class="num">${i+1}</div><div><h3>${t}</h3><p>${d}</p><div class="kd-term" style="margin-top:0"><div class="top"><span>Terminal</span><button class="kd-copy" data-copy="${esc(c)}">Copier</button></div><pre class="kd-code"><span class="p">$</span> ${esc(c)}</pre></div></div>`)));
+OB.forEach(([t,c,d],i)=> $('#ob').append(el('div',{class:'item'},`<div class="num">${i+1}</div><div><h3>${t}</h3><p>${d}</p><div class="kd-term" style="margin-top:0"><div class="top"><span>${c[0]==='/'?'Claude Code':'Terminal'}</span><button class="kd-copy" data-copy="${esc(c)}">Copier</button></div><pre class="kd-code">${c[0]==='/'?'':'<span class="p">$</span> '}${esc(c)}</pre></div></div>`)));
 }
 
 /* migration d'un outillage existant */
@@ -377,10 +377,10 @@ const MAP = [
  ['Un hook qui exige « Closes #N » et une preuve avant fusion','guard-github (module issue-flow), testé avec un faux gh'],
  ['Un hook qui protège les migrations, les .env et interdit le code sur main','guard-write : <code>write.deny</code> et <code>write.no_code_on_main</code>'],
  ['Formatage à la sauvegarde, vérification à la fin de session','format-after-edit et verify-stop (module verify), commandes lues dans la politique'],
- ['Une skill « démarrer un développement » + un script de worktree','/kwa:start-dev + kwa-start'],
+ ['Une skill « démarrer un développement » + un script de worktree','/kwa:start-dev + <code>kwa start</code>'],
  ['Des skills de déploiement par environnement avec pré-vol','/kwa:deploy piloté par <code>environments</code> ; pré-vol et rationalisations dans la politique'],
  ['Une skill TestFlight (Release sur simulateur avant build EAS)','/kwa:testflight, profils lus dans <code>mobile</code> et eas.json (React Native / Expo)'],
- ['Une règle de remise au client et un contrôle d\'hygiène en CI',"module client-handover : règle, kwa-hygiene, liste d'exceptions, job CI"],
+ ['Une règle de remise au client et un contrôle d\'hygiène en CI',"module client-handover : règle, <code>kwa hygiene</code>, liste d'exceptions, job CI"],
  ["Modèles d'issues et de PR",'Gabarits copiés une fois (seed), puis au projet'],
  ['.agents/skills, .codex/hooks.json et règles Codex','Le plugin pour les skills ; <code>kwa init</code> écrit <code>.codex/hooks.json</code> (par <code>kwa hook</code>) et les règles'],
  ["Une section « conventions de collaboration » dans AGENTS.md",'Dans le bloc commun : langue, simplicité, changements chirurgicaux, confidentialité'],

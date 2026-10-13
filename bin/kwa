@@ -1108,10 +1108,11 @@ def cmd_detect(a) -> int:
     man = manifest()
     print(f"Stack détectée : {', '.join(d['tags']) or '—'}")
     print("Modules proposés :")
+    skills = plugin_skills()
     for m in d["modules"]:
-        print(f"  ✓ {m:16} {man[m]['about']}")
+        print(f"  ✓ {m:16} {plugin_text(man[m]['about'], skills)}")
     for m in d["suggested"]:
-        print(f"  ? {m:16} {man[m]['about']}  (sur demande : --with {m})")
+        print(f"  ? {m:16} {plugin_text(man[m]['about'], skills)}  (sur demande : --with {m})")
     print("Politique déduite :")
     print(json.dumps(d["inferred"], indent=2, ensure_ascii=False))
     return 0

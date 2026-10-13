@@ -131,7 +131,7 @@ class Parcours(unittest.TestCase):
         text = self.page("parcours-harness.html")
         for n in range(0, 9):
             self.assertIn(f'id="etape-{n}"', text)
-        self.assertIn("non branchés dans settings.json", text)  # sortie réelle de kwa doctor
+        self.assertIn("plugin kwa@kwa non activé pour le projet", text)  # sortie réelle de kwa doctor
         self.assertIn("permissionDecision", text)               # sortie réelle d'un garde
 
     def test_culture_and_context_stages(self):
@@ -409,6 +409,14 @@ class Shell(unittest.TestCase):
 
     def read(self, name):
         return open(os.path.join(self.SITE, name), encoding="utf-8").read()
+
+    def test_site_speaks_only_of_the_plugin_install(self):
+        """L'installation par copie est l'ancienne méthode : le site ne la montre plus (#43). kwa-hygiene reste copié
+        dans le projet, pour la CI."""
+        legacy = re.compile(r"kwa install|\.claude/kwa/(?:hooks|bin/(?!kwa-hygiene))|\.claude/rules/kwa-|(?<![\w./-])/kwa-(?!demo)[a-z]")
+        for name in self.pages():
+            text = re.sub(r"<[^>]+>", "", self.read(name))
+            self.assertEqual([m.group(0) for m in legacy.finditer(text)], [], name)
 
     def test_every_page_declares_an_existing_favicon(self):
         for name in self.pages():

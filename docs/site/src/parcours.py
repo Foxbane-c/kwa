@@ -40,6 +40,8 @@ def expect(cond: bool, what: str) -> None:
 def collect(pack: str, verdict, worst, make_repo, policy_example: str) -> list[dict]:
     kwa = os.path.join(pack, "bin", "kwa")
     tmp = tempfile.mkdtemp(prefix="kwa-parcours-")
+    home = {"HOME": os.path.join(tmp, "home"), "GH": "false"}  # machine vierge : la sortie ne dépend pas du poste qui génère
+    os.makedirs(home["HOME"])
     try:
         demo = os.path.join(tmp, "mon-projet")
         os.makedirs(demo)
@@ -54,14 +56,14 @@ def collect(pack: str, verdict, worst, make_repo, policy_example: str) -> list[d
         sh(["git", "init", "-q", "--bare", remote], tmp)
         sh(["git", "remote", "add", "origin", remote], demo)
         sh(["git", "push", "-q", "origin", "main"], demo)
-        installed = sh([sys.executable, kwa, "install", ".", "--modules", "core,memory,craft,issue-flow"], demo)
-        expect("AGENTS.md : créé" in installed, "l'installation crée AGENTS.md")
+        installed = sh([sys.executable, kwa, "init", ".", "--modules", "core,memory,craft,issue-flow"], demo, env=home)
+        expect("AGENTS.md : créé" in installed and "plugin kwa@kwa proposé" in installed, "kwa init crée AGENTS.md et propose le plugin")
         claude_md = open(os.path.join(demo, "CLAUDE.md")).read().strip()
         agents = open(os.path.join(demo, "AGENTS.md")).read().splitlines()
         block = [l for l in agents if l.strip()][:9]
         expect(claude_md == "@AGENTS.md", "CLAUDE.md est un pointeur vers AGENTS.md")
 
-        hooks_dir = os.path.join(demo, ".claude", "kwa", "hooks")
+        hooks_dir = os.path.join(pack, "core", "hooks")  # les scripts que le plugin lance
         payload = {"tool_name": "Bash", "tool_input": {"command": "git commit -m wip"}, "cwd": "."}
         by_hand = sh([sys.executable, os.path.join(hooks_dir, "guard-git.py")], demo,
                      env={"CLAUDE_PROJECT_DIR": demo}, inp=json.dumps(payload))
@@ -80,21 +82,22 @@ def collect(pack: str, verdict, worst, make_repo, policy_example: str) -> list[d
         expect(got["cat .env"] == "deny" and got["cat .env.example"] == "allow" and got["rm -rf build"] == "allow",
                "les cinq cas du quiz ont les verdicts annoncés")
 
-        # étape 3 : le branchement
-        settings = json.load(open(os.path.join(demo, ".claude", "settings.json")))
-        entry = next(e for e in settings["hooks"]["PreToolUse"] if any("guard-git.py" in h["command"] for h in e["hooks"]))
-        entry_txt = json.dumps({"hooks": {"PreToolUse": [{"matcher": entry["matcher"], "hooks": [h for h in entry["hooks"] if "guard-git.py" in h["command"]]}]}}, indent=2, ensure_ascii=False)
-        doctor_ok = sh([sys.executable, kwa, "doctor", "."], demo)
-        for e in settings["hooks"]["PreToolUse"]:
-            e["hooks"] = [h for h in e["hooks"] if "guard-git.py" not in h["command"]]
+        # étape 3 : le branchement (le plugin déclare le hook, le projet active le plugin)
+        plugin_hooks = json.load(open(os.path.join(pack, "plugin", "hooks.claude.json")))["hooks"]
+        entry = next(e for e in plugin_hooks["PreToolUse"] if any(h["command"].endswith(" guard-git") for h in e["hooks"]))
+        entry_txt = json.dumps({"hooks": {"PreToolUse": [{"matcher": entry["matcher"], "hooks": [h for h in entry["hooks"] if h["command"].endswith(" guard-git")]}]}}, indent=2, ensure_ascii=False)
         sp = os.path.join(demo, ".claude", "settings.json")
+        settings = json.load(open(sp))
+        enabled = json.dumps({"enabledPlugins": settings["enabledPlugins"]}, indent=2)
+        doctor_ok = sh([sys.executable, kwa, "doctor", "."], demo, env=home)
         saved = open(sp).read()
+        settings.pop("enabledPlugins")
         json.dump(settings, open(sp, "w"), indent=2)
-        doctor_broken = sh([sys.executable, kwa, "doctor", "."], demo)
+        doctor_broken = sh([sys.executable, kwa, "doctor", "."], demo, env=home)
         by_hand_after = sh([sys.executable, os.path.join(hooks_dir, "guard-git.py")], demo,
                            env={"CLAUDE_PROJECT_DIR": demo}, inp=json.dumps(payload))
         open(sp, "w").write(saved)
-        expect("non branchés" in doctor_broken and "conforme" in doctor_ok, "doctor détecte un garde non branché")
+        expect("non activé" in doctor_broken and "conforme" in doctor_ok, "doctor détecte un plugin non activé pour le projet")
         expect('"deny"' in by_hand_after, "le script refuse toujours quand on l'appelle à la main")
 
         # étape 4 : la politique
@@ -119,19 +122,17 @@ def collect(pack: str, verdict, worst, make_repo, policy_example: str) -> list[d
         fail = [l for l in lines if l.startswith(("FAIL", "ERROR", "AssertionError", "AssertionError:")) or "AssertionError" in l]
         lint_out = "\n".join(fail[:3] + [lines[-1]]) if fail else "\n".join(lines[-4:])
         expect("FAILED" in lint or "Error" in lint, "une skill au frontmatter piégé fait échouer la suite")
-        head = open(os.path.join(pack, "core", "skills", "rephrase", "SKILL.md")).read().split("---")[1].strip()
+        head = open(os.path.join(pack, "plugin", "skills", "rephrase", "SKILL.md")).read().split("---")[1].strip()
 
         # étape 6 : la mémoire
-        mem = os.path.join(demo, ".claude", "kwa", "bin", "kwa-memory")
-        sh([sys.executable, mem, "capture", "gotcha", "Les tests d'intégration ont besoin du fichier d'environnement local"], demo)
-        pending = sh([sys.executable, mem, "pending"], demo)
+        sh([sys.executable, kwa, "memory", "capture", "gotcha", "Les tests d'intégration ont besoin du fichier d'environnement local"], demo, env=home)
+        pending = sh([sys.executable, kwa, "memory", "pending"], demo, env=home)
         expect("tests d'intégration" in pending, "une note capturée apparaît dans les notes en attente")
 
         # étape 7 : le workflow
-        start = os.path.join(demo, ".claude", "kwa", "bin", "kwa-start")
-        started = sh([sys.executable, start, "feat", "status-filter", "Ajouter un filtre de statut", "--no-issue"], demo)
+        started = sh([sys.executable, kwa, "start", "feat", "status-filter", "Ajouter un filtre de statut", "--no-issue"], demo, env=home)
         trees = clean(sh(["git", "worktree", "list"], demo), tmp)
-        expect("feat/status-filter" in started + trees, "kwa-start crée la branche dans un worktree")
+        expect("feat/status-filter" in started + trees, "kwa start crée la branche dans un worktree")
         started = clean(started, tmp)
 
         # étape 8 : les limites
@@ -142,7 +143,7 @@ def collect(pack: str, verdict, worst, make_repo, policy_example: str) -> list[d
         expect(all(h["decision"] == "allow" for h in holes), "les trois contournements passent bien (limite assumée)")
 
         return [{
-            "installed": clean("\n".join(installed.splitlines()[:5]), tmp), "claude_md": claude_md, "block": "\n".join(block), "by_hand": by_hand,
+            "installed": clean("\n".join(installed.splitlines()[:10]), tmp), "enabled": enabled, "claude_md": claude_md, "block": "\n".join(block), "by_hand": by_hand,
             "quiz": quiz, "payload": json.dumps(payload), "entry": entry_txt, "doctor_ok": doctor_ok, "doctor_broken": doctor_broken,
             "by_hand_after": by_hand_after, "rule": json.dumps(rule, indent=2, ensure_ascii=False), "before": before, "after": after,
             "lint": lint_out, "skill_head": head, "pending": pending, "started": started, "trees": trees, "holes": holes,
@@ -174,14 +175,14 @@ def pill(d: str) -> str:
 FLOW = """<div class="pc-widget po" id="flow">
 <div class="pc-actions">""" + shell.player("Dérouler une journée type") + """</div>
 <ol class="pf-steps">
-<li data-who="auto"><b>1</b><div><strong>La demande devient une issue et une branche</strong><span>/kwa-start-dev ouvre l'issue, crée la branche dans son worktree. Rien ne s'écrit sur main.</span></div><em>Kwa</em></li>
+<li data-who="auto"><b>1</b><div><strong>La demande devient une issue et une branche</strong><span>/kwa:start-dev ouvre l'issue, crée la branche dans son worktree. Rien ne s'écrit sur main.</span></div><em>Kwa</em></li>
 <li data-who="auto"><b>2</b><div><strong>Explorer, puis planifier</strong><span>En mode plan, l'agent lit le code sans rien modifier ; des sous-agents explorent chacun un domaine et renvoient un résumé.</span></div><em>Sous-agents</em></li>
 <li data-who="human"><b>3</b><div><strong>Vous validez le plan et les critères de réussite</strong><span>Le point où votre jugement compte le plus : ce que « fini » veut dire, y compris les captures attendues.</span></div><em>Humain</em></li>
-<li data-who="auto"><b>4</b><div><strong>Documentation à jour, puis test avant code</strong><span>Context7 donne la doc de la bonne version ; /kwa-tdd fait écrire le test qui échoue, puis le code qui le fait passer.</span></div><em>Context7</em></li>
-<li data-who="auto"><b>5</b><div><strong>Les contrôles automatiques tournent seuls</strong><span>Un hook PostToolUse formate, un hook Stop refuse de rendre la main tant que tests, lint et build ne sont pas verts.</span></div><em>Hooks</em></li>
+<li data-who="auto"><b>4</b><div><strong>Documentation à jour, puis test avant code</strong><span>Context7 donne la doc de la bonne version ; /kwa:tdd fait écrire le test qui échoue, puis le code qui le fait passer.</span></div><em>Context7</em></li>
+<li data-who="auto"><b>5</b><div><strong>Les contrôles automatiques tournent seuls</strong><span>Un hook PostToolUse formate, un hook Stop, s'il est activé (dans Kwa : <code>KWA_STOP_VERIFY=1</code>), refuse de rendre la main tant que tests, lint et build ne sont pas verts.</span></div><em>Hooks</em></li>
 <li data-who="auto"><b>6</b><div><strong>Playwright ouvre l'application et fait ses captures</strong><span>Parcours du formulaire, capture à 1280 px et à 375 px, lecture de la console et des requêtes réseau.</span></div><em>Playwright</em></li>
 <li data-who="auto"><b>7</b><div><strong>Un agent vérificateur compare aux critères</strong><span>Un sous-agent en contexte neuf, qui n'a pas écrit le code, confronte captures et diff aux critères et ne signale que les écarts qui comptent.</span></div><em>Sous-agent</em></li>
-<li data-who="human"><b>8</b><div><strong>Pull request avec ses preuves ; vous relisez et fusionnez</strong><span>/kwa-ship ouvre la PR avec captures et sorties de tests. La fusion reste une décision humaine.</span></div><em>Humain</em></li>
+<li data-who="human"><b>8</b><div><strong>Pull request avec ses preuves ; vous relisez et fusionnez</strong><span>/kwa:ship ouvre la PR avec captures et sorties de tests. La fusion reste une décision humaine.</span></div><em>Humain</em></li>
 </ol>
 <p class="po-cap" id="flow-cap" aria-live="polite">Lancez la scène : chaque étape s'allume à son tour.</p>
 <p class="pc-hint">Parcours idéal : tout projet n'a pas ces huit étapes. Les points humains (3 et 8) sont voulus.</p></div>"""
@@ -211,9 +212,9 @@ PROTEGE_JSON = """{
 def render(c: dict) -> str:
     q = c["quiz"]
     skill_block = code("---\n" + c["skill_head"] + "\n---")
-    mem_cmd = cmd('kwa-memory capture gotcha "Les tests d\'intégration ont besoin du fichier d\'environnement local"')
-    start_cmd = cmd('kwa-start feat status-filter "Ajouter un filtre de statut" --no-issue')
-    echo_cmd = cmd("echo '" + c["payload"] + "' | python3 .claude/kwa/hooks/guard-git.py")
+    mem_cmd = cmd('kwa memory capture gotcha "Les tests d\'intégration ont besoin du fichier d\'environnement local"')
+    start_cmd = cmd('kwa start feat status-filter "Ajouter un filtre de statut" --no-issue')
+    echo_cmd = cmd("echo '" + c["payload"] + "' | python3 \"$KWA\"/core/hooks/guard-git.py")
     quiz_rows = "".join(
         f'<tr><td><code>{esc(x["cmd"])}</code><br><small>{esc(x["where"])}</small></td>'
         f'<td>{reveal("Mon pronostic", pill(x["decision"]) + (" <small>" + esc(x["reason"]) + "</small>" if x["reason"] else ""))}</td></tr>'
@@ -221,28 +222,30 @@ def render(c: dict) -> str:
     holes = "".join(f'<tr><td><code>{esc(h["cmd"])}</code></td><td>{pill(h["decision"])}</td></tr>' for h in c["holes"])
     stages = [
         ("1", "Instructions et contrainte", "Ce que l'agent lit, et ce qui l'oblige.",
-         f"""<p>Installez Kwa dans un dépôt jetable. Regardez ce qui est écrit pour l'agent, puis demandez-vous : quelle ligne l'empêche de committer sur <code>main</code> ?</p>
-{cmd("kwa install ./mon-projet --modules core,memory,craft,issue-flow")}{code(c["installed"])}
+         f"""<p>Préparez un dépôt jetable pour le plugin. <code>kwa init</code> n'écrit que de la configuration : les scripts restent dans le plugin. Regardez ce qui est écrit pour l'agent, puis demandez-vous : quelle ligne l'empêche de committer sur <code>main</code> ?</p>
+{cmd("kwa init ./mon-projet --modules core,memory,craft,issue-flow")}{code(c["installed"])}
+<p class="kd-note">Dans une session Claude Code, le plugin met <code>kwa</code> dans le PATH. Dans un terminal ordinaire, appelez-le depuis le dossier du plugin, noté <code>$KWA</code> dans ce parcours : <code>~/.claude/plugins/cache/kwa/kwa/&lt;version&gt;</code>, ou un clone du dépôt Kwa (<code>"$KWA"/bin/kwa init …</code>).</p>
 <p><code>CLAUDE.md</code> contient une ligne, un pointeur vers le fichier commun :</p>{code(c["claude_md"])}
 <p>Début du bloc géré de <code>AGENTS.md</code> :</p>{code(c["block"])}
 {reveal("Réponse", "<p>Aucune ligne ne l'empêche. Un fichier d'instructions est du <strong>contexte</strong> : l'agent le lit et peut s'en écarter. Ce qui contraint, c'est un hook qui s'exécute avant l'outil. Voici le même commit, tenté sur <code>main</code>, quand le garde est appelé :</p>" + code(c["by_hand"]))}""",
          "Dire pourquoi une règle écrite ne suffit pas, et nommer ce qui la fait respecter.",
-         "Le dossier <code>hooks/</code> ne fait rien tout seul : un hook n'existe que s'il est branché dans <code>settings.json</code> (étape 3)."),
+         "Un script de garde ne fait rien tout seul : un hook n'existe que s'il est déclaré et activé (étape 3)."),
         ("2", "Un garde, de la commande au verdict", "Un hook reçoit du JSON et répond refuse, demande ou laisse passer.",
-         f"""<p>Un garde est un petit programme. Claude Code lui envoie ce que l'agent s'apprête à faire, il répond sur la sortie standard. Appelez-le à la main :</p>
+         f"""<p>Un garde est un petit programme. C'est Claude Code qui le lance, pas le modèle : il lui envoie ce que l'agent s'apprête à faire, et le garde répond sur la sortie standard. Appelez-le à la main :</p>
 {echo_cmd}
 <p>Pas de sortie veut dire « laisse passer ». Avant de regarder les réponses, <strong>faites votre pronostic</strong> pour chaque commande, puis ouvrez :</p>
 <table class="pc-table"><thead><tr><th>Commande</th><th>Verdict réel</th></tr></thead><tbody>{quiz_rows}</tbody></table>
 <p class="kd-note">Verdicts calculés en exécutant les gardes à chaque génération de la page.</p>""",
          "Prédire le verdict d'une commande avant de l'exécuter, et lire la raison donnée.",
          "<code>.env.example</code> reste lisible : un garde trop large se fait contourner par agacement."),
-        ("3", "Le branchement", "settings.json relie un événement à un script. Sans lui, rien n'est appelé.",
-         f"""<p>Voici l'entrée qui relie le garde git à l'événement <code>PreToolUse</code> pour l'outil <code>Bash</code> :</p>{code(c["entry"])}
-<p>Vérifiez l'état de l'installation :</p>{cmd("kwa doctor ./mon-projet")}{code(c["doctor_ok"])}
-<p><strong>Cassez-le</strong> : supprimez cette entrée de <code>settings.json</code> sans toucher au script, puis relancez le diagnostic.</p>{code(c["doctor_broken"])}
-{reveal("Que fait le script maintenant ?", "<p>Il refuse toujours quand on l'appelle à la main, mais plus personne ne l'appelle. Un garde qui existe sans être branché protège de rien.</p>" + code(c["by_hand_after"]))}""",
-         "Suivre la chaîne événement, filtre d'outil, commande, trace, et repérer un garde non branché.",
-         "Le chemin <code>$CLAUDE_PROJECT_DIR</code> se résout à la racine du projet ; ne pas recopier tel quel une variable propre aux plugins."),
+        ("3", "Le branchement", "Un hook relie un événement à un script. Le plugin le déclare, le projet active le plugin.",
+         f"""<p>Le plugin déclare ses hooks dans un fichier <code>hooks.json</code>. Voici l'entrée qui relie le garde git à l'événement <code>PreToolUse</code> pour l'outil <code>Bash</code> ; <code>run.py</code> vérifie d'abord que le projet a une politique Kwa et le module concerné :</p>{code(c["entry"])}
+<p>Le projet, lui, active le plugin dans <code>.claude/settings.json</code> :</p>{code(c["enabled"])}
+<p>Vérifiez l'état de l'installation (ici sur une machine où le plugin n'est pas encore installé) :</p>{cmd("kwa doctor ./mon-projet")}{code(c["doctor_ok"])}
+<p><strong>Cassez-le</strong> : retirez <code>enabledPlugins</code> de <code>settings.json</code> sans toucher au script, puis relancez le diagnostic.</p>{code(c["doctor_broken"])}
+{reveal("Que fait le script maintenant ?", "<p>Il refuse toujours quand on l'appelle à la main, mais plus personne ne l'appelle dans ce projet. Un garde qui existe sans être branché ne protège de rien.</p>" + code(c["by_hand_after"]))}""",
+         "Suivre la chaîne événement, filtre d'outil, commande, et repérer un garde non branché.",
+         "Dans un plugin, les chemins passent par <code>${{CLAUDE_PLUGIN_ROOT}}</code> ; dans un hook écrit pour le projet, par <code>$CLAUDE_PROJECT_DIR</code>. Ne pas recopier l'un à la place de l'autre."),
         ("4", "Les autres événements de hooks", "Le garde ne sert qu'un événement sur plus de trente. Le choix de l'événement fait la différence.",
          """<p>Jusqu'ici, un seul événement : <code>PreToolUse</code>, avant un outil. Il en existe plus de trente. Cinq suffisent pour commencer :</p>
 <table class="pc-table"><thead><tr><th>Événement</th><th>Quand</th><th>Usage typique</th><th>Dans Kwa</th></tr></thead><tbody>
@@ -268,22 +271,22 @@ def render(c: dict) -> str:
          "Ajouter une règle de projet et prouver qu'elle change un verdict.",
          "Le refus l'emporte toujours sur la demande. Une politique trop stricte se contourne, une règle utile est précise."),
         ("6", "Une skill, et comment la casser", "Une procédure que l'agent déclenche ou que vous tapez.",
-         f"""<p>Une skill est un fichier <code>SKILL.md</code> : un en-tête qui dit quand l'appeler, un corps qui dit comment. Celui de <code>/kwa-rephrase</code> :</p>{skill_block}
-<p>Créez une skill dont la description contient « : » (un piège YAML qui tronque l'en-tête sans bruit), puis lancez la suite de contrôle des skills. Elle échoue deux fois : le premier échec est le piège YAML, le second rappelle qu'une skill doit être déclarée dans <code>manifest.json</code>.</p>{cmd("python3 -m unittest tests.test_skills.Lint")}{code(c["lint"])}
+         f"""<p>Une skill est un fichier <code>SKILL.md</code> : un en-tête qui dit quand l'appeler, un corps qui dit comment. Celui de <code>/kwa:rephrase</code> :</p>{skill_block}
+<p>Dans un clone du dépôt Kwa, créez une skill dont la description contient « : » (un piège YAML qui tronque l'en-tête sans bruit), puis lancez la suite de contrôle des skills. Elle échoue deux fois : le premier échec est le piège YAML, le second rappelle qu'une skill doit être déclarée dans <code>manifest.json</code>.</p>{cmd("python3 -m unittest tests.test_skills.Lint")}{code(c["lint"])}
 {reveal("Pourquoi ce test existe", "<p>Une description mal formée ne plante rien : la skill devient simplement introuvable. Un test qui échoue vaut mieux qu'une skill invisible.</p>")}""",
          "Écrire l'en-tête d'une skill et lire l'échec qui signale une erreur.",
-         "Une description dit quand invoquer la skill, pas son déroulé : un agent qui lit les étapes saute le corps (voir <code>/kwa-agent-docs</code>)."),
+         "Une description dit quand invoquer la skill, pas son déroulé : un agent qui lit les étapes saute le corps (voir <code>/kwa:agent-docs</code>)."),
         ("7", "La mémoire qui s'enrichit", "Noter pendant, trier à la fin, valider soi-même.",
          f"""<p>Capturez un piège rencontré pendant le travail, sans rien écrire dans la documentation :</p>
 {mem_cmd}
-{cmd("kwa-memory pending")}{code(c["pending"])}
-<p>En fin de session, <code>/kwa-learn</code> propose où chaque note devrait vivre (documentation, politique, mémoire de l'agent). <strong>Rien n'est appliqué sans votre accord.</strong></p>""",
+{cmd("kwa memory pending")}{code(c["pending"])}
+<p>En fin de session, <code>/kwa:learn</code> propose où chaque note devrait vivre (documentation, politique, mémoire de l'agent). <strong>Rien n'est appliqué sans votre accord.</strong></p>""",
          "Capturer une note et dire qui décide de son destin.",
          "Les notes locales ne sont pas versionnées : elles sont exclues via <code>.git/info/exclude</code>."),
         ("8", "Le workflow complet", "Une demande, une branche, une preuve, une PR.",
          f"""<p>Démarrez un changement : une branche dans son propre worktree, à côté du dépôt, jamais sur <code>main</code>.</p>
 {start_cmd}{code(c["started"])}{code(c["trees"])}
-<p>La suite se joue avec les skills : <code>/kwa-brainstorm</code>, <code>/kwa-plan</code>, <code>/kwa-tdd</code>, <code>/kwa-verify</code>, <code>/kwa-review</code>, <code>/kwa-ship</code>. La page <a href="board.html">Les workflows</a> déroule ce workflow sur une demande réelle, et le <a href="terminal.html">Terminal</a> montre les commandes.</p>""",
+<p>La suite se joue avec les skills : <code>/kwa:brainstorm</code>, <code>/kwa:plan</code>, <code>/kwa:tdd</code>, <code>/kwa:verify</code>, <code>/kwa:review</code>, <code>/kwa:ship</code>. La page <a href="board.html">Les workflows</a> déroule ce workflow sur une demande réelle, et le <a href="terminal.html">Terminal</a> montre les commandes.</p>""",
          "Conduire un petit changement jusqu'à une PR, avec une preuve que quelqu'un d'autre peut rejouer.",
          "Versionner n'est pas publier, et un commit n'est pas un déploiement. Chaque étape reste une décision."),
         ("9", "Le flux d'un développeur aujourd'hui", "Tout mis ensemble : une journée où presque tout est automatisé, sauf les décisions.",
