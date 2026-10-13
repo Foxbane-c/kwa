@@ -10,6 +10,7 @@
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var NS = 'http://www.w3.org/2000/svg';
   var MORPH = 650;  // durée d'ouverture ou de fermeture d'une brique (flows.css)
+  var REVEAL = 450;  // apparition du contenu d'une brique ouverte, après sa morphose
   var PAUSE = { go: 1800, guard: 3400, loop: 1400, ask: 1100, delegate: 1000, handoff: 1200 };  // lecture auto : temps de lecture après un pas
 
   function h(tag, cls, text) {
@@ -63,7 +64,7 @@
       if (!st.fast && window.innerWidth <= 760 && watching) {  // téléphone : on garde la brique ouverte en vue
         later(function () { brick.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' }); }, MORPH);
       }
-      later(then, MORPH);
+      later(then, MORPH + REVEAL);  // le jeton arrive une fois le contenu apparu (flows.css : fondu en cascade)
     }
     function place(i) {
       if (st.fast) { st.at = i; byIndex[i].classList.add('is-seen'); return; }
