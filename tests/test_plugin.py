@@ -80,9 +80,9 @@ class Build(unittest.TestCase):
         self.assertEqual(set(run.HOOK_MODULE), names)
 
     def test_reviewer_agent_loses_its_header_hooks(self):
-        md = read(os.path.join(PLUGIN, "agents", "relecteur.md"))
+        md = read(os.path.join(PLUGIN, "agents", "reviewer.md"))
         head = md.split("---")[1]
-        self.assertIn("name: relecteur", head)
+        self.assertIn("name: reviewer", head)
         self.assertNotIn("hooks:", head)
         self.assertIn("disallowedTools: Write, Edit", head)
 
@@ -105,6 +105,19 @@ class Build(unittest.TestCase):
         for target in (PLUGIN, PACK):
             r = subprocess.run(["claude", "plugin", "validate", target], capture_output=True, text=True, timeout=120)
             self.assertIn("Validation passed", r.stdout + r.stderr, target)
+
+
+class EnglishIdentifiers(unittest.TestCase):
+    """Skills, agents, hooks, règles, modules : des identifiants en anglais (les textes restent en français)."""
+
+    FRENCH = re.compile(r"relecteur|remise|livr|capitalis|cadr|preuve|garde[-_]|regle|règle")
+
+    def test_names_are_english(self):
+        names = list(json.loads(read(os.path.join(PACK, "manifest.json")))["modules"])
+        for d in ("core/skills", "core/agents", "core/hooks", "core/rules", "core/bin", "plugin/agents", "plugin/skills"):
+            names += [os.path.splitext(n)[0] for n in os.listdir(os.path.join(PACK, d))]
+        bad = sorted(n for n in names if self.FRENCH.search(n))
+        self.assertEqual(bad, [])
 
 
 class Gate(unittest.TestCase):
@@ -150,7 +163,7 @@ class Gate(unittest.TestCase):
         policy(self.root)
         rm = {"tool_name": "Bash", "tool_input": {"command": "rm -rf src"}}
         self.assertEqual(hook("readonly-bash", rm, self.root), "")
-        self.assertEqual(hook("readonly-bash", {**rm, "agent_type": "kwa:relecteur"}, self.root), "deny")
+        self.assertEqual(hook("readonly-bash", {**rm, "agent_type": "kwa:reviewer"}, self.root), "deny")
 
     def test_worktree_without_committed_policy_uses_the_main_one(self):
         commit_all(self.root)
@@ -277,7 +290,16 @@ class Init(unittest.TestCase):
     def test_the_kwa_shipped_in_the_plugin_can_init(self):
         r = subprocess.run([sys.executable, os.path.join(PLUGIN, "bin", "kwa"), "init", self.t], capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertTrue(os.path.exists(os.path.join(self.t, ".codex", "agents", "kwa-relecteur.toml")))
+        self.assertTrue(os.path.exists(os.path.join(self.t, ".codex", "agents", "kwa-reviewer.toml")))
+
+    def test_init_removes_the_renamed_codex_agent(self):
+        old = os.path.join(self.t, ".codex", "agents", "kwa-relecteur.toml")
+        os.makedirs(os.path.dirname(old))
+        with open(old, "w") as f:
+            f.write("# Géré par Kwa (kwa install) : généré depuis .claude/agents/kwa-relecteur.md, ne pas éditer.\n")
+        kwa("init", self.t)
+        self.assertFalse(os.path.exists(old))
+        self.assertTrue(os.path.exists(os.path.join(self.t, ".codex", "agents", "kwa-reviewer.toml")))
 
     def test_kwa_hook_and_tools_pass_through(self):
         kwa("init", self.t)

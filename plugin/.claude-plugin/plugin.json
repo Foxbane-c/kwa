@@ -1,6 +1,6 @@
 {
   "name": "kwa",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Kit de workflows automatisés pour le dev agentique : garde-fous, skills de méthode, mémoire de session et workflow issue → PR.",
   "author": {
     "name": "nesyouyou",

@@ -106,10 +106,10 @@ Le spécifique d'un projet vit dans `.claude/kwa.policy.json` (créé une fois �
 ## Claude Code et Codex
 
 Le même plugin sert les deux agents. Sous Claude Code, il apporte skills (`/kwa:commit`), agent relecteur
-(`kwa:relecteur`), hooks et la commande `kwa` ; le projet ne reçoit que sa configuration (`kwa init`, ou `/kwa:init`
+(`kwa:reviewer`), hooks et la commande `kwa` ; le projet ne reçoit que sa configuration (`kwa init`, ou `/kwa:init`
 dans une session). Sous Codex, le plugin apporte les skills ; Codex lit `AGENTS.md`, les hooks dans
 `.codex/hooks.json` (lancés par `kwa hook`), les règles de commandes dans `.codex/rules/kwa.rules` et l'agent
-relecteur dans `.codex/agents/kwa-relecteur.toml`, écrits par `kwa init`. Les scripts des gardes sont les mêmes ;
+relecteur dans `.codex/agents/kwa-reviewer.toml`, écrits par `kwa init`. Les scripts des gardes sont les mêmes ;
 seules les différences de Codex sont traitées :
 
 | Différence de Codex | Ce que fait Kwa |

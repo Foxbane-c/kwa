@@ -54,29 +54,29 @@ class Installed(unittest.TestCase):
         subprocess.run(["git", "init", "-q", d], check=True)
         r = subprocess.run([sys.executable, KWA, "install", d, "--modules", "core,craft"], capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
-        claude = open(os.path.join(d, ".claude/agents/kwa-relecteur.md"), encoding="utf-8").read()
+        claude = open(os.path.join(d, ".claude/agents/kwa-reviewer.md"), encoding="utf-8").read()
         self.assertIn("disallowedTools: Write, Edit", claude)
         self.assertIn("readonly-bash.py", claude)
         self.assertTrue(os.path.isfile(os.path.join(d, ".claude/kwa/hooks/readonly-bash.py")))
-        codex = open(os.path.join(d, ".codex/agents/kwa-relecteur.toml"), encoding="utf-8").read()
-        self.assertIn('name = "kwa-relecteur"', codex)
+        codex = open(os.path.join(d, ".codex/agents/kwa-reviewer.toml"), encoding="utf-8").read()
+        self.assertIn('name = "kwa-reviewer"', codex)
         self.assertIn('sandbox_mode = "read-only"', codex)
         self.assertIn("developer_instructions = '''", codex)
         # la seconde installation ne réécrit rien
         r = subprocess.run([sys.executable, KWA, "install", d, "--modules", "core,craft"], capture_output=True, text=True)
-        self.assertNotIn(".codex/agents/kwa-relecteur.toml", r.stdout)
+        self.assertNotIn(".codex/agents/kwa-reviewer.toml", r.stdout)
 
     def test_skills_send_reviews_to_the_reviewer_agent(self):
         for rel in ("core/skills/review/SKILL.md", "core/skills/agents/SKILL.md",
                     "core/skills/agents/spec-reviewer-prompt.md", "core/skills/agents/quality-reviewer-prompt.md"):
-            self.assertIn("kwa-relecteur", open(os.path.join(PACK, rel), encoding="utf-8").read(), rel)
+            self.assertIn("kwa-reviewer", open(os.path.join(PACK, rel), encoding="utf-8").read(), rel)
 
 
 class DelegationPage(unittest.TestCase):
     def test_page_explains_the_three_delegating_skills_with_its_diagram(self):
         site = os.path.join(PACK, "docs", "site")
         page = open(os.path.join(site, "delegation.html"), encoding="utf-8").read()
-        for needle in ("/kwa:agents", "/kwa:parallel", "/kwa:review", "kwa:relecteur", 'id="dg"', "src/delegation.js",
+        for needle in ("/kwa:agents", "/kwa:parallel", "/kwa:review", "kwa:reviewer", 'id="dg"', "src/delegation.js",
                        "implementer-prompt.md", "agent-prompt.md", "reviewer-prompt.md"):
             self.assertIn(needle, page, needle)
         js = open(os.path.join(site, "src", "delegation.js"), encoding="utf-8").read()

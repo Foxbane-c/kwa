@@ -180,8 +180,8 @@
         "core/skills/teach/*": {
           "dest": ".claude/skills/kwa-teach"
         },
-        "core/agents/relecteur.md": {
-          "dest": ".claude/agents/kwa-relecteur.md"
+        "core/agents/reviewer.md": {
+          "dest": ".claude/agents/kwa-reviewer.md"
         },
         "core/hooks/readonly-bash.py": {
           "dest": ".claude/kwa/hooks/readonly-bash.py",
@@ -427,8 +427,8 @@
     "client-handover": {
       "about": "Dépôt remis au client : règle des 4 tests, contrôle d'hygiène (secrets, comptes perso, noms, mesures datées) + job CI",
       "files": {
-        "core/rules/remise-au-client.md": {
-          "dest": ".claude/rules/kwa-remise-au-client.md"
+        "core/rules/client-handover.md": {
+          "dest": ".claude/rules/kwa-client-handover.md"
         },
         "core/bin/kwa-hygiene": {
           "dest": ".claude/kwa/bin/kwa-hygiene",

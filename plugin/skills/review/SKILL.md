@@ -31,9 +31,9 @@ connais déjà les raisons.
    résumer), ce qui est volontairement hors sujet, les doutes que tu as.
 3. **Choisir le modèle** : `sonnet` pour un diff courant, `opus` pour un changement subtil ou risqué (concurrence,
    sécurité, données) et pour la relecture finale d'une branche entière. Toujours le préciser dans l'appel.
-4. **Dispatcher** l'agent `kwa:relecteur` (installé par Kwa, en lecture seule) avec le prompt de
-   `reviewer-prompt.md` rempli : sous Claude Code, outil `Agent` avec `subagent_type: "kwa:relecteur"` ; sous Codex,
-   « lance l'agent kwa:relecteur avec ce prompt » puis attendre son retour. Un seul relecteur par passe. Au premier
+4. **Dispatcher** l'agent `kwa:reviewer` (installé par Kwa, en lecture seule) avec le prompt de
+   `reviewer-prompt.md` rempli : sous Claude Code, outil `Agent` avec `subagent_type: "kwa:reviewer"` ; sous Codex,
+   « lance l'agent kwa:reviewer avec ce prompt » puis attendre son retour. Un seul relecteur par passe. Au premier
    plan si tu attends son verdict.
 5. **Classer et traiter** les retours (voir ci-dessous).
 6. **Boucler** jusqu'au vert, avec les règles de sortie.
@@ -52,7 +52,7 @@ Le prompt les impose au relecteur :
   qu'on coupe, ce qui le remplace. Un test qui protège un comportement n'est pas du superflu.
 - **Hygiène de remise** si le module `client-handover` est actif (le savoir par `.claude/kwa.policy.json` ou les
   modules listés dans `AGENTS.md`) : secret, compte personnel, nom de personne, phrase périmable dans un fichier
-  versionné ; voir la règle Kwa « remise-au-client » (rappelée au démarrage de session). Ce n'est pas la même chose que la sécurité.
+  versionné ; voir la règle Kwa « client-handover » (rappelée au démarrage de session). Ce n'est pas la même chose que la sécurité.
 
 ## Gravité et traitement
 

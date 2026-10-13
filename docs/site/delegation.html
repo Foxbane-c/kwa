@@ -166,7 +166,7 @@ dépend donc de ce prompt, et la skill garde toujours la vérification finale.</
 </div>
 <h2 class="kw-section-title dg-h">Qui délègue quoi</h2>
 <div class="kd-wrap"><table class="dg-table"><thead><tr><th>Skill</th><th>Quand</th><th>Modèle de prompt</th><th>Agent</th><th>Rythme</th></tr></thead>
-<tbody><tr><td><code>/kwa:agents</code></td><td>Un plan dont les tâches sont assez indépendantes</td><td>implementer-prompt.md, puis spec-reviewer-prompt.md et quality-reviewer-prompt.md</td><td>Un implémenteur neuf par tâche, puis deux relectures par kwa:relecteur</td><td>L&#x27;une après l&#x27;autre</td></tr><tr><td><code>/kwa:parallel</code></td><td>Plusieurs problèmes sans fichier ni état en commun</td><td>agent-prompt.md, un exemplaire par problème</td><td>Un agent par problème</td><td>En même temps</td></tr><tr><td><code>/kwa:review</code></td><td>Un diff ou une branche à relire</td><td>reviewer-prompt.md</td><td>kwa:relecteur, en lecture seule</td><td>Un seul par passe</td></tr></tbody></table></div>
+<tbody><tr><td><code>/kwa:agents</code></td><td>Un plan dont les tâches sont assez indépendantes</td><td>implementer-prompt.md, puis spec-reviewer-prompt.md et quality-reviewer-prompt.md</td><td>Un implémenteur neuf par tâche, puis deux relectures par kwa:reviewer</td><td>L&#x27;une après l&#x27;autre</td></tr><tr><td><code>/kwa:parallel</code></td><td>Plusieurs problèmes sans fichier ni état en commun</td><td>agent-prompt.md, un exemplaire par problème</td><td>Un agent par problème</td><td>En même temps</td></tr><tr><td><code>/kwa:review</code></td><td>Un diff ou une branche à relire</td><td>reviewer-prompt.md</td><td>kwa:reviewer, en lecture seule</td><td>Un seul par passe</td></tr></tbody></table></div>
 <h2 class="kw-section-title dg-h">Ce que contient un prompt délégué</h2>
 <div class="kd-grid kd-g2 dg-grid">
 <div class="kd-card"><h3>Ce qu'il doit savoir</h3><p>La demande d'origine et ses <strong>critères de réussite</strong>, cités et non résumés ; les <strong>fichiers</strong> à lire ; les erreurs exactes collées ; ce qui est volontairement hors sujet.</p></div>
@@ -176,7 +176,7 @@ dépend donc de ce prompt, et la skill garde toujours la vérification finale.</
 </div>
 <h2 class="kw-section-title dg-h">Sous Claude Code et sous Codex</h2>
 <div class="kd-wrap"><table class="dg-table"><thead><tr><th></th><th>Claude Code</th><th>Codex</th></tr></thead><tbody>
-<tr><td>Lancer un agent</td><td>Outil <code>Agent</code>, <code>subagent_type</code> (<code>general-purpose</code>, <code>kwa:relecteur</code>)</td><td>En clair : « lance un agent <code>worker</code> avec ce prompt », ou <code>kwa:relecteur</code></td></tr>
+<tr><td>Lancer un agent</td><td>Outil <code>Agent</code>, <code>subagent_type</code> (<code>general-purpose</code>, <code>kwa:reviewer</code>)</td><td>En clair : « lance un agent <code>worker</code> avec ce prompt », ou <code>kwa:reviewer</code></td></tr>
 <tr><td>Plusieurs à la fois</td><td>Plusieurs appels dans un seul message, en arrière-plan</td><td>Une demande qui lance plusieurs agents et attend tous les résultats</td></tr>
 <tr><td>Isoler les écritures</td><td><code>isolation: "worktree"</code> pour des zones voisines</td><td>Pas d'isolation documentée : les tâches voisines passent l'une après l'autre</td></tr>
 <tr><td>Relecture en lecture seule</td><td>Outils d'écriture retirés, shell filtré par un hook</td><td>Bac à sable en lecture seule</td></tr>

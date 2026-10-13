@@ -1,5 +1,5 @@
 ---
-name: kwa-relecteur
+name: kwa-reviewer
 description: Relecteur en lecture seule d'un diff, d'une tâche ou d'une branche, lancé par /kwa-review et par les deux passes de relecture de /kwa-agents avec un prompt qui décrit le changement. Ne pas l'utiliser pour corriger, implémenter ou explorer un sujet.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit, MultiEdit, NotebookEdit

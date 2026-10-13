@@ -256,7 +256,7 @@ disable-model-invocation: false
 3. Relire : aucun montant ni date qui ne vienne de l'utilisateur."""
 
 AGENT_EX = """---
-name: relecteur
+name: reviewer
 description: Relit un diff et signale les risques. À utiliser après une modification, avant la PR.
 tools: Read, Glob, Grep
 model: sonnet
