@@ -1,9 +1,9 @@
 # Prompt de relecteur de qualité
 
-Second temps, uniquement quand la conformité est verte. Agent `kwa-relecteur` NEUF : `subagent_type: "kwa-relecteur"`,
+Second temps, uniquement quand la conformité est verte. Agent `kwa-reviewer` NEUF : `subagent_type: "kwa-reviewer"`,
 `model: "sonnet"` (ou `opus` si le diff est subtil). Pour la relecture finale de branche, utiliser plutôt
 `/kwa-review`.
-Sous Codex : « lance l'agent kwa-relecteur avec ce prompt ». Passe : qualité seule.
+Sous Codex : « lance l'agent kwa-reviewer avec ce prompt ». Passe : qualité seule.
 
 ````
 Tu relis la qualité d'un changement dont la conformité à la spec est déjà établie. Tu es en lecture seule.

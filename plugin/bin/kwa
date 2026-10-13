@@ -294,7 +294,7 @@ def render_block(profile: str, modules: list[str], target: Path | None = None, p
     body = body.replace("{{KNOWLEDGE_LINE}}\n", line + "\n" if line else "").replace("{{KNOWLEDGE_LINE}}", line)
     if plugin:
         body = plugin_text(body, plugin_skills()).replace(
-            "{{KNOWLEDGE_LINE}}", "- Sous Codex, l'agent `kwa:relecteur` s'appelle `kwa-relecteur`.\n{{KNOWLEDGE_LINE}}", 1)
+            "{{KNOWLEDGE_LINE}}", "- Sous Codex, l'agent `kwa:reviewer` s'appelle `kwa-reviewer`.\n{{KNOWLEDGE_LINE}}", 1)
     head = f"<!-- kwa:begin v{version()} profile={profile} (géré ; toute retouche ici est écrasée à la mise à jour) -->"
     return [head] + body.splitlines() + ["<!-- kwa:end -->"]
 
@@ -762,13 +762,13 @@ def plugin_text(text: str, skills) -> str:
     text = text.replace("`.claude/rules/kwa-*.md`", "les règles communes de Kwa (rappelées au démarrage de session)")
     text = re.sub(r"`\.claude/rules/kwa-([a-z-]+)\.md`", r"la règle Kwa « \1 » (rappelée au démarrage de session)", text)
     text = re.sub(r"`\.claude/kwa/hooks/?`", "du plugin Kwa", text)
-    text = text.replace("kwa-relecteur", "kwa:relecteur")
+    text = text.replace("kwa-reviewer", "kwa:reviewer")
     names = "|".join(sorted(skills, key=len, reverse=True))
     return re.sub(rf"([/$])kwa-({names})(?![a-z-])", r"\1kwa:\2", text)
 
 
 def plugin_agent(md: str, skills) -> str:
-    """L'agent pour le plugin : son nom perd le préfixe (le plugin le préfixe : kwa:relecteur), et ses hooks
+    """L'agent pour le plugin : son nom perd le préfixe (le plugin le préfixe : kwa:reviewer), et ses hooks
     d'en-tête, ignorés par Claude Code dans un plugin, passent dans les hooks du plugin (readonly-bash filtré par
     agent dans run.py)."""
     _, head, body = md.split("---", 2)
@@ -988,8 +988,16 @@ def plugin_codex_hooks(modules: list[str]) -> dict:
     return snippet
 
 
+RENAMED_CODEX_AGENTS = ("kwa-relecteur.toml",)  # devenu kwa-reviewer.toml (identifiants en anglais)
+
+
 def apply_plugin_codex(target: Path, modules: list[str], dry: bool) -> list[str]:
     notes = []
+    for old in RENAMED_CODEX_AGENTS:  # agents renommés : l'ancien fichier généré par Kwa disparaît
+        f = target / ".codex" / "agents" / old
+        if f.is_file() and f.read_text(encoding="utf-8").startswith("# Géré par Kwa") and not dry:
+            f.unlink()
+            notes.append(f"ancien agent retiré : .codex/agents/{old}")
     path = target / ".codex" / "hooks.json"
     settings = read_json(path, {}) or {}
     before = json.dumps(settings, sort_keys=True)

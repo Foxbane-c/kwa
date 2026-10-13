@@ -35,10 +35,10 @@ def widget() -> str:
 
 ROWS = [
     ("/kwa:agents", "Un plan dont les tâches sont assez indépendantes", "implementer-prompt.md, puis spec-reviewer-prompt.md et quality-reviewer-prompt.md",
-     "Un implémenteur neuf par tâche, puis deux relectures par kwa:relecteur", "L'une après l'autre"),
+     "Un implémenteur neuf par tâche, puis deux relectures par kwa:reviewer", "L'une après l'autre"),
     ("/kwa:parallel", "Plusieurs problèmes sans fichier ni état en commun", "agent-prompt.md, un exemplaire par problème",
      "Un agent par problème", "En même temps"),
-    ("/kwa:review", "Un diff ou une branche à relire", "reviewer-prompt.md", "kwa:relecteur, en lecture seule", "Un seul par passe"),
+    ("/kwa:review", "Un diff ou une branche à relire", "reviewer-prompt.md", "kwa:reviewer, en lecture seule", "Un seul par passe"),
 ]
 
 
@@ -62,7 +62,7 @@ dépend donc de ce prompt, et la skill garde toujours la vérification finale.</
 </div>
 <h2 class="kw-section-title dg-h">Sous Claude Code et sous Codex</h2>
 <div class="kd-wrap"><table class="dg-table"><thead><tr><th></th><th>Claude Code</th><th>Codex</th></tr></thead><tbody>
-<tr><td>Lancer un agent</td><td>Outil <code>Agent</code>, <code>subagent_type</code> (<code>general-purpose</code>, <code>kwa:relecteur</code>)</td><td>En clair : « lance un agent <code>worker</code> avec ce prompt », ou <code>kwa:relecteur</code></td></tr>
+<tr><td>Lancer un agent</td><td>Outil <code>Agent</code>, <code>subagent_type</code> (<code>general-purpose</code>, <code>kwa:reviewer</code>)</td><td>En clair : « lance un agent <code>worker</code> avec ce prompt », ou <code>kwa:reviewer</code></td></tr>
 <tr><td>Plusieurs à la fois</td><td>Plusieurs appels dans un seul message, en arrière-plan</td><td>Une demande qui lance plusieurs agents et attend tous les résultats</td></tr>
 <tr><td>Isoler les écritures</td><td><code>isolation: "worktree"</code> pour des zones voisines</td><td>Pas d'isolation documentée : les tâches voisines passent l'une après l'autre</td></tr>
 <tr><td>Relecture en lecture seule</td><td>Outils d'écriture retirés, shell filtré par un hook</td><td>Bac à sable en lecture seule</td></tr>

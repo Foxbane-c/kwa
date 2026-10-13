@@ -22,7 +22,7 @@ WORKFLOWS = [  # (clé, pictogramme, titre, promesse, lien, [(type, nom, ce qui 
         ("skill", "/kwa:start-dev", "ouvrir l'issue, la branche et son worktree"),
         ("garde", "guard-write", "refuse le code produit sur main"),
         ("skill", "/kwa:tdd", "test qui échoue, puis le code"),
-        ("agent", "kwa:relecteur", "relit en lecture seule"),
+        ("agent", "kwa:reviewer", "relit en lecture seule"),
         ("skill", "/kwa:ship", "PR liée à son issue, avec la preuve"),
     ]),
     ("bug", "bug", "Corriger un bug", "Pas de correctif avant la cause.", "skill-map.html#view=bug", [
@@ -35,9 +35,9 @@ WORKFLOWS = [  # (clé, pictogramme, titre, promesse, lien, [(type, nom, ce qui 
     ]),
     ("review", "eye", "Relire", "Un regard neuf qui ne peut rien modifier.", "delegation.html", [
         ("skill", "/kwa:review", "rassembler le diff et les critères"),
-        ("agent", "kwa:relecteur", "constats classés et verdict, en lecture seule"),
+        ("agent", "kwa:reviewer", "constats classés et verdict, en lecture seule"),
         ("skill", "/kwa:review-feedback", "trier les retours avant d'en appliquer un"),
-        ("agent", "kwa:relecteur", "relecture ciblée des corrections"),
+        ("agent", "kwa:reviewer", "relecture ciblée des corrections"),
         ("vous", "décision", "vous jugez que c'est prêt"),
     ]),
     ("ship", "send", "Livrer", "Chaque publication est une décision.", "skill-map.html#view=delivery", [

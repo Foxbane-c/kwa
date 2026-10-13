@@ -48,7 +48,7 @@ TERMS = [
      "Un texte lu par l'agent (page web, ticket, fichier) qui contient des instructions cachées pour détourner son comportement.", ""),
     ("sous-agent", "Sous-agent", "subagent", ["sous-agents"],
      "Un agent lancé par l'agent principal, avec sa propre fenêtre de contexte : il fait une tâche et ne renvoie qu'un résumé.",
-     "Kwa installe kwa:relecteur, un sous-agent en lecture seule."),
+     "Kwa installe kwa:reviewer, un sous-agent en lecture seule."),
     ("handoff", "Handoff (passage de relais)", "handoff", [],
      "Un court document de reprise (objectif, fait, décisions, reste à faire, pièges) pour qu'une autre session ou un autre agent continue sans relire toute la conversation.",
      "/kwa:handoff l'écrit."),

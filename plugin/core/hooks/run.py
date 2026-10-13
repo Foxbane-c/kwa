@@ -27,7 +27,7 @@ HOOK_MODULE = {
     "format-after-edit": "verify", "verify-stop": "verify",
 }
 DEFAULT_MODULES = ["core", "craft", "memory", "issue-flow"]  # politique sans champ « modules »
-REVIEWER = {"kwa:relecteur", "kwa-relecteur"}  # nom de l'agent sous plugin, puis en copie
+REVIEWER = {"kwa:reviewer", "kwa-reviewer"}  # nom de l'agent sous plugin, puis en copie
 
 
 def policy_path(root: str) -> str:

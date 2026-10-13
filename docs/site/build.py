@@ -114,7 +114,7 @@ def plugin_names(text: str) -> str:
         SKILL_NAME = re.compile(r"(?<![\w./-])([/$])kwa-(" + "|".join(map(re.escape, names)) + r")(?![a-z-])")
     text = SKILL_NAME.sub(r"\1kwa:\2", text)
     text = re.sub(r"(?:python3 )?\.claude/kwa/bin/kwa-(memory|start)\b", r"kwa \1", text)
-    return re.sub(r"(?<![\w./-])kwa-relecteur(?![a-z.-])", "kwa:relecteur", text)
+    return re.sub(r"(?<![\w./-])kwa-reviewer(?![a-z.-])", "kwa:reviewer", text)
 
 
 COPY_PAGES = {"parcours-harness.html"}  # démonte une installation par copie : noms d'origine

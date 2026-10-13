@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse Bash, dans l'agent kwa-relecteur seulement — n'autorise que les commandes qui lisent.
+"""PreToolUse Bash, dans l'agent kwa-reviewer seulement — n'autorise que les commandes qui lisent.
 
 Un relecteur qui peut écrire finit par corriger au lieu de relire. Sous Claude Code, ses outils d'écriture sont
 retirés ; ce hook ferme la porte du shell. Liste blanche : une commande inconnue est refusée, avec sa raison.

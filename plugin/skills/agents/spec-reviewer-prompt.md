@@ -1,8 +1,8 @@
 # Prompt de relecteur de conformité
 
-Premier temps de la relecture. Un agent `kwa:relecteur` NEUF (jamais l'implémenteur) : `subagent_type: "kwa:relecteur"`,
+Premier temps de la relecture. Un agent `kwa:reviewer` NEUF (jamais l'implémenteur) : `subagent_type: "kwa:reviewer"`,
 `model: "sonnet"`. Il vérifie que le code fait ce que la tâche demande, rien d'autre. La qualité vient après.
-Sous Codex : « lance l'agent kwa:relecteur avec ce prompt ». Passe : conformité seule.
+Sous Codex : « lance l'agent kwa:reviewer avec ce prompt ». Passe : conformité seule.
 
 ````
 Tu vérifies qu'une implémentation respecte exactement sa spécification. Tu ne juges pas le style : un autre
