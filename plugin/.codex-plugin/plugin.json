@@ -1,7 +1,7 @@
 {
   "name": "kwa",
   "version": "0.2.2",
-  "description": "Kit de workflows automatisés pour le dev agentique : garde-fous, skills de méthode, mémoire de session et workflow issue → PR.",
+  "description": "Kit de workflows agentiques pour le développement : garde-fous, skills de méthode, mémoire de session et workflow issue → PR.",
   "author": {
     "name": "nesyouyou",
     "url": "https://github.com/nesyouyou"
@@ -19,7 +19,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Kwa",
-    "shortDescription": "Workflows automatisés pour le dev agentique",
+    "shortDescription": "Workflows agentiques pour le développement",
     "developerName": "nesyouyou",
     "category": "Coding",
     "websiteURL": "https://nesyouyou.github.io/kwa/"

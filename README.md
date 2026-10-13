@@ -2,9 +2,9 @@
 
 **Site : https://nesyouyou.github.io/kwa/** (documentation illustrée et trois parcours de formation)
 
-Kit de workflows automatisés pour le dev agentique : mêmes règles, mêmes garde-fous, mêmes skills, partout, sous
-Claude Code comme sous Codex.
-Kwa se lit **K**it de **W**orkflows **A**utomatisés : développer une fonctionnalité, corriger un bug, relire, livrer,
+Kit de workflows agentiques pour le développement : mêmes règles, mêmes garde-fous, mêmes skills, partout, sous
+Claude Code et, à titre expérimental, sous Codex.
+Kwa se lit **K**it de **W**orkflows **A**gentiques : développer une fonctionnalité, corriger un bug, relire, livrer,
 capitaliser, chacun outillé par des garde-fous, des hooks et des skills.
 
 ## Pourquoi ce dépôt
@@ -101,7 +101,9 @@ Le spécifique d'un projet vit dans `.claude/kwa.policy.json` (créé une fois �
 - Retouche locale d'un fichier géré : sauvegardée avant d'être écrasée. Gabarits « seed » : copiés une fois.
 - Aucune action git. Les notes locales et sauvegardes sont exclues via `.git/info/exclude`.
 - Les gardes sont des filets contre la bévue, pas une frontière de sécurité ; leurs erreurs internes demandent à
-  l'humain. Pour une vraie barrière : protection de branche GitHub + `permissions.deny`.
+  l'humain. `permissions.deny` seul filtre un outil (`Read(./.env)` n'arrête pas `python3 -c`). Pour une vraie barrière :
+  le bac à sable de Claude Code (`/sandbox`, qui applique aussi ces règles aux commandes shell), un conteneur ou une
+  machine isolée, des identifiants séparés, la protection de branche GitHub avec CI obligatoire.
 
 ## Claude Code et Codex
 

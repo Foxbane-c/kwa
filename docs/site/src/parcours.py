@@ -301,7 +301,7 @@ def render(c: dict) -> str:
          f"""<p>Essayez de contourner le garde des secrets. Ces trois commandes lisent le même fichier d'environnement ; seule la forme change :</p>
 <table class="pc-table"><thead><tr><th>Commande</th><th>Verdict réel</th></tr></thead><tbody>{holes}</tbody></table>
 <p>Le garde lit le <strong>texte</strong> de la commande, il ne l'exécute pas : un nom calculé, un glob ou un interpréteur lui échappent.</p>
-{reveal("Alors, à quoi ça sert, et que mettre en plus ?", "<p>À arrêter l'erreur honnête. Contre une attaque, il faut une vraie barrière : la protection de branche GitHub, et les règles <code>permissions.deny</code> de Claude Code, qui portent sur le fichier lui-même.</p>")}""",
+{reveal("Alors, à quoi ça sert, et que mettre en plus ?", "<p>À arrêter l'erreur honnête. Les règles <code>permissions.deny</code> de Claude Code, seules, ne font pas mieux : <code>Read(./.env)</code> bloque l'outil de lecture, pas <code>python3 -c</code>. Contre une attaque, il faut une barrière que le système d'exploitation ou GitHub fait respecter : le bac à sable de Claude Code (<code>/sandbox</code>, désactivé par défaut), qui applique aussi ces règles aux commandes shell ; un conteneur ou une machine isolée ; des identifiants séparés ; et la protection de branche avec la CI obligatoire. Voir <a href='impose.html'>Ce qui est imposé, ce qui est suggéré</a>.</p>")}""",
          "Trouver un contournement, et dire quelle barrière complète le garde.",
          "Ne jamais présenter un hook comme une garantie. Un contournement trouvé en séance est un bon résultat."),
     ]

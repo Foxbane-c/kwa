@@ -177,6 +177,7 @@ def main():
         "memoire.html": ("memoire", "La mémoire", "Comment chaque session enrichit la suivante : capture, journal, filtre, tri, reprise."),
         "methode.html": ("superpowers", "La méthode", "Les principes de discipline de superpowers, réécrits en français et branchés sur la politique du projet."),
         "migrer.html": ("migrer", "Remplacer l'existant", "Remplacer un outillage maison par Kwa : correspondances et détection automatique."),
+        "impose.html": ("impose", "Imposé ou suggéré", "Pour chaque mécanisme de Kwa : qui l'exécute, ce qu'il garantit, s'il est actif par défaut, comment on le contourne."),
         "limites.html": ("limites", "Limites et suite", "Les limites de Kwa, sans maquillage, et la feuille de route."),
         "credits.html": ("credits", "Crédits", "Ce que Kwa doit aux autres projets, avec licence et référence."),
     }
