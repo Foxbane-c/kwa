@@ -27,7 +27,7 @@ KIND = {  # type d'étape -> (pictogramme, libellé)
     "skill": ("sword", "Skill"),
     "garde": ("shield", "Garde"),
     "hook": ("hook", "Hook"),
-    "agent": ("agent", "Agent"),
+    "agent": ("agent", "Sous-agent"),
     "vous": ("user", "Vous"),
     "doc": ("doc", "Relais"),
 }
@@ -51,7 +51,7 @@ FLOWS = {
             ("faire", "garde", "guard-write", "pas de code produit sur main"),
             ("faire", "skill", "/kwa:start-dev", "issue, branche et worktree"),
             ("faire", "skill", "/kwa:agents", "un implémenteur par tâche"),
-            ("prouver", "skill", "/kwa:tdd", "un test qui échoue, puis le code"),
+            ("prouver", "skill", "/kwa:tdd", "dans chaque implémenteur : un test qui échoue, puis le code"),
             ("prouver", "skill", "/kwa:verify", "les vérifications du projet, sorties citées"),
             ("relire", "agent", "kwa:reviewer", "relit en lecture seule"),
             ("relire", "skill", "/kwa:review-feedback", "trier les constats avant d'en appliquer un"),

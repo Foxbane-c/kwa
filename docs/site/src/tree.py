@@ -63,7 +63,7 @@ SYNTHETIC = [  # fichiers créés par `kwa init` ou par l'usage, pas copiés dep
     (".codex/rules/kwa.rules", "config", ["core"], "Ce que Codex fait confirmer lui-même : push, fusion, suppressions."),
     (".codex/agents/kwa-reviewer.toml", "config", ["craft"], "L'agent relecteur pour Codex, en bac à sable en lecture seule."),
     (".claude/kwa/local/inbox.md", "local", ["memory"], "Notes d'apprentissage en attente de /kwa:learn. Local, jamais versionné."),
-    (".claude/kwa/local/journal", "local", ["memory"], "Une entrée par session : faits git et huit lignes de récit."),
+    (".claude/kwa/local/journal", "local", ["memory"], "Une entrée par session : faits git et huit lignes de récit au plus."),
     (".claude/kwa/local/signals.jsonl", "local", ["memory"], "Refus de garde et corrections repérées. Local."),
     (".claude/kwa/local/sessions", "local", ["memory"], "Début et base git de chaque session."),
 ]
@@ -93,6 +93,14 @@ def split(files: list[dict]) -> tuple[list[dict], list[dict]]:
             plugin.append({**f, "dest": where, "desc": f["desc"].replace("/kwa-", "/kwa:")})
         else:
             project.append(f)
+    skills_dir = os.path.join(PACK, "plugin", "skills")
+    known = {f["dest"] for f in plugin}
+    for name in sorted(os.listdir(skills_dir)) if os.path.isdir(skills_dir) else []:  # skills propres au plugin (init)
+        dest = f"skills/{name}/SKILL.md"
+        if dest not in known and os.path.isfile(os.path.join(skills_dir, name, "SKILL.md")):
+            m = re.search(r"^description:\s*(.+)$", open(os.path.join(skills_dir, name, "SKILL.md"), encoding="utf-8").read(), re.M)
+            plugin.append({"dest": dest, "src": f"plugin/{dest}", "modules": ["core"], "kind": "skill",
+                           "desc": (m.group(1).strip().strip('"') if m else "")})
     return project, sorted(plugin, key=lambda f: f["dest"])
 
 
@@ -255,17 +263,19 @@ def render_repo() -> str:
     return "".join(rows)
 
 
-def section(files: list[dict], modules: list[str], about: dict | None = None) -> str:
+def section(files: list[dict], modules: list[str], about: dict | None = None, policy_only: list[str] | None = None) -> str:
     about = about or {}
     project, plugin = split(files)
     mod_chips = "".join(f'<button type="button" class="tr-chip" aria-pressed="true" data-m="{html.escape(m)}" data-about="{html.escape(about.get(m, ""))}">{html.escape(m)}</button>' for m in modules)
+    note = (f'<p class="tr-only">{" et ".join(html.escape(m) for m in policy_only)} n\'ajoute{"nt" if len(policy_only) > 1 else ""} aucun fichier : '
+            f'{"ils règlent" if len(policy_only) > 1 else "il règle"} seulement la politique.</p>') if policy_only else ""
     legend = "".join(f'<li><i class="tr-key tr-k-{k}"></i>{KIND_LABEL[k]}</li>' for k in ("skill", "guard", "hook", "rule", "bin", "config", "doc", "local"))
     return f"""<section class="kw-container kd-section kd-rv" id="arborescence">
   <div class="kd-head"><div class="kd-eyebrow"><i class="kd-dot" style="--dot:var(--tr-config)"></i>Arborescence</div><h2 class="kw-section-title">Ce que Kwa ajoute, et où</h2>
     <p class="kd-lead">Votre projet ne reçoit que de la configuration ; skills, gardes et hooks vivent dans le plugin, installé une fois par machine. Ouvrez un dossier pour voir ce qu'il contient. Chaque ligne renvoie à son code source ; les skills et les gardes renvoient aussi à la carte. Décochez un module pour voir ce qui disparaît.</p></div>
   <div class="tr" id="tree">
     <div class="tr-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-tab="project">Dans votre projet</button><button type="button" role="tab" aria-selected="false" data-tab="plugin">Dans le plugin</button><button type="button" role="tab" aria-selected="false" data-tab="repo">Dans le dépôt Kwa</button></div>
-    <div class="tr-bar"><div class="tr-mods" role="group" aria-label="Modules"><span class="tr-lbl">{pictos.svg("code")}Modules</span>{mod_chips}</div>
+    <div class="tr-bar"><div class="tr-mods" role="group" aria-label="Modules"><span class="tr-lbl">{pictos.svg("code")}Modules</span>{mod_chips}</div>{note}
       <div class="tr-act"><button type="button" class="tr-btn" data-act="open">Tout ouvrir</button><button type="button" class="tr-btn" data-act="close">Tout replier</button></div></div>
     <p class="tr-modnote" id="tr-modnote">Survolez un module pour voir son rôle ; décochez-le pour voir ce qui disparaît.</p>
     <div class="tr-panel" data-panel="project"><div class="tr-body">{render_project(project)}</div></div>

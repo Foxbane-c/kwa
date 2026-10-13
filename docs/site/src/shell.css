@@ -47,6 +47,7 @@ html { scroll-padding-top: calc(var(--kd-top-h) + 16px); }
 .tr-tabs button[aria-selected="true"] { background: var(--kw-invert-bg); color: var(--kw-invert-fg); font-weight: 600; }
 .tr-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin: 18px 0 12px; }
 .tr-mods, .tr-act { display: flex; flex-wrap: wrap; gap: 6px; }
+.tr-only { flex-basis: 100%; margin: 4px 0 0; font-size: 12px; color: var(--kw-mut); }
 .tr-lbl { display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; font-size: 13px; color: var(--kw-mut); }
 .tr-lbl .kd-pic { width: 16px; height: 16px; margin: 0; color: var(--kd-teal); }
 .tr-chip { padding: 4px 10px; border: 1px solid var(--kw-rule); border-radius: 6px; background: transparent; color: var(--kw-mut); font: 500 12px/1.4 'Geist Mono', monospace; transition: background-color .15s ease, color .15s ease, border-color .15s ease; }

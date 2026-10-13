@@ -32,6 +32,28 @@ TERMS = [
      "Exemples : pas de commit sur main, pas de lecture d'un fichier de secrets."),
     ("politique", "Politique du projet", "policy", ["politique"],
      "Le fichier .claude/kwa.policy.json : ce qui change d'un projet à l'autre (commandes interdites ou à confirmer, vérifications, environnements).", ""),
+    ("regle", "Règle", "rule", ["règles"],
+     "Le mot a quatre sens. Une règle d'instructions (.claude/rules/*.md) : du texte que le modèle lit, sans contrainte. Une règle de permission de Claude Code (permissions.allow, ask, deny) : l'outil l'applique avant d'utiliser un outil. Une règle de commandes de Codex (.codex/rules) : Codex l'applique. Une règle de la politique de Kwa (bash.deny, write.deny) : les gardes l'appliquent.",
+     "Seules les trois dernières contraignent. Voir la page Imposé ou suggéré."),
+    ("plugin", "Plugin", "plugin", ["plugins"],
+     "Un paquet que l'agent de code installe une fois par machine : skills, agents, hooks, commandes. Il se met à jour sans toucher aux projets.",
+     "Kwa est un plugin ; le projet ne reçoit que sa configuration (kwa init)."),
+    ("marketplace", "Marketplace (catalogue)", "marketplace", [],
+     "Un dépôt qui liste des plugins installables. On l'ajoute une fois (/plugin marketplace add), puis on installe le plugin voulu.",
+     "Le dépôt nesyouyou/kwa est à la fois la marketplace et le plugin."),
+    ("superpowers", "superpowers", "superpowers", [],
+     "Un plugin tiers de méthode pour Claude Code (licence MIT) : cadrer, planifier, tester d'abord, vérifier. Kwa en reprend les principes, réécrits en français.",
+     "Inutile de le connaître pour utiliser Kwa : la page Méthode montre ce qui est repris."),
+    ("conventional-commits", "Conventional Commits", "Conventional Commits", [],
+     "Une convention de message de commit : un type (feat, fix, docs…), une portée entre parenthèses, puis un sujet court. Exemple : fix(site): corriger le lien du glossaire.", ""),
+    ("pre-vol", "Pré-vol", "preflight", ["pré-vols"],
+     "La liste des contrôles à passer juste avant un déploiement : branche à jour, tests verts, migrations prêtes, environnement visé.",
+     "/kwa:deploy lit les pré-vols de chaque environnement dans la politique."),
+    ("seed", "Gabarit seed", "seed", [],
+     "Un fichier modèle copié une seule fois dans le projet (par exemple un modèle d'issue), puis laissé au projet : Kwa ne le réécrit plus.", ""),
+    ("opt-in", "Opt-in (à activer)", "opt-in", [],
+     "Désactivé par défaut : il faut l'activer soi-même.",
+     "Exemple : verify-stop, activé par KWA_STOP_VERIFY=1."),
     ("prompt", "Prompt (consigne)", "prompt", ["prompts"],
      "Le texte que l'on donne au modèle pour lui demander quelque chose : la demande, son contexte, le format attendu.", ""),
     ("jeton", "Jeton", "token", ["jetons", "token", "tokens"],
@@ -86,7 +108,7 @@ TERMS = [
      "Les vérifications (tests, build) lancées automatiquement à chaque changement poussé.", ""),
 ]
 
-SKIP_AUTO = {"pr", "ci", "adr", "branche", "commit", "merge", "push", "issue"}  # trop courants pour une infobulle partout
+SKIP_AUTO = {"pr", "ci", "adr", "branche", "commit", "merge", "push", "issue", "plugin", "regle"}  # trop courants pour une infobulle partout
 
 
 def data_js() -> str:

@@ -138,7 +138,8 @@ base, force-push, cibles de production, workflow issue → PR → preuve, migrat
 
 ## Origine
 
-Kwa assemble des idées de super-board, superpowers, des skills de Matt Pocock et de ponytail (tous MIT), réécrites
+Kwa assemble des idées de super-board, superpowers, des skills de Matt Pocock, de ponytail, humanizer,
+claude-reflect et Claudeception (tous MIT), réécrites
 et testées : voir `THIRD_PARTY_NOTICES.md`, `credits.json` et `licenses/`. Aucun fichier copié.
 
 ## Licence

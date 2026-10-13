@@ -20,7 +20,7 @@ il ne demande aucune installation.</p>
 <li><h2 class="kw-section-title">Ce qu'il vous faut</h2>
 <ul class="pc-list">
 <li><strong>Python 3</strong> : les garde-fous de Kwa sont de petits scripts Python, sans dépendance.</li>
-<li><strong>GitHub CLI</strong> (<code>gh</code>), connecté avec <code>gh auth login</code> : Kwa ouvre les issues et les pull requests avec.</li>
+<li><strong>GitHub CLI</strong> (<code>gh</code>), connecté avec <code>gh auth login</code> : Kwa ouvre les issues et les pull requests avec. Les captures jointes aux issues passent par <code>gh issue comment --attach</code> (vérifié avec gh 2.102).</li>
 <li><strong>Node.js</strong>, seulement pour les serveurs MCP du parcours 2 (Context7, Playwright).</li>
 </ul></li>
 
