@@ -29,8 +29,8 @@
 .fl-mini { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--fl-c) 14%, transparent); }
 .fl-mini .kd-pic { width: 12px; height: 12px; margin: 0; color: var(--fl-c); }
 .fl-body { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows var(--fl-morph) var(--fl-ease), opacity .25s ease; }
-.fl-body > * { min-height: 0; overflow: hidden; padding: 3px; margin: -3px; }  /* l'anneau des étapes et les bordures ne sont pas rognés */
-.fl-body ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.fl-body > * { min-height: 0; overflow: hidden; }
+.fl-body ol { list-style: none; margin: -3px; padding: 3px; display: grid; gap: 6px; }  /* marge du liseré de l'étape en cours */
 
 /* la brique ouverte : elle grossit et montre ses étapes */
 .fl-brick.is-open { flex-grow: 2.3; justify-content: flex-start; border-color: color-mix(in srgb, var(--kw-fg) 30%, transparent); background: var(--kw-raise);
@@ -45,8 +45,9 @@
 .fl-node { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; padding: 7px 8px; border-radius: 10px;
   opacity: 0; transform: translateY(6px); transition: background-color .3s ease, box-shadow .3s ease, opacity .35s ease, transform .35s ease; }
 .fl-brick.is-open .fl-node { opacity: 1; transform: none; }
-.fl-brick.is-open .fl-node:nth-child(1) { transition-delay: .25s; } .fl-brick.is-open .fl-node:nth-child(2) { transition-delay: .32s; }
-.fl-brick.is-open .fl-node:nth-child(3) { transition-delay: .39s; } .fl-brick.is-open .fl-node:nth-child(4) { transition-delay: .46s; }
+/* apparition en cascade : le délai ne touche que l'opacité et le déplacement, pas le liseré de l'étape en cours */
+.fl-brick.is-open .fl-node:nth-child(1) { transition-delay: 0s, 0s, .25s, .25s; } .fl-brick.is-open .fl-node:nth-child(2) { transition-delay: 0s, 0s, .32s, .32s; }
+.fl-brick.is-open .fl-node:nth-child(3) { transition-delay: 0s, 0s, .39s, .39s; } .fl-brick.is-open .fl-node:nth-child(4) { transition-delay: 0s, 0s, .46s, .46s; }
 .fl-node b { display: block; font: 500 13px/1.3 'Geist Mono', monospace; color: var(--kw-fg); overflow-wrap: anywhere; }
 .fl-node small { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.35; color: var(--kw-body); }
 .fl-dot { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: color-mix(in srgb, var(--fl-c) 14%, transparent); }
@@ -54,7 +55,7 @@
 .fl-skill { --fl-c: var(--kd-blue); } .fl-garde { --fl-c: var(--kd-red); } .fl-hook { --fl-c: var(--kd-amber); }
 .fl-agent { --fl-c: var(--kd-violet); } .fl-vous { --fl-c: var(--kd-green); } .fl-doc { --fl-c: var(--kd-teal); }
 .fl-node.is-seen { background: color-mix(in srgb, var(--kw-fg) 4%, transparent); }
-.fl-node.is-here { background: color-mix(in srgb, var(--fl-c) 13%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--fl-c) 55%, transparent); }
+.fl-node.is-here { background: color-mix(in srgb, var(--fl-c) 14%, transparent); box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--fl-c) 85%, transparent); }
 .fl-node.is-deny { animation: fl-shake .45s ease 2; background: color-mix(in srgb, var(--kd-red) 15%, transparent); }
 @keyframes fl-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
@@ -95,7 +96,7 @@
 @keyframes fl-in { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
 
 /* sous-agents */
-.fl-tray { display: grid; gap: 6px; max-height: 0; overflow: hidden; transition: max-height .45s ease, margin-top .45s ease; }
+.fl-tray { display: grid; gap: 6px; max-height: 0; overflow: hidden; padding: 0 3px; margin: 0 -3px; transition: max-height .45s ease, margin-top .45s ease; }
 .fl-tray.is-open { max-height: 320px; margin-top: 10px; }
 .fl-sub { --fl-c: var(--kd-violet); display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; padding: 6px 8px;
   border: 1px dashed color-mix(in srgb, var(--kd-violet) 55%, transparent); border-radius: 10px; animation: fl-spawn .5s cubic-bezier(.34, 1.4, .64, 1) both; }
