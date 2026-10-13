@@ -179,7 +179,11 @@ def _mods(node) -> set[str]:
 def _link(f: dict) -> str:
     links = []
     if f["src"]:
-        links.append(f'<a class="tr-l" href="{REPO}/blob/main/{html.escape(f["src"])}" title="Code source dans le dépôt">source</a>')
+        src = f["src"]
+        plugin = re.sub(r"^core/(skills|agents)/", r"plugin/\1/", src)  # la version réécrite pour le plugin, celle qui sert
+        if plugin != src and os.path.isfile(os.path.join(PACK, plugin)):
+            src = plugin
+        links.append(f'<a class="tr-l" href="{REPO}/blob/main/{html.escape(src)}" title="Code source dans le dépôt">source</a>')
     name = os.path.basename(f["dest"])
     node = None
     m = re.match(r"^(?:\.claude/skills/kwa-|skills/)([a-z-]+)/SKILL\.md$", f["dest"])

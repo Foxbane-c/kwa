@@ -248,9 +248,9 @@ if ($('#ob')) {
 const OB = [
  ['Ajouter le plugin, une fois par machine','/plugin marketplace add nesyouyou/kwa',"Dans une session Claude Code, puis <code>/plugin install kwa@kwa</code>. Skills, agent relecteur, garde-fous, mémoire et la commande <code>kwa</code> arrivent avec le plugin. Sous Codex : <code>codex plugin marketplace add nesyouyou/kwa</code>, puis <code>codex plugin add kwa@kwa</code>. Il faut d'abord un agent de code : voir <a href=\"avant-de-commencer.html\">Avant de commencer</a>."],
  ['Préparer le projet, une fois par dépôt','/kwa:init',"Dans une session ouverte dans le projet. La skill montre ce que Kwa détecte, simule, puis n'écrit que de la configuration après votre accord : la politique <code>.claude/kwa.policy.json</code>, le bloc d'AGENTS.md, le plugin proposé à l'équipe. Elle complète la politique avec vous et vérifie le résultat. Aucun script n'est copié."],
- ['Committer la configuration','/kwa:commit',"Sur une branche, puis <code>/kwa:ship</code> pour la pull request : l'équipe reçoit la proposition d'installer le plugin en ouvrant le projet."]
+ ['Livrer la configuration par une PR','git switch -c chore/kwa-setup',"La configuration est écrite mais pas committée. Sur une branche, committez avec <code>/kwa:commit</code>. Avec le module issue-flow, une PR doit porter « Closes #N », où N est le numéro d'une issue GitHub : ouvrez une issue « Installer Kwa » (<code>gh issue create</code>), puis <code>/kwa:ship</code>. À la fusion, l'équipe reçoit la proposition d'installer le plugin en ouvrant le projet."]
 ];
-OB.forEach(([t,c,d],i)=> $('#ob').append(el('div',{class:'item'},`<div class="num">${i+1}</div><div><h3>${t}</h3><p>${d}</p><div class="kd-term" style="margin-top:0"><div class="top"><span>Terminal</span><button class="kd-copy" data-copy="${esc(c)}">Copier</button></div><pre class="kd-code"><span class="p">$</span> ${esc(c)}</pre></div></div>`)));
+OB.forEach(([t,c,d],i)=> $('#ob').append(el('div',{class:'item'},`<div class="num">${i+1}</div><div><h3>${t}</h3><p>${d}</p><div class="kd-term" style="margin-top:0"><div class="top"><span>${c[0]==='/'?'Claude Code':'Terminal'}</span><button class="kd-copy" data-copy="${esc(c)}">Copier</button></div><pre class="kd-code">${c[0]==='/'?'':'<span class="p">$</span> '}${esc(c)}</pre></div></div>`)));
 }
 
 /* migration d'un outillage existant */
@@ -261,10 +261,10 @@ const MAP = [
  ['Un hook qui exige « Closes #N » et une preuve avant fusion','guard-github (module issue-flow), testé avec un faux gh'],
  ['Un hook qui protège les migrations, les .env et interdit le code sur main','guard-write : <code>write.deny</code> et <code>write.no_code_on_main</code>'],
  ['Formatage à la sauvegarde, vérification à la fin de session','format-after-edit et verify-stop (module verify), commandes lues dans la politique'],
- ['Une skill « démarrer un développement » + un script de worktree','/kwa:start-dev + kwa-start'],
+ ['Une skill « démarrer un développement » + un script de worktree','/kwa:start-dev + <code>kwa start</code>'],
  ['Des skills de déploiement par environnement avec pré-vol','/kwa:deploy piloté par <code>environments</code> ; pré-vol et rationalisations dans la politique'],
  ['Une skill TestFlight (Release sur simulateur avant build EAS)','/kwa:testflight, profils lus dans <code>mobile</code> et eas.json (React Native / Expo)'],
- ['Une règle de remise au client et un contrôle d\'hygiène en CI',"module client-handover : règle, kwa-hygiene, liste d'exceptions, job CI"],
+ ['Une règle de remise au client et un contrôle d\'hygiène en CI',"module client-handover : règle, <code>kwa hygiene</code>, liste d'exceptions, job CI"],
  ["Modèles d'issues et de PR",'Gabarits copiés une fois (seed), puis au projet'],
  ['.agents/skills, .codex/hooks.json et règles Codex','Le plugin pour les skills ; <code>kwa init</code> écrit <code>.codex/hooks.json</code> (par <code>kwa hook</code>) et les règles'],
  ["Une section « conventions de collaboration » dans AGENTS.md",'Dans le bloc commun : langue, simplicité, changements chirurgicaux, confidentialité'],
