@@ -1,13 +1,16 @@
 /* Workflows animés : six macro-briques compactes sur une ligne. Quand le jeton entre dans une brique, elle s'ouvre et
    montre ses étapes (skills, gardes, agents, vos décisions) ; quand il passe à la suivante, elle se referme. Une boucle
-   vers une brique précédente est une flèche sur la ligne des briques. Scénario : src/flows.py, injecté en JSON.
-   Lecture, pause, rejouer ; démarre seul quand le schéma devient visible. Mouvement réduit : rien ne part seul, les
-   changements sont instantanés. Script classique, sans dépendance. */
+   vers une brique précédente est une flèche entre briques. Scénario : src/flows.py, injecté en JSON.
+   Deux façons de lire : la lecture automatique (démarre seule quand le schéma devient visible), ou pas à pas avec
+   Précédent / Suivant et les flèches du clavier. Revenir en arrière rejoue instantanément tout ce qui précède, puis
+   anime le pas demandé. Mouvement réduit : rien ne part seul, les changements sont instantanés.
+   Script classique, sans dépendance. */
 (function () {
   'use strict';
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var NS = 'http://www.w3.org/2000/svg';
   var MORPH = 650;  // durée d'ouverture ou de fermeture d'une brique (flows.css)
+  var PAUSE = { go: 1800, guard: 3400, loop: 1400, ask: 1100, delegate: 1000, handoff: 1200 };  // lecture auto : temps de lecture après un pas
 
   function h(tag, cls, text) {
     var e = document.createElement(tag);
@@ -20,27 +23,35 @@
   function mount(root) {
     var script = JSON.parse(root.querySelector('.fl-script').textContent);
     var board = root.querySelector('.fl-board'), token = root.querySelector('.fl-token'), arcs = root.querySelector('.fl-arcs');
-    var fill = root.querySelector('.fl-fill'), say = root.querySelector('.fl-say');
-    var playBtn = root.querySelector('.fl-play'), restart = root.querySelector('.fl-restart');
+    var fill = root.querySelector('.fl-fill'), say = root.querySelector('.fl-say'), count = root.querySelector('.fl-count');
+    var playBtn = root.querySelector('.fl-play'), prevBtn = root.querySelector('.fl-prev'), nextBtn = root.querySelector('.fl-next');
+    var restart = root.querySelector('.fl-restart');
     var bricks = Array.prototype.slice.call(root.querySelectorAll('.fl-brick'));
     var byIndex = {};
     each(root.querySelectorAll('.fl-node'), function (n) { byIndex[n.getAttribute('data-i')] = n; });
     var picto = function (kind) { var d = root.querySelector('.fl-legend .fl-' + kind + ' .fl-dot'); return d ? d.innerHTML : ''; };
-    var st = { i: 0, playing: false, timer: null, at: null, open: null, run: 0 };
-    var T = function (ms) { return reduced ? Math.min(ms, 300) : ms; };
-    function later(fn, ms) { var run = st.run; st.timer = setTimeout(function () { if (run === st.run) fn(); }, T(ms)); }
+    var intro = say.textContent;
+    // i : nombre de pas déjà joués ; fast : on reconstruit un état sans animer ; run : invalide les minuteries d'un état périmé
+    var st = { i: 0, playing: false, fast: false, timers: [], at: null, open: null, run: 0 };
+    var watching = false;
+
+    function later(fn, ms) {
+      if (st.fast) return fn();
+      var run = st.run;
+      st.timers.push(setTimeout(function () { if (run === st.run) fn(); }, reduced ? Math.min(ms, 250) : ms));
+    }
+    function stopTimers() { st.run++; st.timers.forEach(clearTimeout); st.timers = []; }
 
     function brickOf(i) { return byIndex[i].closest('.fl-brick'); }
     function rel(el) {
       var b = board.getBoundingClientRect(), r = el.getBoundingClientRect();
-      return { x: r.left - b.left + r.width / 2, y: r.top - b.top + r.height / 2, top: r.top - b.top, bottom: r.bottom - b.top, left: r.left - b.left };
+      return { x: r.left - b.left + r.width / 2, top: r.top - b.top, bottom: r.bottom - b.top, left: r.left - b.left, y: r.top - b.top + r.height / 2 };
     }
     function progress(brick) {
       var k = bricks.indexOf(brick);
       fill.style.width = ((k + 1) / bricks.length * 100) + '%';
       bricks.forEach(function (b, j) { b.classList.toggle('is-done', j < k); });
     }
-    /* ouvrir une brique (et refermer l'autre), puis continuer */
     function open(brick, then) {
       if (st.open === brick) return then();
       token.classList.remove('is-on');
@@ -49,12 +60,13 @@
       brick.classList.add('is-open');
       st.open = brick;
       progress(brick);
-      if (window.innerWidth <= 760 && watching) {  // téléphone : les briques s'empilent, on garde la brique ouverte en vue
-        setTimeout(function () { brick.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' }); }, T(MORPH));
+      if (!st.fast && window.innerWidth <= 760 && watching) {  // téléphone : on garde la brique ouverte en vue
+        later(function () { brick.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' }); }, MORPH);
       }
       later(then, MORPH);
     }
     function place(i) {
+      if (st.fast) { st.at = i; byIndex[i].classList.add('is-seen'); return; }
       var n = byIndex[i], c = rel(n.querySelector('.fl-dot')), first = !token.classList.contains('is-on');
       if (first) token.style.transition = 'none';
       token.style.transform = 'translate(' + (c.x - 9) + 'px,' + (c.y - 9) + 'px)';
@@ -64,7 +76,7 @@
       n.classList.add('is-seen');
       st.at = i;
     }
-    function goTo(i, then) { open(brickOf(i), function () { place(i); if (then) then(); }); }
+    function goTo(i, then) { open(brickOf(i), function () { place(i); then(); }); }
 
     function clearPops() { each(board.querySelectorAll('.fl-pop'), function (p) { p.remove(); }); }
     function pop(node, cls) {
@@ -74,7 +86,6 @@
       board.appendChild(p);
       return p;
     }
-    /* flèche de boucle : entre deux étapes de la brique ouverte, ou entre deux briques sur la ligne */
     function arrow(fromEl, toEl, self) {
       var a = rel(fromEl), z = rel(toEl), path = document.createElementNS(NS, 'path'), d;
       if (self) d = 'M' + (a.x + 10) + ' ' + (a.top + 2) + ' C ' + (a.x + 60) + ' ' + (a.top - 44) + ', ' + (a.x - 60) + ' ' + (a.top - 44) + ', ' + (a.x - 10) + ' ' + (a.top + 2);
@@ -90,81 +101,78 @@
       path.style.strokeDasharray = len;
       path.style.strokeDashoffset = reduced ? 0 : len;
       requestAnimationFrame(function () { requestAnimationFrame(function () { path.style.strokeDashoffset = 0; }); });
-      later(function () { path.classList.add('is-out'); }, 2200);
-      later(function () { path.remove(); }, 2800);
+      later(function () { path.classList.add('is-out'); }, 2600);
+      later(function () { path.remove(); }, 3200);
     }
-    function loop(ev, then) {
-      var from = byIndex[ev.at], to = byIndex[ev.to], same = brickOf(ev.at) === brickOf(ev.to);
+    function loop(ev, done) {
+      var from = byIndex[ev.at], same = brickOf(ev.at) === brickOf(ev.to);
+      if (st.fast) return goTo(ev.to, done);
+      clearPops();
       var tag = pop(from, 'fl-pop-loop');
       tag.appendChild(h('b', null, 'Boucle'));
       tag.appendChild(h('span', null, ev.why || ev.say));
-      if (same) { arrow(from.querySelector('.fl-dot'), to.querySelector('.fl-dot'), ev.at === ev.to); return later(function () { place(ev.to); then(); }, 1500); }
+      if (same) { arrow(from.querySelector('.fl-dot'), byIndex[ev.to].querySelector('.fl-dot'), ev.at === ev.to); return later(function () { place(ev.to); done(); }, 1500); }
       arrow(brickOf(ev.at).querySelector('header'), brickOf(ev.to).querySelector('header'), false);
-      later(function () { goTo(ev.to, then); }, 1500);
+      later(function () { goTo(ev.to, done); }, 1500);
     }
 
-    function step() {
-      if (st.i >= script.length) {
-        st.playing = false;
-        playBtn.textContent = 'Lire'; playBtn.setAttribute('aria-pressed', 'false');
-        say.textContent = 'Fin du workflow : de l\'intention floue à la PR fusionnée, puis la leçon rangée. Rejouez pour le revoir.';
-        return;
-      }
-      var ev = script[st.i++];
-      clearPops();
-      say.textContent = ev.say || '';
-      if (ev.t === 'go') return goTo(ev.at, function () { next(1800); });
+    /* un pas du scénario ; done() quand son animation est finie */
+    function run(ev, done) {
+      if (!st.fast) { clearPops(); say.textContent = ev.say || ''; }
+      if (ev.t === 'go') return goTo(ev.at, done);
       if (ev.t === 'guard') return goTo(ev.at, function () {
+        if (st.fast) return done();
         var n = byIndex[ev.at];
         n.classList.add('is-deny');
         var p = pop(n, 'fl-pop-deny');
         p.appendChild(h('b', null, 'Refusé par ' + n.querySelector('b').textContent));
         p.appendChild(h('span', null, ev.msg));
-        later(function () { n.classList.remove('is-deny'); }, 3200);
-        next(3400);
+        later(function () { n.classList.remove('is-deny'); }, 1000);
+        done();
       });
-      if (ev.t === 'loop') return goTo(ev.at, function () { loop({ at: ev.at, to: ev.to, say: ev.say }, function () { next(1400); }); });
-      if (ev.t === 'ask') return goTo(ev.at, function () { ask(ev); });
-      if (ev.t === 'delegate') return goTo(ev.at, function () { delegate(ev); });
-      if (ev.t === 'handoff') return goTo(ev.at, function () { handoff(ev); });
-      next(800);
+      if (ev.t === 'loop') return goTo(ev.at, function () { loop({ at: ev.at, to: ev.to, say: ev.say }, done); });
+      if (ev.t === 'ask') return goTo(ev.at, function () { ask(ev, done); });
+      if (ev.t === 'delegate') return goTo(ev.at, function () { delegate(ev, done); });
+      if (ev.t === 'handoff') return goTo(ev.at, function () { handoff(ev, done); });
+      done();
     }
-    function next(ms) { if (st.playing) later(step, ms); }
 
-    function ask(ev) {
-      var p = pop(byIndex[ev.at], 'fl-pop-ask'), row = h('div', 'fl-opts'), done = false;
+    function ask(ev, done) {
+      if (st.fast) return done();
+      var p = pop(byIndex[ev.at], 'fl-pop-ask'), row = h('div', 'fl-opts'), settled = false;
       p.setAttribute('role', 'dialog');
       p.setAttribute('aria-label', ev.q);
       p.appendChild(h('b', null, ev.q));
       var resolve = function (k) {
-        if (done) return;
-        done = true;
+        if (settled) return;
+        settled = true;
+        st.pending = null;
         var o = ev.opts[k];
         each(row.children, function (b, j) { b.classList.toggle('is-picked', j === k); b.disabled = true; });
         if (k !== ev.pick) {  // choix hors scénario : sa conséquence, puis la question revient
           say.textContent = 'Vous choisissez « ' + o.label + ' » : ' + (o.why || 'on continue.') + ' Puis la question revient.';
-          st.i--;
-          if (o.to != null) return later(function () { loop({ at: ev.at, to: o.to, why: o.why }, function () { later(step, 1200); }); }, 600);
-          return later(step, 2400);
+          var again = function () { run(ev, done); };
+          if (o.to != null) return later(function () { loop({ at: ev.at, to: o.to, why: o.why }, function () { later(again, 1400); }); }, 600);
+          return later(again, 2200);
         }
         say.textContent = ev.say;
-        later(step, 1100);
+        if (o.to != null) return later(function () { loop({ at: ev.at, to: o.to, why: o.why }, done); }, 500);  // le scénario lui-même revient en arrière
+        done();
       };
+      st.pending = function () { resolve(ev.pick); };  // « Suivant » répond comme le scénario
       ev.opts.forEach(function (o, k) {
         var b = h('button', 'fl-opt' + (k === 0 ? ' is-main' : ''), o.label);
         b.type = 'button';
-        b.addEventListener('click', function () {
-          if (!st.playing) { st.playing = true; playBtn.textContent = 'Pause'; playBtn.setAttribute('aria-pressed', 'true'); }
-          resolve(k);
-        });
+        b.addEventListener('click', function () { resolve(k); });
         row.appendChild(b);
       });
       p.appendChild(row);
       if (st.playing) later(function () { resolve(ev.pick); }, 2600);
     }
 
-    function delegate(ev) {
+    function delegate(ev, done) {
       var tray = brickOf(ev.at).querySelector('.fl-tray');
+      if (st.fast) { tray.textContent = ''; tray.classList.remove('is-open'); return done(); }
       tray.textContent = '';
       tray.classList.add('is-open');
       ev.agents.forEach(function (a, k) {
@@ -177,48 +185,106 @@
         tray.appendChild(c);
         later(function () { c.classList.add('is-back'); t.lastChild.textContent = 'retour : ' + a.back; }, 1700 + k * 260);
       });
-      later(function () { tray.classList.remove('is-open'); }, 3800 + ev.agents.length * 200);
-      next(4300 + ev.agents.length * 200);
+      later(done, 2400 + ev.agents.length * 260);
     }
 
-    function handoff(ev) {
+    function handoff(ev, done) {
+      if (st.fast) return done();
       var card = h('div', 'fl-hand');
       card.innerHTML = '<span class="fl-dot">' + picto('doc') + '</span>';
       card.appendChild(h('span', null, 'vers la session suivante'));
       brickOf(ev.at).querySelector('.fl-body').appendChild(card);
-      later(function () { card.classList.add('is-gone'); }, 2400);
-      later(function () { card.remove(); }, 3300);
-      next(3400);
+      later(function () { card.classList.add('is-gone'); }, 2200);
+      later(done, 2200);
     }
 
+    /* état visible : boutons et compteur */
+    function sync() {
+      count.textContent = st.i + ' / ' + script.length;
+      prevBtn.disabled = st.i <= 1;
+      nextBtn.disabled = st.i >= script.length && !st.pending;
+      playBtn.textContent = st.playing ? 'Pause' : (st.i >= script.length ? 'Rejouer' : 'Lire');
+      playBtn.setAttribute('aria-pressed', String(st.playing));
+    }
+    function finished() {
+      st.playing = false;
+      say.textContent = 'Fin du workflow : de l\'intention floue à la PR fusionnée, puis la leçon rangée.';
+      sync();
+    }
+    /* joue le pas suivant (animé) ; en lecture automatique, enchaîne */
+    function forward() {
+      if (st.i >= script.length) return finished();
+      var ev = script[st.i++];
+      sync();
+      var token0 = st.run;
+      run(ev, function () {
+        if (token0 !== st.run) return;
+        sync();
+        if (st.playing) later(st.i >= script.length ? finished : forward, PAUSE[ev.t] || 1200);
+        else if (st.i >= script.length) finished();
+      });
+    }
     function reset() {
-      st.run++; clearTimeout(st.timer); st.i = 0; st.at = null; st.open = null;
+      stopTimers();
+      st.i = 0; st.at = null; st.open = null; st.pending = null;
       clearPops();
       each(arcs.querySelectorAll('.fl-arc'), function (a) { a.remove(); });
       each(root.querySelectorAll('.fl-tray'), function (t) { t.textContent = ''; t.classList.remove('is-open'); });
       each(root.querySelectorAll('.fl-node'), function (x) { x.classList.remove('is-here', 'is-seen', 'is-deny'); });
+      each(root.querySelectorAll('.fl-hand'), function (x) { x.remove(); });
       bricks.forEach(function (b) { b.classList.remove('is-open', 'is-done'); });
       fill.style.width = '0';
       token.classList.remove('is-on');
+      say.textContent = intro;
     }
+    /* aller au pas k (1 à n) : tout ce qui précède est rejoué sans animation, puis le pas k est animé */
+    function seek(k) {
+      k = Math.max(1, Math.min(script.length, k));
+      reset();
+      root.classList.add('fl-instant');
+      st.fast = true;
+      for (var j = 0; j < k - 1; j++) run(script[j], function () {});
+      st.fast = false;
+      st.i = k - 1;
+      void board.offsetWidth;
+      root.classList.remove('fl-instant');
+      if (st.at != null) { token.classList.remove('is-on'); place(st.at); }
+      forward();
+    }
+    function pause() { st.playing = false; stopTimers(); sync(); }
     function play() {
-      st.playing = !st.playing;
-      playBtn.textContent = st.playing ? 'Pause' : 'Lire';
-      playBtn.setAttribute('aria-pressed', String(st.playing));
-      if (!st.playing) { st.run++; clearTimeout(st.timer); return; }
-      if (st.i >= script.length) reset();
-      step();
+      if (st.playing) return pause();
+      st.playing = true;
+      if (st.i >= script.length) { reset(); return forward(); }
+      if (st.pending) return st.pending();
+      if (st.i === 0) return forward();
+      later(forward, 300);
+      sync();
     }
+    function stepNext() {
+      if (st.playing) pause();
+      if (st.pending) return st.pending();
+      if (st.i < script.length) seek(st.i + 1);
+    }
+    function stepPrev() { if (st.playing) pause(); if (st.i > 1) seek(st.i - 1); }
+
     var defs = document.createElementNS(NS, 'defs');
     defs.innerHTML = '<marker id="fl-head-' + root.id + '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker>';
     arcs.appendChild(defs);
     playBtn.addEventListener('click', play);
-    restart.addEventListener('click', function () { reset(); st.playing = false; play(); });
+    nextBtn.addEventListener('click', stepNext);
+    prevBtn.addEventListener('click', stepPrev);
+    restart.addEventListener('click', function () { pause(); reset(); sync(); play(); });
+    root.addEventListener('keydown', function (e) {
+      if (e.target.closest('.fl-opt')) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); stepNext(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); stepPrev(); }
+    });
     window.addEventListener('resize', function () { if (st.at != null) place(st.at); });
-    var watching = false;  // le schéma est à l'écran : seulement alors on fait défiler vers la brique ouverte
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (es) { watching = es[0].isIntersecting; }, { threshold: 0.05 }).observe(board);
     }
+    sync();
     if (!reduced && 'IntersectionObserver' in window) {
       var io = new IntersectionObserver(function (es) {
         if (es[0].isIntersecting && !st.playing && st.i === 0) { io.disconnect(); play(); }
