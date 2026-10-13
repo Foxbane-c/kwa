@@ -594,6 +594,15 @@ class WorkflowsPage(unittest.TestCase):
             self.assertEqual(title, flows.FLOWS[key]["title"], key)
             self.assertEqual(steps, [s[1:] for s in flows.FLOWS[key]["steps"]], key)
 
+    def test_review_jargon_is_in_the_glossary(self):
+        """Les termes signalés par la relecture critique (#47) ont leur entrée, et le marqueur animé n'est pas un « jeton »."""
+        sys.path.insert(0, os.path.join(PACK, "docs", "site", "src"))
+        import glossary
+        ids = {t[0] for t in glossary.TERMS}
+        for term in ("regle", "preuve", "plugin", "marketplace", "superpowers", "conventional-commits", "pre-vol", "seed", "opt-in", "sous-agent"):
+            self.assertIn(term, ids)
+        self.assertNotIn("Le jeton suit", self.read("board.html"))
+
     def test_no_dead_widget_is_left(self):
         src = os.path.join(self.SITE, "src")
         pages = "".join(self.read(f) for f in os.listdir(self.SITE) if f.endswith(".html") and f != "template.html")

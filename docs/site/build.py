@@ -167,7 +167,7 @@ def main():
     shown = [m for m in man if any(m in f["modules"] for f in files)]
     tpl = pictos.fill_placeholders(tpl).replace("/*PICTOS*/{}", pictos.as_json())
     tpl = tpl.replace("<!--EXTRA_CSS-->", '<link rel="stylesheet" href="src/workflows.css">').replace("<!--EXTRA_JS-->", "").replace("<!--TOPBAR-->", shell.topbar())
-    tree_html = tree.section(files, shown, {m: man[m]["about"] for m in shown})
+    tree_html = tree.section(files, shown, {m: man[m]["about"] for m in shown}, [m for m in man if m not in shown])
 
     # pages dédiées : chaque section du gabarit qui n'est pas l'accueil devient sa propre page
     SPLIT = {  # fichier : (id de la section, titre de l'onglet, description)
@@ -211,7 +211,7 @@ def main():
         errs = flows.check(flow)
         if errs:
             sys.exit(f"workflow {key} : " + "; ".join(errs))
-    BOARD_HTML = ('<p class="kd-lead bd-lead">Chaque workflow est regroupé en briques. Le jeton suit son scénario : les boucles quand '
+    BOARD_HTML = ('<p class="kd-lead bd-lead">Chaque workflow est regroupé en briques. Le curseur suit son scénario : les boucles quand '
                   'une condition n\'est pas remplie, vos décisions, les refus des gardes, les sous-agents qui partent et reviennent. '
                   'Lisez-le d\'une traite ou pas à pas.</p>' + flows.section())
     pages = {
@@ -291,7 +291,7 @@ $('#ver2').textContent = DATA.version;
                 if r.returncode != 0:
                     sys.exit(f"erreur de syntaxe JS dans {page} (script {i}) :\n{r.stderr[:400]}")
     d = data["examples"]
-    print(f"index.html — {len(mods)} modules, {len(skills)} skills, {len(d)} exemples réels "
+    print(f"index.html — {len(mods)} modules, {len(catalog)} skills, {len(d)} exemples réels "
           f"({sum(x['decision']=='deny' for x in d)} refus, {sum(x['decision']=='ask' for x in d)} demandes, "
           f"{sum(x['decision']=='allow' for x in d)} passages), {n_tests} tests {'OK' if ok else 'EN ÉCHEC'}")
 

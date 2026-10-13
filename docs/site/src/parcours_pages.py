@@ -45,6 +45,10 @@ def nav(items: list[tuple[str, str]]) -> str:
     return '<ol class="pc-nav">' + "".join(f'<li style="list-style:none"><a href="#etape-{n}">{n} · {esc(t)}</a></li>' for n, t in items) + "</ol>"
 
 
+UNTESTED = ('<p class="kd-note" style="margin:0 0 20px">Parcours pas encore éprouvé avec un groupe : les durées et les '
+            'exercices sont des estimations de conception, à ajuster après une première séance.</p>')
+
+
 def intro(text: str) -> str:
     return f'<p class="pc-intro">{text}</p>'
 
@@ -223,7 +227,7 @@ def culture() -> str:
     ]
     out = "\n".join(stage(*x) for x in s)
     return (intro("Huit étapes pour comprendre ce que fait vraiment un modèle de langage : le texte, les jetons, les erreurs qui en découlent, la fenêtre de contexte, la manière de demander, l'agent, les boucles, les risques. Aucun outil à installer ; un outil d'IA au choix suffit pour les exercices. Environ deux heures et demie, à calibrer en séance.") +
-            nav(CULTURE_NAV) + out +
+            UNTESTED + nav(CULTURE_NAV) + out +
             checklist("Vous avez compris si vous savez", [
                 "dire pourquoi un modèle produit du texte plausible sans consulter une base de faits ;",
                 "estimer les jetons d'un texte et lister ce qui occupe une fenêtre de contexte ;",
@@ -254,15 +258,15 @@ def culture() -> str:
 
 AGENTS_GOOD = """# AGENTS.md
 
-Site vitrine (Next.js, pnpm). Répondre en français.
+Application web (Next.js, pnpm). Répondre en français.
 
 ## Vérifier avant de dire « fait »
-- `npx tsc --noEmit` puis `pnpm test:int` : citer le résultat.
-- `pnpm lint` est cassé : ne pas s'y fier.
+- `npx tsc --noEmit` puis `pnpm test` : citer le résultat.
+- `pnpm lint` signale à tort les fichiers générés : lancer `pnpm lint src`.
 
 ## Pièges
-- Le serveur de développement tourne sur le port 3100, pas 3000.
-- Après un changement de collection : `pnpm migrate:create <nom>` puis `pnpm migrate`.
+- Le serveur de développement écoute sur le port 4000, fixé dans `.env.example`.
+- Après un changement de schéma : `pnpm db:migrate:create <nom>` puis `pnpm db:migrate`.
 
 ## Interdit
 - Pas de commit sur main : une branche par sujet, une PR par branche."""
@@ -575,7 +579,7 @@ def contexte() -> str:
     ]
     out = "\n".join(stage(*x) for x in s)
     return (intro("Du prompt isolé à un contexte entretenu : la session, les fichiers d'instructions, les règles, les skills, les agents, les serveurs MCP (dont Context7 et Playwright) et les permissions, avec les vrais fichiers de configuration. Les exemples sont des configurations valides, vérifiées à la génération de la page. Prérequis : le parcours Culture, ou une bonne pratique d'un assistant d'IA. Pour les exercices : Claude Code ou Codex installé (voir <a href='avant-de-commencer.html'>Avant de commencer</a>) et Node.js pour les serveurs MCP. Environ quatre heures, à calibrer en séance.") +
-            nav(CONTEXTE_NAV) + out +
+            UNTESTED + nav(CONTEXTE_NAV) + out +
             checklist("Vous avez compris si vous savez", [
                 "lister ce qui remplit la fenêtre d'une session d'agent, et la technique qui répond à chaque problème ;",
                 "écrire des instructions vérifiables et dire pourquoi elles ne contraignent pas ;",
@@ -626,7 +630,7 @@ def history() -> str:
 
 def harness(practice_html: str) -> str:
     return (intro("De l'histoire du processus de développement jusqu'à un harness complet, puis dix étapes sur un dépôt jetable, avec les vrais gardes : les sorties affichées sont celles de l'exécution, recalculées à chaque génération du site. La pratique prépare un dépôt jetable pour le plugin, puis lance les gardes à la main : ce sont de simples scripts, les mêmes que ceux que Claude Code appelle. Prérequis : les parcours Culture et Contexte, Python 3 et le plugin Kwa installé (voir <a href='avant-de-commencer.html'>Avant de commencer</a>). Les exercices tournent sans agent, sans compte ni clé ; Claude Code ou Codex sert pour les essais en situation, et jq pour l'exemple de hook en bash. Environ quatre heures, à calibrer en séance.") +
-            nav(HARNESS_NAV) +
+            UNTESTED + nav(HARNESS_NAV) +
             history() + practice_html)
 
 
