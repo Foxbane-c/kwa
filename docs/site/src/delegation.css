@@ -48,3 +48,7 @@
   .dg-table { display: block; overflow-x: auto; }
 }
 @media (prefers-reduced-motion: reduce) { .dg-chip { animation: none; } .dg-st, .dg-run i { transition: none; } }
+/* respiration entre les sections : un titre ne colle jamais au tableau ou aux cartes qui précèdent */
+.kd-main .dg-h { margin: 72px 0 18px; }
+.dg-bar .kp { margin-left: auto; }
+.dg-cards .kd-card h3, .kd-main .dg-h + .kd-grid .kd-card h3 { margin-bottom: 8px; }

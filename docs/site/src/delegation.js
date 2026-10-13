@@ -35,7 +35,7 @@
     ]
   };
 
-  var st = {}, cur = 'agents', i = -1, timer = null;
+  var st = {}, cur = 'agents', i = -1;
   Array.prototype.forEach.call(root.querySelectorAll('.dg-st'), function (li) { st[li.getAttribute('data-st')] = li; });
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
@@ -56,33 +56,31 @@
   function reset() {
     i = -1;
     Object.keys(st).forEach(function (k) { st[k].classList.remove('on', 'done'); st[k].querySelector('.dg-body').textContent = ''; });
-    cap.textContent = 'Choisissez une skill, puis « Lecture » ou « Étape suivante ».';
+    cap.textContent = 'Choisissez une skill, puis lancez la lecture ou avancez pas à pas.';
   }
-  function step() {
+  function show(k) {  // l'état complet de l'étape k : on repart de zéro et on rejoue jusqu'à elle
     var steps = S[cur];
-    if (i >= steps.length - 1) { stop(); return; }
-    i++;
-    var s = steps[i];
-    Object.keys(st).forEach(function (k) {
-      if (st[k].classList.contains('on')) st[k].classList.add('done');
-      st[k].classList.toggle('on', k === s[0]);
-    });
-    var body = st[s[0]].querySelector('.dg-body');
-    s[1].forEach(function (c) { body.appendChild(render(c)); });
-    cap.textContent = (i + 1) + ' / ' + steps.length + ' · ' + s[2];
+    Object.keys(st).forEach(function (n) { st[n].classList.remove('on', 'done'); st[n].querySelector('.dg-body').textContent = ''; });
+    for (var j = 0; j <= k; j++) {
+      var s = steps[j];
+      Object.keys(st).forEach(function (n) {
+        if (st[n].classList.contains('on')) st[n].classList.add('done');
+        st[n].classList.toggle('on', n === s[0]);
+      });
+      var body = st[s[0]].querySelector('.dg-body');
+      s[1].forEach(function (c) { body.appendChild(render(c)); });
+    }
+    i = k;
+    cap.textContent = steps[k][2];
   }
-  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+  var player = window.KwaPlayer && KwaPlayer(root, { count: function () { return S[cur].length; }, show: show, reset: reset, interval: 2400 });
 
   Array.prototype.forEach.call(root.querySelectorAll('[data-dg]'), function (b) {
     b.addEventListener('click', function () {
-      stop(); cur = b.getAttribute('data-dg'); reset();
+      cur = b.getAttribute('data-dg');
       Array.prototype.forEach.call(root.querySelectorAll('[data-dg]'), function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      if (player) player.reset();
     });
-  });
-  root.querySelector('[data-dg-next]').addEventListener('click', function () { stop(); step(); });
-  root.querySelector('[data-dg-play]').addEventListener('click', function () {
-    stop(); reset(); step();
-    if (!reduced) timer = setInterval(step, 2400);
   });
   reset();
 })();

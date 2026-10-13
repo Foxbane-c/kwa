@@ -17,6 +17,7 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hl  # noqa: E402
+import shell  # noqa: E402
 
 
 def sh(cmd: list[str], cwd: str, env: dict | None = None, inp: str | None = None) -> str:
@@ -171,7 +172,7 @@ def pill(d: str) -> str:
 
 
 FLOW = """<div class="pc-widget po" id="flow">
-<div class="pc-actions"><button type="button" class="kd-copy" data-flow-play>Dérouler une journée type</button><button type="button" class="kd-copy" data-flow-next>Étape suivante</button></div>
+<div class="pc-actions">""" + shell.player("Dérouler une journée type") + """</div>
 <ol class="pf-steps">
 <li data-who="auto"><b>1</b><div><strong>La demande devient une issue et une branche</strong><span>/kwa-start-dev ouvre l'issue, crée la branche dans son worktree. Rien ne s'écrit sur main.</span></div><em>Kwa</em></li>
 <li data-who="auto"><b>2</b><div><strong>Explorer, puis planifier</strong><span>En mode plan, l'agent lit le code sans rien modifier ; des sous-agents explorent chacun un domaine et renvoient un résumé.</span></div><em>Sous-agents</em></li>

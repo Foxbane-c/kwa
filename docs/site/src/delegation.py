@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 
 import pictos
+import shell
 
 STATIONS = [  # (clé, pictogramme, titre, sous-titre)
     ("skill", "sword", "La skill", "dans la session principale"),
@@ -26,8 +27,7 @@ def widget() -> str:
 <button type="button" class="kd-copy" data-dg="parallel" aria-pressed="false">/kwa:parallel</button>
 <button type="button" class="kd-copy" data-dg="review" aria-pressed="false">/kwa:review</button>
 <span class="dg-sp"></span>
-<button type="button" class="kd-copy" data-dg-play>Lecture</button>
-<button type="button" class="kd-copy" data-dg-next>Étape suivante</button></div>
+{shell.player("Dérouler la délégation")}</div>
 <ol class="dg-line">{st}</ol>
 <p class="dg-cap" id="dg-cap" aria-live="polite"></p>
 </div>"""
