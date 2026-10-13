@@ -66,7 +66,7 @@
   'use strict';
   var G = window.KWA_GLOSSARY, main = document.querySelector('main');
   if (!G || !main || /glossaire\.html$/.test(location.pathname)) return;
-  var SKIP = 'code, pre, a, button, h1, h2, h3, label, script, style, textarea, input, select, svg, summary, .kd-eyebrow, .kd-stat, .kd-term, .tr, .km, .kc, .gl';
+  var SKIP = 'code, pre, a, button, h1, h2, h3, label, script, style, textarea, input, select, svg, summary, .kd-eyebrow, .kd-stat, .kd-term, .tr, .km, .kc, .gl, .fl, .wf-steps, .wf-legend, .wf-tabs';
   function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
   var items = G.map(function (it) {
     return { it: it, re: new RegExp('(^|[^\\p{L}\\p{N}_/$-])(' + it.words.map(esc).join('|') + ')(?![\\p{L}\\p{N}_-])', 'iu') };

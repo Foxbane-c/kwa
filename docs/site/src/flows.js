@@ -268,6 +268,42 @@
     }
     function stepPrev() { if (st.playing) pause(); if (st.i > 1) seek(st.i - 1); }
 
+    /* hauteur fixe : la ligne réserve la hauteur de sa brique la plus haute une fois ouverte (sous-agents et relais
+       compris), pour que la page en dessous ne bouge pas quand une brique s'ouvre */
+    var row = root.querySelector('.fl-row'), extra = {};
+    script.forEach(function (ev) {
+      var b = brickOf(ev.at).getAttribute('data-b'), e = extra[b] || { agents: 0, hand: false };
+      if (ev.t === 'delegate') e.agents = Math.max(e.agents, ev.agents.length);
+      if (ev.t === 'handoff') e.hand = true;
+      extra[b] = e;
+    });
+    function reserve() {
+      row.style.minHeight = '';
+      root.classList.add('fl-instant');
+      var max = row.offsetHeight;
+      bricks.forEach(function (b) {
+        var e = extra[b.getAttribute('data-b')] || {}, tray = b.querySelector('.fl-tray'), body = b.querySelector('.fl-body');
+        var trayHtml = tray.innerHTML, trayOpen = tray.classList.contains('is-open'), hand = null;
+        bricks.forEach(function (x) { x.classList.toggle('is-open', x === b); });
+        if (e.agents) {
+          tray.innerHTML = new Array(e.agents + 1).join('<div class="fl-sub"><span class="fl-dot"></span><span class="fl-sub-t"><b>a</b><small>a</small></span></div>');
+          tray.classList.add('is-open');
+        }
+        if (e.hand) { hand = h('div', 'fl-hand', 'a'); body.appendChild(hand); }
+        max = Math.max(max, row.offsetHeight);
+        tray.innerHTML = trayHtml; tray.classList.toggle('is-open', trayOpen);
+        if (hand) hand.remove();
+      });
+      bricks.forEach(function (x) { x.classList.toggle('is-open', x === st.open); });
+      void row.offsetHeight;
+      root.classList.remove('fl-instant');
+      row.style.minHeight = Math.ceil(max) + 'px';
+    }
+    reserve();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(reserve);
+    var sizing = null;
+    window.addEventListener('resize', function () { clearTimeout(sizing); sizing = setTimeout(reserve, 200); });
+
     var defs = document.createElementNS(NS, 'defs');
     defs.innerHTML = '<marker id="fl-head-' + root.id + '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker>';
     arcs.appendChild(defs);
