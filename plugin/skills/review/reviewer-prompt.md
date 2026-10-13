@@ -1,9 +1,9 @@
 # Prompt de relecteur
 
-Pour l'agent `kwa:relecteur` : son rôle, ses axes, ses interdits et son format de retour sont dans sa définition ;
-ce prompt ne donne que la tâche. Sous Claude Code : outil `Agent`, `subagent_type: "kwa:relecteur"`, `name:
-"relecteur"` pour le reprendre en relecture ciblée avec `SendMessage` (un neuf pour un regard indépendant). Sous Codex :
-« lance l'agent kwa:relecteur avec ce prompt ».
+Pour l'agent `kwa:reviewer` : son rôle, ses axes, ses interdits et son format de retour sont dans sa définition ;
+ce prompt ne donne que la tâche. Sous Claude Code : outil `Agent`, `subagent_type: "kwa:reviewer"`, `name:
+"reviewer"` pour le reprendre en relecture ciblée avec `SendMessage` (un neuf pour un regard indépendant). Sous Codex :
+« lance l'agent kwa:reviewer avec ce prompt ».
 
 ````
 Tu es relecteur de code senior. Tu relis un changement et tu rends un verdict argumenté. Tu es en lecture seule.

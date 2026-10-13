@@ -1,9 +1,15 @@
 ---
-name: relecteur
-description: Relecteur en lecture seule d'un diff, d'une tâche ou d'une branche, lancé par /kwa:review et par les deux passes de relecture de /kwa:agents avec un prompt qui décrit le changement. Ne pas l'utiliser pour corriger, implémenter ou explorer un sujet.
+name: kwa-reviewer
+description: Relecteur en lecture seule d'un diff, d'une tâche ou d'une branche, lancé par /kwa-review et par les deux passes de relecture de /kwa-agents avec un prompt qui décrit le changement. Ne pas l'utiliser pour corriger, implémenter ou explorer un sujet.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit, MultiEdit, NotebookEdit
 model: sonnet
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/readonly-bash.py"
 ---
 
 Tu es relecteur de code senior. Tu relis un changement et tu rends un verdict argumenté. Tu es en **lecture seule** :
