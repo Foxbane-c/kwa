@@ -107,7 +107,7 @@ FLOWS = {
             ("faire", "skill", "/kwa:start-dev", "issue du bug et branche dédiée"),
             ("prouver", "skill", "/kwa:tdd", "un test rouge qui montre le bug"),
             ("prouver", "skill", "/kwa:simple", "le correctif le plus petit possible"),
-            ("prouver", "hook", "verify-stop", "refuse de rendre la main sur du rouge"),
+            ("prouver", "hook", "verify-stop", "refuse de rendre la main sur du rouge, s'il est activé (KWA_STOP_VERIFY=1)"),
             ("prouver", "skill", "/kwa:verify", "le test repasse au rouge sans le correctif"),
             ("livrer", "skill", "/kwa:commit", "un commit qui dit pourquoi"),
             ("livrer", "garde", "guard-github", "une PR se rattache à son issue"),
@@ -283,6 +283,7 @@ def player(key: str) -> str:
   <div class="fl-board"><div class="fl-row">{"".join(cols)}</div><div class="fl-rail" aria-hidden="true"><i class="fl-fill"></i></div>
     <span class="fl-token" aria-hidden="true"></span><svg class="fl-arcs" aria-hidden="true"></svg></div>
   <ul class="fl-legend" aria-label="Légende">{legend}</ul>
+  <p class="fl-note">Garde et hook : imposés, l'outil les exécute. Skill et agent : suggérés, le modèle décide de les suivre. <a href="impose.html">Ce qui est imposé, ce qui est suggéré</a></p>
   <script type="application/json" class="fl-script">{_json(key)}</script>
 </div>"""
 

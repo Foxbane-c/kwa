@@ -4,7 +4,7 @@
     "name": "nesyouyou",
     "url": "https://github.com/nesyouyou"
   },
-  "description": "Kwa, kit de workflows automatisés pour le dev agentique.",
+  "description": "Kwa, kit de workflows agentiques pour le développement.",
   "plugins": [
     {
       "name": "kwa",

@@ -31,7 +31,7 @@ WORKFLOWS = [  # (clé, pictogramme, titre, promesse, lien, [(type, nom, ce qui 
         ("skill", "/kwa:tdd", "un test rouge qui montre le bug"),
         ("skill", "/kwa:simple", "le correctif le plus petit possible"),
         ("skill", "/kwa:verify", "preuve : le test repasse au rouge sans le correctif"),
-        ("hook", "verify-stop", "refuse de finir sur des tests rouges"),
+        ("hook", "verify-stop", "refuse de finir sur des tests rouges, s'il est activé"),
     ]),
     ("review", "eye", "Relire", "Un regard neuf qui ne peut rien modifier.", "board.html#review", [
         ("skill", "/kwa:review", "rassembler le diff et les critères"),
@@ -74,7 +74,7 @@ def section() -> str:
                       f'<ol class="wf-steps">{items}</ol></div>')
     legend = "".join(f'<li class="wf-{k}"><span class="wf-dot">{pictos.svg(p)}</span>{lab}</li>' for k, (p, lab) in KIND.items())
     return f"""<section class="kw-container kd-section kd-rv" id="workflows">
-  <div class="kd-head"><div class="kd-eyebrow">Les workflows</div><h2 class="kw-section-title">Cinq workflows automatisés</h2>
+  <div class="kd-head"><div class="kd-eyebrow">Les workflows</div><h2 class="kw-section-title">Cinq workflows agentiques</h2>
     <p class="kd-lead">Chacun enchaîne des skills, des gardes, des hooks et des agents, et garde vos décisions aux bons
     endroits. Choisissez un workflow pour voir ses étapes.</p></div>
   <div class="wf" id="wf">
