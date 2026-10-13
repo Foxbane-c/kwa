@@ -148,8 +148,11 @@ def player(key: str) -> str:
             f'<span class="fl-txt"><b>{html.escape(name)}</b><small>{html.escape(what)}</small></span></li>'
             for i, (b, kind, name, what) in enumerate(flow["steps"]) if b == bid)
         if items:
-            cols.append(f'<section class="fl-brick" data-b="{bid}"><header><h3>{html.escape(label)}</h3>'
-                        f'<p>{html.escape(promise)}</p></header><ol>{items}</ol><div class="fl-tray" aria-hidden="true"></div></section>')
+            minis = "".join(f'<i class="fl-mini fl-{kind}" title="{html.escape(name)}">{pictos.svg(KIND[kind][0])}</i>'
+                            for b, kind, name, _w in flow["steps"] if b == bid)
+            cols.append(f'<section class="fl-brick" data-b="{bid}"><header><span class="fl-n">{len(cols) + 1}</span>'
+                        f'<h3>{html.escape(label)}</h3><p>{html.escape(promise)}</p><span class="fl-minis">{minis}</span></header>'
+                        f'<div class="fl-body"><ol>{items}</ol><div class="fl-tray" aria-hidden="true"></div></div></section>')
     legend = "".join(f'<li class="fl-{k}"><span class="fl-dot">{pictos.svg(p)}</span>{lab}</li>' for k, (p, lab) in KIND.items())
     return f"""<div class="fl" id="fl-{key}" data-flow="{key}">
   <div class="fl-bar">
@@ -157,7 +160,8 @@ def player(key: str) -> str:
     <button type="button" class="kw-btn fl-restart">Rejouer</button>
     <p class="fl-say" aria-live="polite">Lancez la lecture : le jeton suit le workflow, avec ses boucles, vos décisions et les refus des gardes.</p>
   </div>
-  <div class="fl-board">{"".join(cols)}<span class="fl-token" aria-hidden="true"></span><svg class="fl-arcs" aria-hidden="true"></svg></div>
+  <div class="fl-board"><div class="fl-row">{"".join(cols)}</div><div class="fl-rail" aria-hidden="true"><i class="fl-fill"></i></div>
+    <span class="fl-token" aria-hidden="true"></span><svg class="fl-arcs" aria-hidden="true"></svg></div>
   <ul class="fl-legend" aria-label="Légende">{legend}</ul>
   <script type="application/json" class="fl-script">{_json(key)}</script>
 </div>"""
