@@ -135,6 +135,11 @@ a.gl.gl-r:hover::after, a.gl.gl-r:focus-visible::after { left: auto; right: 0; }
 /* page glossaire */
 .gl-lead { margin: 0 0 20px; }
 .gl-search { width: 100%; max-width: 520px; margin: 0 0 22px; padding: 9px 12px; border: 1px solid var(--kw-rule); border-radius: 8px; background: transparent; color: var(--kw-fg); font: 14px Geist, system-ui, sans-serif; }
+.kw .gl-lex-h { font: 600 20px/1.3 Geist, system-ui, sans-serif; margin: 48px 0 6px; }
+.gl-lex { border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+.gl-lex th { text-align: left; font: 400 11px "Geist Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--kw-mut); padding: 8px 24px 8px 0; border-bottom: 1px solid var(--kw-rule); }
+.gl-lex td { padding: 8px 24px 8px 0; border-top: 1px solid var(--kw-rule-soft); color: var(--kw-body); }
+.gl-lex td:first-child { color: var(--kw-fg); font-weight: 500; }
 .gl-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .gl-item { padding: 16px; border: 1px solid var(--kw-rule); border-radius: 12px; scroll-margin-top: 80px; }
 .gl-item:target { border-color: var(--kd-violet); background: var(--kw-raise); }

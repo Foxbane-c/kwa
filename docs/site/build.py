@@ -153,6 +153,7 @@ def main():
     data["map"] = mapdata.build(sorted(os.listdir(os.path.join(PACK, "core", "skills"))) and
                                 [d for d in sorted(os.listdir(os.path.join(PACK, "core", "skills")))
                                  if os.path.isfile(os.path.join(PACK, "core", "skills", d, "SKILL.md"))], data["credits"], {})
+    data["families"] = {"of": mapdata.FAMILIES, "label": mapdata.FAMILY_LABEL, "rule": mapdata.FAMILY_RULE}
     open(os.path.join(HERE, "data.js"), "w", encoding="utf-8").write("window.KWA=" + json.dumps(data, ensure_ascii=False) + ";")
 
     def assets(names):

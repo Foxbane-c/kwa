@@ -28,21 +28,29 @@ AVATARS = {  # id de source (credits.json) -> avatar vendorisé
 KINDS = {
     "skill": "skill que l'agent invoque ou que vous tapez",
     "agent": "sous-agent lancé par une skill (outil Agent)",
-    "hook": "hook déclenché tout seul par l'harnais",
+    "hook": "hook exécuté par l'outil (Claude Code, Codex), sans décision du modèle",
     "garde": "garde PreToolUse : refuse ou demande",
     "humain": "porte où c'est vous qui décidez",
     "policy": "fichier du projet lu par les skills et les gardes",
     "step": "étape interne d'une skill",
 }
 
+# Une famille = le moment du travail où la skill agit (source unique : la page Skills et la carte la lisent).
+FAMILY_RULE = {
+    "cadrer": "avant le changement : comprendre, décider, poser les questions",
+    "faire": "changer le dépôt : le préparer, écrire le code",
+    "prouver": "montrer que ça marche, ou trouver ce qui cloche",
+    "livrer": "faire sortir le travail : commit, PR, déploiement, texte publié",
+    "transmettre": "ce qui sert à la session suivante ou à une autre personne",
+}
 FAMILIES = {
     "cadrer": ["brainstorm", "interview", "plan", "tickets", "prototype", "questionnaire", "architecture", "rephrase", "research", "domain"],
-    "faire": ["start-dev", "tdd", "execute", "agents", "parallel", "simple"],
+    "faire": ["init", "start-dev", "tdd", "execute", "agents", "parallel", "simple"],
     "prouver": ["debug", "verify", "review", "review-feedback", "audit"],
     "livrer": ["commit", "ship", "deploy", "testflight", "humanize", "conflicts"],
-    "mémoire": ["learn", "handoff", "agent-docs", "teach"],
+    "transmettre": ["learn", "handoff", "agent-docs", "teach"],
 }
-FAMILY_LABEL = {"cadrer": "Cadrer", "faire": "Faire", "prouver": "Prouver", "livrer": "Livrer", "mémoire": "Mémoire"}
+FAMILY_LABEL = {"cadrer": "Cadrer", "faire": "Faire", "prouver": "Prouver", "livrer": "Livrer", "transmettre": "Transmettre"}
 
 
 DETAILS = {  # comment ça se comporte, par garde / hook
@@ -204,7 +212,7 @@ def build(catalog_ids: list[str], credits: dict, wf_text: dict) -> dict:
 
     # --- vue d'ensemble du pack
     items, groups, edges = [], [], []
-    colmap = {"cadrer": (0, 2), "faire": (2, 1), "prouver": (3, 1), "livrer": (4, 1), "mémoire": (5, 1)}
+    colmap = {"cadrer": (0, 2), "faire": (2, 1), "prouver": (3, 1), "livrer": (4, 1), "transmettre": (5, 1)}
     for fam, ids in FAMILIES.items():
         c0, ncols = colmap[fam]
         for i, sid in enumerate(ids):

@@ -108,6 +108,17 @@ TERMS = [
      "Les vérifications (tests, build) lancées automatiquement à chaque changement poussé.", ""),
 ]
 
+# Lexique figé : (mot retenu dans le texte, mot écarté, pages où l'écarté reste permis). Hors balises de code, un test
+# refuse le mot écarté ailleurs. Les noms de commandes et de fichiers (capture gotcha, /kwa:handoff) sont du code.
+LEXICON = [
+    ("harness", "harnais", {"glossaire.html"}),
+    ("jeton", "token", {"glossaire.html", "parcours-culture.html"}),
+    ("piège", "gotcha", {"glossaire.html"}),
+    ("garde", "guardrail", {"glossaire.html"}),
+    ("passage de relais", "handoff", {"glossaire.html"}),
+    ("sous-agent", "subagent", {"glossaire.html"}),
+]
+
 SKIP_AUTO = {"pr", "ci", "adr", "branche", "commit", "merge", "push", "issue", "plugin", "regle"}  # trop courants pour une infobulle partout
 
 
@@ -136,6 +147,9 @@ def page() -> str:
 son terme d'origine. Sur les autres pages, survolez un mot souligné en pointillés pour voir sa définition.</p>
 <input class="gl-search" id="gl-search" type="search" placeholder="Chercher un terme, en français ou en anglais…" aria-label="Chercher un terme">
 <div class="gl-list" id="gl-list">{"".join(rows)}</div>
+<h2 class="gl-lex-h">Les mots retenus</h2>
+<p class="kd-note">Un seul mot par idée dans le texte du site ; l'anglais reste dans les noms de commandes et de fichiers.</p>
+<table class="gl-lex"><thead><tr><th>On écrit</th><th>Plutôt que</th></tr></thead><tbody>{"".join(f"<tr><td>{html.escape(k)}</td><td>{html.escape(x)}</td></tr>" for k, x, _ in LEXICON)}</tbody></table>
 <p class="kd-note" id="gl-none" hidden>Aucun terme ne correspond.</p>
 <script>(function(){{var i=document.getElementById('gl-search'),items=document.querySelectorAll('.gl-item'),none=document.getElementById('gl-none');
 i.addEventListener('input',function(){{var q=i.value.trim().toLowerCase(),n=0;Array.prototype.forEach.call(items,function(it){{var ok=!q||it.getAttribute('data-text').indexOf(q)>-1;it.hidden=!ok;if(ok)n++;}});none.hidden=n>0;}});}})();</script>"""

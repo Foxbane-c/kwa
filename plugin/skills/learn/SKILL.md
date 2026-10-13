@@ -63,7 +63,7 @@ prose quand l'erreur est mécanique. Le même tableau de l'étape 4 les accueill
 | Erreur répétable | `.claude/kwa.policy.json` (`bash.deny/ask`, `write.deny`) | règle `{id, reason, all/any}` + cas de test si possible |
 | Procédure répétable (étapes, déclencheur clair, déjà refaite plusieurs fois) | une skill de projet `.claude/skills/<nom>/SKILL.md`, écrite avec `/kwa:agent-docs` | la description dit **quand** l'appeler, pas le déroulé |
 | Préférence de collaboration, retour sur ta façon de faire | mémoire de l'agent (fichier mémoire, selon la configuration de la session) | une idée par fichier, avec *Pourquoi* et *Comment l'appliquer* |
-| Client, mission, décision métier, transverse aux projets | base de connaissance de l'équipe via `$KWA_VAULT_INBOX` (capture rapide **seulement**) | une ligne datée ; jamais un fichier marqué immuable ; données financières ou RH : ne pas y écrire |
+| Décision métier ou fait transverse à plusieurs projets | base de connaissance de l'équipe via `$KWA_VAULT_INBOX` (capture rapide **seulement**) | une ligne datée ; respecter les règles d'écriture de cette base (fichiers protégés, données sensibles exclues) |
 | Amélioration générale de Kwa lui-même | boîte de réception de l'équipe, étiquette `#kwa` | une ligne : problème rencontré, idée |
 
 Si `KWA_VAULT_INBOX` n'est pas défini, ne rien écrire dans la base de connaissance : le dire.

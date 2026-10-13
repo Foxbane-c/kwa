@@ -27,6 +27,8 @@ section{scroll-margin-top:84px}
 .kd-first li{font-size:14px;color:var(--kw-body)}
 .kd-first li code{margin-right:6px}
 .kw .kd-first p{margin:12px 0 0;font-size:13px;color:var(--kw-mut)}
+.kd-rule{list-style:none;margin:0 0 18px;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--kw-mut)}
+.kd-rule b{color:var(--kw-fg);font-weight:500;margin-right:4px}
 .kw .kd-h3{font:600 18px/1.4 Geist,system-ui,sans-serif;margin:48px 0 0}
 .kd-impose{min-width:900px!important}.kd-impose td{vertical-align:top}.kd-impose td:first-child{min-width:150px}
 .kd-kind{display:inline-block;white-space:nowrap;font:500 11px 'Geist Mono',monospace;padding:2px 7px;border:1px solid var(--kw-rule);border-radius:6px;color:var(--kw-mut)}
@@ -222,6 +224,7 @@ footer.kw-footer{margin-top:128px}
     <p class="kd-lead">Une <strong>skill</strong> est une procédure écrite que l'agent suit quand la situation correspond, ou que vous lancez vous-même : <code>/kwa:commit</code> sous Claude Code, <code>$kwa:commit</code> sous Codex. Chaque skill dit quand l'utiliser. L'étiquette indique ce dont elle s'inspire ; « Kwa » signifie une conception propre. Aucun texte n'est recopié : tout est réécrit en français et branché sur la politique du projet.</p>
     <p class="kd-lead" style="margin-top:14px"><a class="kw-btn" href="skill-map.html">Ouvrir la carte <span aria-hidden="true">→</span></a> pour voir qui appelle qui : skills, gardes, hooks et agents.</p></div>
   <div class="kd-first"><h3>Les huit à connaître d'abord</h3><ul><li><code>/kwa:start-dev</code> <span>ouvrir l'issue et sa branche</span></li><li><code>/kwa:brainstorm</code> <span>cadrer une intention floue</span></li><li><code>/kwa:plan</code> <span>découper en tâches</span></li><li><code>/kwa:tdd</code> <span>test qui échoue, puis le code</span></li><li><code>/kwa:debug</code> <span>la cause avant le correctif</span></li><li><code>/kwa:verify</code> <span>une preuve avant de dire « fait »</span></li><li><code>/kwa:review</code> <span>un regard neuf sur le diff</span></li><li><code>/kwa:ship</code> <span>publier la branche, ouvrir la PR</span></li></ul><p>Les autres servent des cas plus rares ; l'agent les propose quand la situation se présente.</p></div>
+  <p class="kd-note" style="margin:20px 0 6px">Chaque skill est rangée selon le moment du travail où elle agit :</p><ul class="kd-rule" id="sk-rule"></ul>
   <div class="kd-tools" id="sk-tools"></div>
   <div class="kd-sk" id="sk"></div>
 </section>
@@ -274,7 +277,7 @@ footer.kw-footer{margin-top:128px}
 
 <section class="kw-container kd-section kd-rv" id="migrer">
   <div class="kd-head"><div class="kd-eyebrow">Remplacer l'existant</div><h2 class="kw-section-title">Remplacer un outillage maison</h2>
-    <p class="kd-lead">Beaucoup de projets ont déjà leur propre jeu de scripts : hooks shell par projet, skills de déploiement, règles de dépôt. Kwa les porte dans le <strong>noyau</strong> (générique) et dans la <strong>politique</strong> (spécifique). <code>kwa doctor</code> signale les doublons à retirer, une fois la politique validée. Les cas d'un harnais de test réel sont rejoués contre Kwa avec <code>examples/expo-monorepo.policy.json</code>.</p></div>
+    <p class="kd-lead">Beaucoup de projets ont déjà leur propre jeu de scripts : hooks shell par projet, skills de déploiement, règles de dépôt. Kwa les porte dans le <strong>noyau</strong> (générique) et dans la <strong>politique</strong> (spécifique). <code>kwa doctor</code> signale les doublons à retirer, une fois la politique validée. Les cas d'un banc d'essai réel sont rejoués contre Kwa avec <code>examples/expo-monorepo.policy.json</code>.</p></div>
   <div class="kd-wrap" style="margin-top:40px"><table id="maptable"></table></div>
   <h3 style="margin:48px 0 16px;font:500 18px Geist,sans-serif">Ce que Kwa déduit seul d'un projet (exemple)</h3>
   <pre class="kd-code" id="detect"></pre>
@@ -396,9 +399,9 @@ renderTools(); renderTable();
 
 /* skills */
 if ($('#sk')) {
-const FAMILIES = {cadrage:['interview','brainstorm','plan','tickets','questionnaire','prototype','architecture','rephrase','research','domain'], faire:['execute','agents','parallel','tdd','simple','start-dev'], prouver:['debug','verify','review','review-feedback','audit'], livrer:['commit','ship','deploy','testflight','humanize','conflicts'], memoire:['learn','handoff','agent-docs','teach']};
-const FLAB = {cadrage:'Cadrer', faire:'Faire', prouver:'Prouver', livrer:'Livrer', memoire:'Mémoire'};
-const famOf = n => Object.keys(FAMILIES).find(f=>FAMILIES[f].includes(n)) || 'faire';
+const FAMILIES = DATA.families.of, FLAB = DATA.families.label;
+const famOf = n => Object.keys(FAMILIES).find(f=>FAMILIES[f].includes(n));
+$('#sk-rule').innerHTML = Object.entries(DATA.families.rule).map(([k,r])=>`<li><b>${FLAB[k]}</b> ${esc(r)}</li>`).join('');
 let ff='all';
 $('#nskills').textContent = DATA.catalog.length;
 const originsOf = n => DATA.credits.sources.filter(s=>s.skills.includes(n)).map(s=>({name:s.author, av:(DATA.map.origins[s.id]||{}).avatar, handle:(DATA.map.origins[s.id]||{}).handle}));

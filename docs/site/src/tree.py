@@ -234,7 +234,7 @@ REPO_TREE = [  # structure du dépôt de Kwa : (chemin, type, description)
     ("core/hooks", "guard", "Les gardes et les hooks, des scripts Python sans dépendance."),
     ("core/skills", "skill", "Une skill par dossier : SKILL.md et ses annexes."),
     ("core/rules", "rule", "Les règles communes, rappelées à l'agent au démarrage de chaque session."),
-    ("core/bin", "bin", "kwa-start, kwa-memory, kwa-hygiene."),
+    ("core/bin", "bin", "Les outils lancés par kwa start, kwa memory et kwa hygiene."),
     ("core/templates", "doc", "Bloc d'AGENTS.md, table de routage, gabarits GitHub."),
     ("manifest.json", "config", "Ce que chaque module installe, et les hooks qu'il branche."),
     ("credits.json", "config", "Les projets dont Kwa reprend des idées, avec licence et référence."),

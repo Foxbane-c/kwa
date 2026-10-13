@@ -27,6 +27,8 @@ section{scroll-margin-top:84px}
 .kd-first li{font-size:14px;color:var(--kw-body)}
 .kd-first li code{margin-right:6px}
 .kw .kd-first p{margin:12px 0 0;font-size:13px;color:var(--kw-mut)}
+.kd-rule{list-style:none;margin:0 0 18px;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--kw-mut)}
+.kd-rule b{color:var(--kw-fg);font-weight:500;margin-right:4px}
 .kw .kd-h3{font:600 18px/1.4 Geist,system-ui,sans-serif;margin:48px 0 0}
 .kd-impose{min-width:900px!important}.kd-impose td{vertical-align:top}.kd-impose td:first-child{min-width:150px}
 .kd-kind{display:inline-block;white-space:nowrap;font:500 11px 'Geist Mono',monospace;padding:2px 7px;border:1px solid var(--kw-rule);border-radius:6px;color:var(--kw-mut)}
@@ -240,9 +242,9 @@ renderTools(); renderTable();
 
 /* skills */
 if ($('#sk')) {
-const FAMILIES = {cadrage:['interview','brainstorm','plan','tickets','questionnaire','prototype','architecture','rephrase','research','domain'], faire:['execute','agents','parallel','tdd','simple','start-dev'], prouver:['debug','verify','review','review-feedback','audit'], livrer:['commit','ship','deploy','testflight','humanize','conflicts'], memoire:['learn','handoff','agent-docs','teach']};
-const FLAB = {cadrage:'Cadrer', faire:'Faire', prouver:'Prouver', livrer:'Livrer', memoire:'Mémoire'};
-const famOf = n => Object.keys(FAMILIES).find(f=>FAMILIES[f].includes(n)) || 'faire';
+const FAMILIES = DATA.families.of, FLAB = DATA.families.label;
+const famOf = n => Object.keys(FAMILIES).find(f=>FAMILIES[f].includes(n));
+$('#sk-rule').innerHTML = Object.entries(DATA.families.rule).map(([k,r])=>`<li><b>${FLAB[k]}</b> ${esc(r)}</li>`).join('');
 let ff='all';
 $('#nskills').textContent = DATA.catalog.length;
 const originsOf = n => DATA.credits.sources.filter(s=>s.skills.includes(n)).map(s=>({name:s.author, av:(DATA.map.origins[s.id]||{}).avatar, handle:(DATA.map.origins[s.id]||{}).handle}));
