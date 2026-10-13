@@ -150,3 +150,23 @@ a.gl.gl-r:hover::after, a.gl.gl-r:focus-visible::after { left: auto; right: 0; }
 .bg-agents .kd-card p { font-size: 14px; }
 .bg-steps .kd-note { font: 13px/1.5 Geist, system-ui, sans-serif; letter-spacing: 0; color: var(--kw-mut); }
 .bg-agents .kd-card p { margin: 10px 0 6px; }
+/* lecteur commun (shell.player, src/player.js) */
+.kp { display: inline-flex; align-items: center; gap: 8px; }
+.kp-btn, .kp-play { display: inline-grid; place-items: center; border-radius: 50%; cursor: pointer; padding: 0;
+  transition: background-color .2s ease, transform .15s ease, opacity .2s ease, box-shadow .2s ease; }
+.kp-btn { width: 40px; height: 40px; border: 1px solid var(--kw-rule); background: transparent; color: var(--kw-fg); }
+.kp-btn.kp-sm { width: 34px; height: 34px; }
+.kp-play { width: 48px; height: 48px; border: 0; background: var(--kw-invert-bg); color: var(--kw-invert-fg); box-shadow: 0 6px 18px -8px rgba(0, 0, 0, .45); }
+.kp svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.kp-btn.kp-sm svg { width: 15px; height: 15px; }
+.kp-play svg { width: 20px; height: 20px; }
+.kp-i-play path { fill: currentColor; stroke: currentColor; stroke-width: 1.5; }
+.kp-i-pause { display: none; } .kp-i-pause path { stroke-width: 2.6; }
+.kp-play[aria-pressed="true"] .kp-i-play { display: none; } .kp-play[aria-pressed="true"] .kp-i-pause { display: block; }
+.kp-btn:hover:not(:disabled) { background: var(--kw-raise); transform: translateY(-1px); }
+.kp-play:hover:not(:disabled) { transform: translateY(-1px) scale(1.04); }
+.kp-btn:active:not(:disabled), .kp-play:active:not(:disabled) { transform: scale(.96); }
+.kp-btn:disabled { opacity: .35; cursor: default; }
+.kp-count { min-width: 52px; text-align: center; font: 500 12.5px 'Geist Mono', monospace; color: var(--kw-mut); }
+.kp-count:empty { display: none; }
+@media (prefers-reduced-motion: reduce) { .kp-btn, .kp-play { transition: none; } }

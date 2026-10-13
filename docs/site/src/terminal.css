@@ -124,3 +124,13 @@
   .kt *, .kt *::before, .kt *::after { animation: none !important; transition: none !important; }
   .kt-caret { display: none; }
 }
+/* lecteur commun : icônes seules pour lecture, précédent, suivant, rejouer, passer */
+.kt-controls.kp { display: flex; align-items: center; gap: 8px; }
+.kt-controls .kp-btn, .kt-controls .kp-play { padding: 0; min-width: 0; }
+.kt-controls .kp-btn .kt-btn-label, .kt-controls .kp-play .kt-btn-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.kt-controls .kp-play svg path[d^="M8 5.5v13l"] { fill: currentColor; }
+.kt-controls .kt-btn--speed { margin-left: 4px; }
+.kt-controls .kp-play { width: 48px; height: 48px; border-radius: 50%; border-color: transparent; background: var(--kw-invert-bg); color: var(--kw-invert-fg);
+  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, .45); }
+.kt-controls .kp-btn { width: 40px; height: 40px; border-radius: 50%; }
+.kt-controls .kp-btn.kp-sm { width: 34px; height: 34px; }

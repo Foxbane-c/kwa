@@ -12,6 +12,7 @@ import html
 import json
 
 import pictos
+import shell
 
 BRICKS = [  # (id, libellé, ce que la brique garantit)
     ("cadrer", "Cadrer", "savoir quoi faire avant de le faire"),
@@ -156,13 +157,7 @@ def player(key: str) -> str:
     legend = "".join(f'<li class="fl-{k}"><span class="fl-dot">{pictos.svg(p)}</span>{lab}</li>' for k, (p, lab) in KIND.items())
     return f"""<div class="fl" id="fl-{key}" data-flow="{key}">
   <div class="fl-bar">
-    <div class="fl-ctl" role="group" aria-label="Lecture du workflow">
-      <button type="button" class="fl-btn fl-prev" aria-label="Étape précédente" title="Étape précédente (←)">←</button>
-      <button type="button" class="kw-btn kw-btn--primary fl-play" aria-pressed="false">Lire</button>
-      <button type="button" class="fl-btn fl-next" aria-label="Étape suivante" title="Étape suivante (→)">→</button>
-      <span class="fl-count" aria-live="off">0 / 0</span>
-      <button type="button" class="fl-link fl-restart">Recommencer</button>
-    </div>
+    {shell.player("Lecture du workflow")}
     <p class="fl-say" aria-live="polite">Lisez le workflow d'une traite, ou pas à pas avec les flèches : ses boucles, vos décisions et les refus des gardes.</p>
   </div>
   <div class="fl-board"><div class="fl-row">{"".join(cols)}</div><div class="fl-rail" aria-hidden="true"><i class="fl-fill"></i></div>

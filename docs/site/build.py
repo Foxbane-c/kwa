@@ -268,7 +268,7 @@ def main():
 </main>
 </div></div>
 {foot}
-<script src="data.js"></script>{wjs}<script src="src/glossary-data.js"></script><script src="src/shell.js"></script>
+<script src="data.js"></script><script src="src/player.js"></script>{wjs}<script src="src/glossary-data.js"></script><script src="src/shell.js"></script>
 <script>
 const DATA = window.KWA;
 const $ = (s, r=document) => r.querySelector(s);

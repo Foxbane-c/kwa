@@ -11,6 +11,7 @@ import sys
 
 import hl
 import pictos
+import shell
 from parcours import code, cmd, esc, pill, reveal, stage
 
 CULTURE_NAV = [("1", "Le modèle"), ("2", "Les jetons"), ("3", "Les hallucinations"), ("4", "Le contexte"), ("5", "Le prompt"), ("6", "L'agent"), ("7", "Risques")]
@@ -59,7 +60,7 @@ def pair(bad_title: str, bad: str, good_title: str, good: str) -> str:
 # ---------------------------------------------------------------------------------------------------------------------
 
 LOOP = """<div class="pc-widget po" id="loop">
-<div class="pc-actions"><button type="button" class="kd-copy" data-loop-play>Dérouler l'exemple</button><button type="button" class="kd-copy" data-loop-next>Étape suivante</button></div>
+<div class="pc-actions">""" + shell.player("Dérouler l'exemple") + """</div>
 <div class="lp-ring" aria-hidden="true"><span data-n="0">1 · Réfléchir</span><span data-n="1">2 · Appeler un outil</span><span data-n="2">3 · Lire le résultat</span><span data-n="3">4 · Terminé ?</span></div>
 <p class="po-cap" id="loop-cap" aria-live="polite">Exemple : « corrige le test qui échoue ». Lancez la scène.</p>
 <p class="pc-hint">Scénario simplifié : un vrai agent enchaîne souvent plus de tours.</p></div>"""
@@ -67,7 +68,7 @@ LOOP = """<div class="pc-widget po" id="loop">
 ORCH = """<div class="pc-widget po" id="orch">
 <div class="pc-actions"><button type="button" class="kd-copy" data-orch="team">Avec sous-agents</button>
 <button type="button" class="kd-copy" data-orch="solo">Sans sous-agents</button>
-<button type="button" class="kd-copy" data-orch-next>Étape suivante</button></div>
+""" + shell.player("Dérouler la comparaison") + """</div>
 <div class="po-main"><div class="po-t">Agent principal (l'orchestrateur)</div>
 <div class="pc-stack" id="po-main"><i id="pm-sys"></i><i id="pm-hist"></i><i id="pm-files"></i><i id="pm-sum"></i></div>
 <div class="po-v" id="po-v">Fenêtre principale : 0 %</div></div>

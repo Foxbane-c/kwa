@@ -2,18 +2,9 @@
 .fl { margin-top: 24px; --fl-morph: .65s; --fl-ease: cubic-bezier(.65, 0, .25, 1); }
 .fl-bar { position: sticky; top: var(--kd-top-h, 56px); z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
   margin: 0 -8px 20px; padding: 10px 8px; background: var(--kw-bg); border-bottom: 1px solid var(--kw-rule-soft); }
-.fl-ctl { display: flex; align-items: center; gap: 8px; }
-.fl-btn { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--kw-rule); background: transparent;
-  color: var(--kw-fg); font: 500 17px Geist, system-ui, sans-serif; cursor: pointer; transition: background-color .2s ease, transform .15s ease; }
-.fl-btn:hover:not(:disabled) { background: var(--kw-raise); transform: translateY(-1px); }
-.fl-btn:disabled { opacity: .35; cursor: default; }
-.fl-ctl .fl-play { min-width: 92px; justify-content: center; }
-.fl-count { min-width: 54px; font: 500 12.5px 'Geist Mono', monospace; color: var(--kw-mut); text-align: center; }
-.fl-link { border: 0; background: none; padding: 4px; color: var(--kw-body); font: 13px Geist, system-ui, sans-serif; text-decoration: underline;
-  text-underline-offset: 3px; cursor: pointer; }
 .fl-instant, .fl-instant * { transition: none !important; animation: none !important; }
 .fl-say { flex: 1 1 320px; margin: 0; min-height: 3em; color: var(--kw-fg); font-size: 15px; line-height: 1.5; }
-.fl-board { position: relative; padding-top: 34px; }
+.fl-board { position: relative; padding-top: 34px; overflow-x: clip; overflow-clip-margin: 4px; }  /* rien dans le schéma n'élargit la page */
 .fl-row { display: flex; gap: 10px; align-items: center; min-height: 260px; }
 
 /* une brique, fermée : un titre, son numéro, les pictogrammes de ses étapes */
@@ -125,8 +116,6 @@
   .fl-brick { flex: none; padding: 12px; }
   .fl-brick.is-open { flex-grow: 0; }
   .fl-brick { justify-content: flex-start; }
-  .fl-ctl { width: 100%; }
-  .fl-ctl .fl-play { flex: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   .fl-brick, .fl-body, .fl-node, .fl-fill, .fl-token, .fl-arc, .fl-tray, .fl-hand, .fl-brick header p { transition: none !important; }

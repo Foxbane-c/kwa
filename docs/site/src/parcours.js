@@ -116,7 +116,7 @@
   if (orch) {
     var main = { sys: $('#pm-sys'), hist: $('#pm-hist'), files: $('#pm-files'), sum: $('#pm-sum') };
     var subs = Array.prototype.slice.call(orch.querySelectorAll('.ps')), downs = orch.querySelectorAll('.po-down'), ups = orch.querySelectorAll('.po-up');
-    var cap = $('#po-cap'), val = $('#po-v'), mode = null, step = 0, timer = null;
+    var cap = $('#po-cap'), val = $('#po-v'), mode = null;
     var setMain = function (v) {
       var tot = 0; ['sys', 'hist', 'files', 'sum'].forEach(function (k) { main[k].style.width = v[k] + '%'; tot += v[k]; });
       $('#po-main').classList.toggle('pc-over', tot > 85);
@@ -140,18 +140,18 @@
         function () { return 'Résultat : la fenêtre approche de 95 %. La précision peut baisser avant même la saturation, et une compaction devient nécessaire.'; }
       ]
     };
-    var go = function () { var f = SCRIPT[mode][step]; cap.textContent = f(); };
-    var next = function () { if (!mode) return; if (step < SCRIPT[mode].length - 1) { step++; go(); } else if (timer) { clearInterval(timer); timer = null; } if (step >= SCRIPT[mode].length - 1 && timer) { clearInterval(timer); timer = null; } };
+    var resetOrch = function () { fly(downs, false); fly(ups, false); setSubs([0, 0, 0]); setMain({ sys: 0, hist: 0, files: 0, sum: 0 }); };
+    // une étape rejoue celles d'avant : chaque fonction ne pose qu'une partie de l'état
+    var oShow = function (i) { var t = ''; for (var k = 0; k <= i; k++) t = SCRIPT[mode][k](); cap.textContent = t; };
+    var oPlayer = window.KwaPlayer && KwaPlayer(orch, { count: function () { return mode ? SCRIPT[mode].length : 0; }, show: oShow, reset: resetOrch, interval: 1900 });
     Array.prototype.forEach.call(orch.querySelectorAll('[data-orch]'), function (b) {
       b.addEventListener('click', function () {
-        mode = b.getAttribute('data-orch'); step = 0; if (timer) clearInterval(timer);
+        mode = b.getAttribute('data-orch');
         Array.prototype.forEach.call(orch.querySelectorAll('[data-orch]'), function (o) { o.setAttribute('aria-pressed', String(o === b)); });
-        go();
-        if (!reduced) timer = setInterval(next, 1900);
+        if (oPlayer) oPlayer.play();
       });
     });
-    var nb = $('[data-orch-next]', orch);
-    if (nb) nb.addEventListener('click', function () { if (timer) { clearInterval(timer); timer = null; } next(); });
+    if (!mode) { mode = 'team'; orch.querySelector('[data-orch="team"]').setAttribute('aria-pressed', 'true'); if (oPlayer) oPlayer.refresh(); }
     setMain({ sys: 0, hist: 0, files: 0, sum: 0 });
   }
 
@@ -168,29 +168,27 @@
       [2, 'Il relance les tests : tout est vert. Le résultat entre dans le contexte.'],
       [3, 'Terminé : le modèle juge que l\'objectif est atteint, la boucle s\'arrête et il répond. C\'est lui qui décide, d\'où l\'importance de lui donner un contrôle qu\'il peut lancer.']
     ];
-    var lpI = -1, lpT = null, lpCap = $('#loop-cap'), lpNodes = loop.querySelectorAll('.lp-ring span');
+    var lpI = -1, lpCap = $('#loop-cap'), lpNodes = loop.querySelectorAll('.lp-ring span');
     var lpShow = function () {
       var st = LP[lpI];
       Array.prototype.forEach.call(lpNodes, function (n) { n.classList.toggle('on', Number(n.getAttribute('data-n')) === st[0]); });
       lpCap.textContent = st[1];
     };
-    var lpNext = function () { if (lpI < LP.length - 1) { lpI++; lpShow(); } else if (lpT) { clearInterval(lpT); lpT = null; } };
-    $('[data-loop-play]', loop).addEventListener('click', function () { if (lpT) clearInterval(lpT); lpI = -1; lpNext(); if (!reduced) lpT = setInterval(lpNext, 2200); });
-    $('[data-loop-next]', loop).addEventListener('click', function () { if (lpT) { clearInterval(lpT); lpT = null; } lpNext(); });
+    if (window.KwaPlayer) KwaPlayer(loop, { count: LP.length, interval: 2200, show: function (i) { lpI = i; lpShow(); },
+      reset: function () { Array.prototype.forEach.call(lpNodes, function (n) { n.classList.remove('on'); }); } });
   }
 
   /* ---------- le flux d'un développeur ---------- */
   var flow = $('#flow');
   if (flow) {
-    var fl = flow.querySelectorAll('.pf-steps li'), fI = -1, fT = null, fCap = $('#flow-cap');
+    var fl = flow.querySelectorAll('.pf-steps li'), fI = -1, fCap = $('#flow-cap');
     var fShow = function () {
       Array.prototype.forEach.call(fl, function (li, i) { li.classList.toggle('on', i === fI); li.classList.toggle('done', i < fI); });
       var who = fl[fI].getAttribute('data-who');
       fCap.textContent = 'Étape ' + (fI + 1) + ' sur ' + fl.length + ' : ' + (who === 'human' ? 'une décision humaine.' : 'automatisé, avec sa preuve.');
     };
-    var fNext = function () { if (fI < fl.length - 1) { fI++; fShow(); } else if (fT) { clearInterval(fT); fT = null; } };
-    $('[data-flow-play]', flow).addEventListener('click', function () { if (fT) clearInterval(fT); fI = -1; Array.prototype.forEach.call(fl, function (li) { li.classList.remove('on', 'done'); }); fNext(); if (!reduced) fT = setInterval(fNext, 2000); });
-    $('[data-flow-next]', flow).addEventListener('click', function () { if (fT) { clearInterval(fT); fT = null; } fNext(); });
+    if (window.KwaPlayer) KwaPlayer(flow, { count: fl.length, interval: 2000, show: function (i) { fI = i; fShow(); },
+      reset: function () { Array.prototype.forEach.call(fl, function (li) { li.classList.remove('on', 'done'); }); } });
   }
 
   /* ---------- chargement progressif d'une skill ---------- */

@@ -24,9 +24,9 @@
   function mount(root) {
     var script = JSON.parse(root.querySelector('.fl-script').textContent);
     var board = root.querySelector('.fl-board'), token = root.querySelector('.fl-token'), arcs = root.querySelector('.fl-arcs');
-    var fill = root.querySelector('.fl-fill'), say = root.querySelector('.fl-say'), count = root.querySelector('.fl-count');
-    var playBtn = root.querySelector('.fl-play'), prevBtn = root.querySelector('.fl-prev'), nextBtn = root.querySelector('.fl-next');
-    var restart = root.querySelector('.fl-restart');
+    var fill = root.querySelector('.fl-fill'), say = root.querySelector('.fl-say'), count = root.querySelector('.kp-count');
+    var playBtn = root.querySelector('[data-p="play"]'), prevBtn = root.querySelector('[data-p="prev"]'), nextBtn = root.querySelector('[data-p="next"]');
+    var restart = root.querySelector('[data-p="restart"]');
     var bricks = Array.prototype.slice.call(root.querySelectorAll('.fl-brick'));
     var byIndex = {};
     each(root.querySelectorAll('.fl-node'), function (n) { byIndex[n.getAttribute('data-i')] = n; });
@@ -204,8 +204,8 @@
       count.textContent = st.i + ' / ' + script.length;
       prevBtn.disabled = st.i <= 1;
       nextBtn.disabled = st.i >= script.length && !st.pending;
-      playBtn.textContent = st.playing ? 'Pause' : (st.i >= script.length ? 'Rejouer' : 'Lire');
       playBtn.setAttribute('aria-pressed', String(st.playing));
+      playBtn.setAttribute('aria-label', st.playing ? 'Mettre en pause' : (st.i >= script.length ? 'Rejouer depuis le début' : 'Lancer la lecture'));
     }
     function finished() {
       st.playing = false;
@@ -299,11 +299,17 @@
       void row.offsetHeight;
       root.classList.remove('fl-instant');
       row.style.minHeight = Math.ceil(max) + 'px';
+      if (st.at != null && token.classList.contains('is-on')) { token.classList.remove('is-on'); place(st.at); }  // la mise en page a pu bouger
     }
     reserve();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(reserve);
-    var sizing = null;
-    window.addEventListener('resize', function () { clearTimeout(sizing); sizing = setTimeout(reserve, 200); });
+    // une largeur nouvelle (fenêtre, panneau latéral, zoom) : nouvelle hauteur réservée, puis le jeton se recale
+    var sizing = null, lastWidth = board.clientWidth;
+    var resized = function () { clearTimeout(sizing); sizing = setTimeout(reserve, 150); };
+    window.addEventListener('resize', resized);
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(function () { if (board.clientWidth !== lastWidth) { lastWidth = board.clientWidth; resized(); } }).observe(board);
+    }
 
     var defs = document.createElementNS(NS, 'defs');
     defs.innerHTML = '<marker id="fl-head-' + root.id + '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker>';
@@ -317,7 +323,6 @@
       if (e.key === 'ArrowRight') { e.preventDefault(); stepNext(); }
       if (e.key === 'ArrowLeft') { e.preventDefault(); stepPrev(); }
     });
-    window.addEventListener('resize', function () { if (st.at != null) place(st.at); });
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (es) { watching = es[0].isIntersecting; }, { threshold: 0.05 }).observe(board);
     }

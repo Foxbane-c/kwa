@@ -56,3 +56,22 @@ def sidebar(current: str, toc: list[tuple[str, str]] | None = None) -> str:
         out.append("</ul></div>")
     out.append('</nav></aside><div class="kd-scrim" id="scrim"></div>')
     return "".join(out)
+
+
+# --- lecteur commun : chevron gauche, lecture (icône, couleur principale), chevron droit, compteur, recommencer ---
+ICON_PREV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>'
+ICON_NEXT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
+ICON_PLAY = ('<svg class="kp-i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>'
+             '<svg class="kp-i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg>')
+ICON_RESTART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5v5h5"/></svg>'
+
+
+def player(label: str = "Lecture", count: bool = True, restart: bool = True) -> str:
+    """Les contrôles d'un lecteur pas à pas, identiques sur tout le site (animés par src/player.js ou par le widget)."""
+    return (f'<div class="kp" role="group" aria-label="{html.escape(label)}">'
+            f'<button type="button" class="kp-btn" data-p="prev" aria-label="Étape précédente" title="Étape précédente (←)">{ICON_PREV}</button>'
+            f'<button type="button" class="kp-play" data-p="play" aria-label="Lancer la lecture" aria-pressed="false" title="Lecture">{ICON_PLAY}</button>'
+            f'<button type="button" class="kp-btn" data-p="next" aria-label="Étape suivante" title="Étape suivante (→)">{ICON_NEXT}</button>'
+            + ('<span class="kp-count" aria-live="off"></span>' if count else "")
+            + (f'<button type="button" class="kp-btn kp-sm" data-p="restart" aria-label="Recommencer" title="Recommencer">{ICON_RESTART}</button>' if restart else "")
+            + '</div>')

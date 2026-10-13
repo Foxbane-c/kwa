@@ -253,7 +253,7 @@ Site vitrine (Next.js, pnpm). Répondre en français.
 <div class="pc-widget po" id="orch">
 <div class="pc-actions"><button type="button" class="kd-copy" data-orch="team">Avec sous-agents</button>
 <button type="button" class="kd-copy" data-orch="solo">Sans sous-agents</button>
-<button type="button" class="kd-copy" data-orch-next>Étape suivante</button></div>
+<div class="kp" role="group" aria-label="Dérouler la comparaison"><button type="button" class="kp-btn" data-p="prev" aria-label="Étape précédente" title="Étape précédente (←)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" class="kp-play" data-p="play" aria-label="Lancer la lecture" aria-pressed="false" title="Lecture"><svg class="kp-i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg><svg class="kp-i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg></button><button type="button" class="kp-btn" data-p="next" aria-label="Étape suivante" title="Étape suivante (→)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><span class="kp-count" aria-live="off"></span><button type="button" class="kp-btn kp-sm" data-p="restart" aria-label="Recommencer" title="Recommencer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5v5h5"/></svg></button></div></div>
 <div class="po-main"><div class="po-t">Agent principal (l'orchestrateur)</div>
 <div class="pc-stack" id="po-main"><i id="pm-sys"></i><i id="pm-hist"></i><i id="pm-files"></i><i id="pm-sum"></i></div>
 <div class="po-v" id="po-v">Fenêtre principale : 0 %</div></div>
@@ -439,7 +439,7 @@ Puis ouvre http://localhost:3100/commandes, prends une capture à 1280 px et une
   <div><h3>Documentation</h3><p>Régénérée par <code>docs/site/build.py</code> ; exemples calculés en exécutant les gardes.</p></div>
   <div><h3>Style</h3><p>Feuille de style écrite pour ce site ; polices Geist, licence SIL OFL.</p></div>
 </div></footer>
-<script src="data.js"></script><script src="src/parcours.js"></script><script src="src/glossary-data.js"></script><script src="src/shell.js"></script>
+<script src="data.js"></script><script src="src/player.js"></script><script src="src/parcours.js"></script><script src="src/glossary-data.js"></script><script src="src/shell.js"></script>
 <script>
 const DATA = window.KWA;
 const $ = (s, r=document) => r.querySelector(s);

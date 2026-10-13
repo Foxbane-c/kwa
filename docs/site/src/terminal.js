@@ -198,16 +198,17 @@
     screen.setAttribute('aria-label', 'Sortie du terminal');
     win.appendChild(bar); win.appendChild(screen);
 
-    var controls = el('div', 'kt-controls');
+    var controls = el('div', 'kt-controls kp');  // même lecteur que le reste du site (shell.css, .kp)
     controls.setAttribute('role', 'group');
     controls.setAttribute('aria-label', 'Contrôles de lecture');
-    var bPlay = button('kt-btn--primary', null, 'play', 'Lecture');
-    var bPrev = button('', 'Étape précédente', 'prev', 'Précédent');
-    var bNext = button('', 'Étape suivante', 'next', 'Suivant');
-    var bReplay = button('', 'Rejouer le scénario', 'replay', 'Rejouer');
-    var bSkip = button('', 'Passer : tout afficher d’un coup', 'skip', 'Passer');
+    var bPlay = button('kp-play', null, 'play', 'Lecture');
+    var bPrev = button('kp-btn', 'Étape précédente', 'prev', 'Précédent');
+    var bNext = button('kp-btn', 'Étape suivante', 'next', 'Suivant');
+    var bReplay = button('kp-btn kp-sm', 'Rejouer le scénario', 'replay', 'Rejouer');
+    var bSkip = button('kp-btn kp-sm', 'Passer : tout afficher d’un coup', 'skip', 'Passer');
     var bSpeed = button('kt-btn--speed', null, null, '');
-    [bPlay, bPrev, bNext, bReplay, bSkip, bSpeed].forEach(function (b) { controls.appendChild(b); });
+    [bPlay, bReplay, bSkip].forEach(function (b) { b.title = b.getAttribute('aria-label') || 'Lecture'; });
+    [bPrev, bPlay, bNext, bReplay, bSkip, bSpeed].forEach(function (b) { controls.appendChild(b); });
     main.appendChild(win); main.appendChild(controls);
 
     var side = el('aside', 'kt-side');
