@@ -14,7 +14,7 @@
 .fl-instant, .fl-instant * { transition: none !important; animation: none !important; }
 .fl-say { flex: 1 1 320px; margin: 0; min-height: 3em; color: var(--kw-fg); font-size: 15px; line-height: 1.5; }
 .fl-board { position: relative; padding-top: 34px; }
-.fl-row { display: flex; gap: 10px; align-items: stretch; min-height: 340px; }
+.fl-row { display: flex; gap: 10px; align-items: center; min-height: 260px; }
 
 /* une brique, fermée : un titre, son numéro, les pictogrammes de ses étapes */
 .fl-brick { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; border: 1px solid var(--kw-rule);
@@ -29,7 +29,7 @@
 .fl-mini { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--fl-c) 14%, transparent); }
 .fl-mini .kd-pic { width: 12px; height: 12px; margin: 0; color: var(--fl-c); }
 .fl-body { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows var(--fl-morph) var(--fl-ease), opacity .25s ease; }
-.fl-body > * { min-height: 0; overflow: hidden; }
+.fl-body > * { min-height: 0; overflow: hidden; padding: 3px; margin: -3px; }  /* l'anneau des étapes et les bordures ne sont pas rognés */
 .fl-body ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 
 /* la brique ouverte : elle grossit et montre ses étapes */
