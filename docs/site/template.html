@@ -21,6 +21,7 @@ section{scroll-margin-top:84px}
 .kd-solo .kw-page-title{margin:0 0 14px}
 .kd-main strong{font-weight:600;color:var(--kw-fg)}
 .kd-def{margin-top:14px;font-size:15px}
+.kw .kd-h3{font:600 18px/1.4 Geist,system-ui,sans-serif;margin:48px 0 0}
 .kd-impose{min-width:900px!important}.kd-impose td{vertical-align:top}.kd-impose td:first-child{min-width:150px}
 .kd-kind{display:inline-block;white-space:nowrap;font:500 11px 'Geist Mono',monospace;padding:2px 7px;border:1px solid var(--kw-rule);border-radius:6px;color:var(--kw-mut)}
 .kd-kind--imposé,.kd-kind--barrière{color:var(--kw-fg);border-color:var(--kw-fg)}
@@ -164,9 +165,15 @@ footer.kw-footer{margin-top:128px}
   <p class="kw-lead">Un socle de process de développement pour travailler avec des agents de code : règles, garde-fous, skills, mémoire et workflow, les mêmes sur chaque projet. Ce qui change d'un projet à l'autre tient dans un fichier de politique.</p>
   <p class="kw-lead kd-def"><strong>Workflow agentique</strong> : un enchaînement d'étapes proposé à l'agent. Il choisit comment avancer, mais les gardes imposent les points de passage : pas de code sur <code>main</code>, pas de PR sans issue, pas de fusion sans preuve. <a href="impose.html">Ce qui est imposé, ce qui est suggéré</a></p>
   <div class="kd-start" aria-label="Vous débutez ?"><b>Vous débutez ?</b>
-    <a href="parcours.html"><i>1</i>Comprendre, avec les trois parcours</a>
+    <a href="parcours-culture.html"><i>1</i>Parcours 1 et 2 : comprendre</a>
     <a href="avant-de-commencer.html"><i>2</i>Installer un agent de code</a>
-    <a href="premier-pas.html"><i>3</i>Premier pas en 30 minutes</a></div>
+    <a href="premier-pas.html"><i>3</i>Premier pas en 30 minutes</a>
+    <a href="parcours-harness.html"><i>4</i>Parcours 3 : le harness</a></div>
+  <div class="kd-start" aria-label="Vous développez déjà avec un agent ?"><b>Déjà à l'aise avec un agent ?</b>
+    <a href="premier-pas.html"><i>1</i>Premier pas</a>
+    <a href="parcours-harness.html"><i>2</i>Parcours 3 : le harness</a>
+    <a href="impose.html"><i>3</i>Imposé ou suggéré</a>
+    <a href="alleger.html"><i>4</i>Quand alléger, et ce que ça coûte</a></div>
   <div class="kw-actions">
     <a class="kw-btn kw-btn--primary" href="skill-map.html">Voir la carte <span aria-hidden="true">→</span></a>
     <a class="kw-btn" href="board.html">Voir les workflows</a>
@@ -271,6 +278,30 @@ footer.kw-footer{margin-top:128px}
     <p class="kd-lead">Un texte que le modèle lit le guide ; seul ce que l'outil, le système ou GitHub exécute le contraint. Les workflows de Kwa sont <strong>agentiques</strong> : l'enchaînement est suggéré, les points de passage sont imposés par les gardes.</p></div>
   <div class="kd-wrap" style="margin-top:32px"><table class="kd-impose"><thead><tr><th>Mécanisme</th><th>Qui l'exécute</th><th>Ce qu'il garantit</th><th>Par défaut</th><th>Ce qui le contourne</th><th>Nature</th></tr></thead><tbody><tr><td><code>AGENTS.md</code>, <code>CLAUDE.md</code></td><td>Le modèle, qui les lit</td><td>Rien : c'est du contexte</td><td>Chargés à chaque session</td><td>Le modèle peut s'en écarter</td><td><span class="kd-kind kd-kind--suggéré">suggéré</span></td></tr><tr><td>Règles communes de Kwa</td><td>Le modèle ; un hook les injecte au démarrage</td><td>Rien de plus qu'une consigne</td><td>Actives</td><td>Idem</td><td><span class="kd-kind kd-kind--suggéré">suggéré</span></td></tr><tr><td>Rappel de routage (<code>skills-router</code>)</td><td>Un hook l'injecte, le modèle le lit</td><td>Que la table « quand → skill » est dans le contexte</td><td>Actif</td><td>Le modèle n'appelle pas la skill</td><td><span class="kd-kind kd-kind--suggéré">suggéré</span></td></tr><tr><td>Skills (<code>/kwa:tdd</code>, <code>/kwa:ship</code>…)</td><td>Le modèle, qui suit la procédure</td><td>Rien : une étape peut être sautée</td><td>Appelées par le modèle ou par vous</td><td>Une étape oubliée ; la relecture la rattrape</td><td><span class="kd-kind kd-kind--suggéré">suggéré</span></td></tr><tr><td>Sous-agent <code>kwa:reviewer</code></td><td>Lancé par le modèle ; <code>readonly-bash</code> le garde en lecture seule</td><td>Qu'il ne modifie rien par les commandes reconnues</td><td>Avec <code>/kwa:review</code> et <code>/kwa:agents</code></td><td>Une commande assemblée à l'exécution</td><td><span class="kd-kind kd-kind--mixte">mixte</span></td></tr><tr><td>Gardes (<code>guard-git</code>, <code>guard-write</code>, <code>guard-secrets</code>…)</td><td>Claude Code ou Codex, avant les outils surveillés</td><td>Refus ou confirmation sur les commandes et chemins reconnus</td><td>Actifs dans un projet qui a une politique Kwa et le module</td><td>Ils lisent le texte : nom calculé, glob, script écrit puis lancé</td><td><span class="kd-kind kd-kind--imposé">imposé</span></td></tr><tr><td><code>guard-github</code> (preuve)</td><td>L'outil, avant <code>gh pr create</code> et <code>gh pr merge</code> lancés par l'agent</td><td>« Closes #N » présent, une image ou une section « Preuve » non vide</td><td>Actif avec le module issue-flow</td><td>Une fusion faite par une personne sur GitHub ; il vérifie que la preuve existe, pas qu'elle est juste</td><td><span class="kd-kind kd-kind--imposé">imposé</span></td></tr><tr><td><code>verify-stop</code></td><td>L'outil, quand l'agent veut rendre la main</td><td>Pas de fin de réponse sur des vérifications rouges</td><td><strong>Désactivé</strong> : <code>KWA_STOP_VERIFY=1</code> pour l'activer</td><td>Claude Code rend la main après 8 blocages d'affilée</td><td><span class="kd-kind kd-kind--imposé">imposé si activé</span></td></tr><tr><td><code>permissions.deny</code> de Claude Code</td><td>Claude Code, avant l'outil nommé</td><td>Que cet outil refuse (<code>Read(./.env)</code>)</td><td>À écrire dans <code>settings.json</code></td><td>Un autre outil : <code>python3 -c</code> dans le shell, sauf avec le bac à sable</td><td><span class="kd-kind kd-kind--imposé">imposé, sur un outil</span></td></tr><tr><td>Bac à sable (<code>/sandbox</code>)</td><td>Le système d'exploitation, pendant la commande</td><td>Les commandes shell n'atteignent que les fichiers et domaines permis, règles <code>Read</code> et <code>Edit</code> deny comprises</td><td><strong>Désactivé</strong></td><td>Les hooks, serveurs MCP et outils de fichiers tournent hors du bac à sable ; Claude peut demander une relance hors du bac à sable</td><td><span class="kd-kind kd-kind--barrière">barrière</span></td></tr><tr><td>Protection de branche et CI obligatoire</td><td>GitHub, hors de la machine</td><td>Pas de fusion sans relecture ni CI verte</td><td>À configurer sur le dépôt</td><td>Un administrateur du dépôt</td><td><span class="kd-kind kd-kind--barrière">barrière</span></td></tr></tbody></table></div>
   <p class="kd-note" style="margin-top:16px">Sous Codex, c'est <strong>expérimental</strong> : les mêmes gardes passent par <code>kwa hook</code>, une confirmation que Codex ne sait pas demander devient un refus, et ces adaptations sont vérifiées par des tests, pas encore dans une vraie session. Sources : <a href="https://code.claude.com/docs/en/hooks">hooks</a>, <a href="https://code.claude.com/docs/en/permissions">permissions</a>, <a href="https://code.claude.com/docs/en/sandboxing">bac à sable</a> de Claude Code.</p>
+</section>
+
+<section class="kw-container kd-section kd-rv" id="alleger">
+  <div class="kd-head"><div class="kd-eyebrow">Quand alléger</div><h2 class="kw-section-title">Ce que Kwa coûte, et quand l'alléger</h2>
+    <p class="kd-lead">Issue, branche, preuve et PR pour chaque changement : c'est le bon réglage pour une équipe et un code qui part en production. Pour un essai, une retouche d'une ligne ou un dépôt personnel, c'est souvent trop. Le processus est un réglage de la politique, pas un dogme.</p></div>
+  <h3 class="kd-h3">Ce que ça coûte</h3>
+  <div class="kd-wrap" style="margin-top:16px"><table><thead><tr><th>Moment</th><th>Ce que Kwa ajoute</th><th>Mesure</th></tr></thead><tbody>
+  <tr><td>Chaque session</td><td>Le rappel de routage, les règles communes et la reprise de mémoire, injectés au démarrage</td><td>Environ 5 700 caractères, soit de l'ordre de 1 500 à 2 000 jetons (estimation)</td></tr>
+  <tr><td>Chaque commande shell</td><td>Six gardes, que Claude Code lance en parallèle</td><td>Environ 0,12 s par garde (médiane)</td></tr>
+  <tr><td>Chaque écriture de fichier</td><td>Un garde avant, le formatage après (module verify)</td><td>Le temps du formateur du projet</td></tr>
+  <tr><td>Chaque fin de réponse</td><td>L'invitation à capitaliser (une fois par session) ; <code>verify-stop</code> s'il est activé</td><td>Le temps des vérifications du projet, si activé</td></tr>
+  <tr><td><code>/kwa:agents</code></td><td>Par tâche : un implémenteur et deux relectures, puis une relecture finale de la branche</td><td>Le poste le plus coûteux en jetons : à réserver aux plans longs</td></tr></tbody></table></div>
+  <p class="kd-note" style="margin-top:12px">Mesuré le 13 octobre 2026 avec Kwa 0.2.2, sur un Mac de développement, dans un projet jetable préparé par <code>kwa init</code>. Les hooks d'un même événement tournent en parallèle (<a href="https://code.claude.com/docs/en/hooks">documentation des hooks</a>). Le coût en jetons d'un premier pas complet n'est pas encore mesuré.</p>
+  <h3 class="kd-h3">Alléger selon la situation</h3>
+  <div class="kd-wrap" style="margin-top:16px"><table><thead><tr><th>Situation</th><th>Réglage</th></tr></thead><tbody>
+  <tr><td>Un essai jetable, une exploration</td><td>Un dossier sans <code>.claude/kwa.policy.json</code> : les hooks du plugin n'y font rien</td></tr>
+  <tr><td>Une exception ponctuelle sur <code>main</code></td><td>Lancer la session avec <code>KWA_ALLOW_MAIN=1 claude</code>. La variable est lue dans l'environnement des hooks : un préfixe devant une commande de l'agent ne suffit pas</td></tr>
+  <tr><td>Une branche sans issue</td><td><code>kwa start &lt;type&gt; &lt;slug&gt; "&lt;titre&gt;" --no-issue</code>, ou <code>flow.auto_issue: false</code> dans la politique</td></tr>
+  <tr><td>Un dépôt personnel, sans issues</td><td><code>flow.issue_required: false</code> : <code>guard-github</code> n'exige plus « Closes #N »</td></tr>
+  <tr><td>Une PR sans preuve à joindre</td><td><code>flow.proof_required_for_merge: false</code></td></tr>
+  <tr><td>GitLab, Bitbucket, pas de <code>gh</code></td><td>Retirer le module <code>issue-flow</code> de <code>modules</code> dans la politique ; le reste fonctionne sans GitHub</td></tr>
+  <tr><td>Moins d'interruptions</td><td><code>KWA_MEMORY_NUDGE=0</code> (pas d'invitation à capitaliser), <code>KWA_JOURNAL=0</code> (pas de journal de session)</td></tr>
+  <tr><td>Un petit plan</td><td><code>/kwa:execute</code> dans la session plutôt que <code>/kwa:agents</code> et ses sous-agents</td></tr></tbody></table></div>
+  <p class="kd-note" style="margin-top:12px">Alléger le processus ne retire pas les gardes de sécurité (secrets, suppressions, force-push) : ils restent actifs tant que la politique existe. Voir <a href="impose.html">Ce qui est imposé, ce qui est suggéré</a>.</p>
 </section>
 
 <section class="kw-container kd-section kd-rv" id="limites">
