@@ -129,7 +129,7 @@ FLOWS = {
             ("go", 6, "/kwa:verify : le test passe, et repasse au rouge si on retire le correctif."),
             ("go", 7, "Un commit, avec la raison du changement."),
             ("guard", 8, "Kwa — Une PR se rattache à son issue : le corps doit porter « Closes #N ».",
-             "La PR part sans « Closes #N » : refusée."),
+             "La PR part sans « Closes #N » (N, le numéro de l'issue sur GitHub) : refusée."),
             ("go", 9, "/kwa:ship ouvre la PR liée à l'issue, avec la sortie des tests."),
             ("go", 10, "/kwa:learn propose de ranger le piège : la remise s'applique ligne par ligne."),
         ],

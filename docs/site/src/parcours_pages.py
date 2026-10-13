@@ -14,7 +14,7 @@ import pictos
 import shell
 from parcours import code, cmd, esc, pill, reveal, stage
 
-CULTURE_NAV = [("1", "Le modèle"), ("2", "Les jetons"), ("3", "Les hallucinations"), ("4", "Le contexte"), ("5", "Le prompt"), ("6", "L'agent"), ("7", "Risques")]
+CULTURE_NAV = [("1", "Le modèle"), ("2", "Les jetons"), ("3", "Les hallucinations"), ("4", "Le contexte"), ("5", "Le prompt"), ("6", "L'agent"), ("7", "Les boucles"), ("8", "Risques")]
 CONTEXTE_NAV = [("1", "Le contexte"), ("2", "La session"), ("3", "AGENTS.md"), ("4", "Règles"), ("5", "Skills"), ("6", "Agents"), ("7", "MCP"), ("8", "Context7 et Playwright"), ("9", "Permissions"), ("10", "Choisir")]
 HARNESS_NAV = [("0", "L'histoire"), ("1", "Instructions"), ("2", "Un garde"), ("3", "Branchement"), ("4", "Événements"), ("5", "Politique"), ("6", "Une skill"), ("7", "Mémoire"), ("8", "Workflow"), ("9", "Le flux"), ("10", "Limites")]
 TOC = {  # barre latérale : (ancre, libellé) sous la page courante
@@ -61,7 +61,15 @@ def pair(bad_title: str, bad: str, good_title: str, good: str) -> str:
 
 LOOP = """<div class="pc-widget po" id="loop">
 <div class="pc-actions">""" + shell.player("Dérouler l'exemple") + """</div>
-<div class="lp-ring" aria-hidden="true"><span data-n="0">1 · Réfléchir</span><span data-n="1">2 · Appeler un outil</span><span data-n="2">3 · Lire le résultat</span><span data-n="3">4 · Terminé ?</span></div>
+<div class="lp-ring" aria-hidden="true">
+<svg viewBox="0 0 100 100"><circle class="lp-track" cx="50" cy="50" r="34"/>
+<path class="lp-head" d="M0,-1.6 L1.8,0 L0,1.6" transform="translate(74.04,25.96) rotate(45)"/>
+<path class="lp-head" d="M0,-1.6 L1.8,0 L0,1.6" transform="translate(74.04,74.04) rotate(135)"/>
+<path class="lp-head" d="M0,-1.6 L1.8,0 L0,1.6" transform="translate(25.96,74.04) rotate(225)"/>
+<path class="lp-head" d="M0,-1.6 L1.8,0 L0,1.6" transform="translate(25.96,25.96) rotate(315)"/>
+<circle class="lp-dot" cx="50" cy="16" r="2.4"/></svg>
+<span class="lp-node" data-n="0">Réfléchir</span><span class="lp-node" data-n="1">Appeler un outil</span><span class="lp-node" data-n="2">Lire le résultat</span><span class="lp-node" data-n="3">Terminé ?</span>
+<div class="lp-mid"><b class="lp-turn">Tour 1</b><span class="lp-say">corrige le test qui échoue</span></div></div>
 <p class="po-cap" id="loop-cap" aria-live="polite">Exemple : « corrige le test qui échoue ». Lancez la scène.</p>
 <p class="pc-hint">Scénario simplifié : un vrai agent enchaîne souvent plus de tours.</p></div>"""
 
@@ -167,11 +175,35 @@ def culture() -> str:
          f"""<p>Un assistant de conversation répond puis s'arrête. Un <strong>agent</strong> reçoit un objectif et <strong>boucle</strong> : il réfléchit, appelle un outil (lire un fichier, lancer une commande, chercher), lit le résultat qui entre dans son contexte, puis décide de continuer ou de s'arrêter. Tout ce que vous venez de voir (jetons, fenêtre, probabilités) se rejoue à chaque tour de cette boucle.</p>
 {LOOP}
 <p>Deux familles de systèmes se distinguent : dans un <strong>workflow</strong>, le chemin est écrit à l'avance dans du code et le modèle remplit des étapes ; dans un <strong>agent</strong>, c'est le modèle qui décide des étapes et des outils. Le conseil constant de la documentation d'Anthropic : commencer par la solution la plus simple (un seul appel, bien contextualisé) et n'ajouter de l'autonomie que si la tâche l'exige, parce que l'autonomie coûte en latence, en argent et en risque d'erreurs qui s'accumulent.</p>
-<p>Deux conséquences pour la suite. D'abord, <strong>chaque outil est une porte ouverte</strong> : lire un fichier est bénin, lancer une commande ou écrire dans une base ne l'est pas, d'où les permissions du parcours suivant. Ensuite, <strong>ce qui entre dans la boucle</strong> (pages web, fichiers, résultats d'outils) est du texte que le modèle lit : s'il est hostile, il peut tenter de détourner l'agent (étape 7).</p>""" +
+<p>Deux conséquences pour la suite. D'abord, <strong>chaque outil est une porte ouverte</strong> : lire un fichier est bénin, lancer une commande ou écrire dans une base ne l'est pas, d'où les permissions du parcours suivant. Ensuite, <strong>ce qui entre dans la boucle</strong> (pages web, fichiers, résultats d'outils) est du texte que le modèle lit : s'il est hostile, il peut tenter de détourner l'agent (étape 8).</p>""" +
          reveal("Question", "<p>Dans l'exemple, qu'est-ce qui décide que la boucle s'arrête ? Aucun compteur : le modèle juge que le test est vert. D'où l'intérêt de lui donner un contrôle qu'il peut lancer, plutôt que de lui faire confiance sur parole (parcours Harness).</p>"),
          "Décrire la boucle d'un agent et dire ce qui distingue un workflow d'un agent.",
          "Plus d'autonomie n'améliore pas le résultat : une tâche aux étapes connues se traite mieux avec un workflow, plus simple à contrôler."),
-        ("7", "Risques et usages responsables", "Ce qu'on n'envoie pas, ce qu'on vérifie, qui décide.",
+        ("7", "Les boucles d'agents", "Relancer un agent jusqu'à une condition : utile, à condition de savoir quand il s'arrête.",
+         f"""<p>Le mot <em>loop</em> revient partout sur les réseaux, pour désigner des choses différentes. Il y a trois étages, du plus petit au plus grand.</p>
+<table class="pc-table"><thead><tr><th>Boucle</th><th>Ce qu'elle relance</th><th>Qui l'arrête</th></tr></thead><tbody>
+<tr><td><strong>La boucle de l'agent</strong> (étape 6)</td><td>Un tour : réfléchir, appeler un outil, lire le résultat</td><td>Le modèle, quand sa réponse ne demande plus d'outil</td></tr>
+<tr><td><strong>La boucle autour de l'agent</strong></td><td>Toute la session, avec le même prompt, tant qu'une condition n'est pas remplie</td><td>Un critère écrit à l'avance, ou un nombre maximal de tours</td></tr>
+<tr><td><strong>La tâche planifiée</strong></td><td>Une session à intervalle fixe ou sur un événement</td><td>Une date d'expiration, ou vous</td></tr></tbody></table>
+<h3 class="pc-h3">Ce qui existe vraiment</h3>
+<ul class="pc-list">
+<li><strong>« Ralph »</strong> : une technique popularisée par un développeur, qui la résume à une ligne de shell : <code>while :; do cat PROMPT.md | claude-code ; done</code>. L'agent repart du même prompt à chaque tour, et ce qu'il a écrit dans les fichiers sert de mémoire. Le plugin officiel <code>ralph-wiggum</code> de Claude Code en fait une commande, <code>/ralph-loop</code>, qui s'arrête quand l'agent écrit une phrase convenue (<code>--completion-promise</code>) ou après un nombre de tours (<code>--max-iterations</code>, illimité par défaut : la documentation recommande de toujours le fixer).</li>
+<li><strong>Le hook <code>Stop</code></strong>, le mécanisme qui rend cela possible : quand l'agent veut s'arrêter, un hook peut répondre « bloquer » avec une raison, et l'agent continue. Claude Code limite ces relances à huit d'affilée par défaut, et le champ <code>stop_hook_active</code> permet au hook de savoir qu'il a déjà relancé.</li>
+<li><strong><code>/loop</code></strong> dans Claude Code : relance un prompt à intervalle (<code>/loop 5m …</code>), ou laisse Claude choisir l'attente. Ces tâches vivent dans la session ouverte et expirent après sept jours.</li>
+<li><strong>Les routines</strong> (<code>/schedule</code>) tournent dans le cloud d'Anthropic, sur un horaire, un appel d'API ou un événement GitHub, même ordinateur éteint, et sans demande d'autorisation pendant l'exécution. Une GitHub Action (<code>claude-code-action</code>) peut faire de même sur un <code>cron</code>.</li>
+<li><strong>Les limites intégrées</strong> : <code>claude -p --max-turns 3</code> ou <code>--max-budget-usd</code> en ligne de commande, <code>maxTurns</code> et <code>maxBudgetUsd</code> dans l'Agent SDK. Sans elles, il n'y a pas de limite.</li>
+</ul>
+<h3 class="pc-h3">Quand c'est utile, et ce que ça coûte</h3>
+<p>Une boucle vaut la peine quand le résultat se <strong>vérifie par une machine</strong> : des tests qui passent, une compilation sans erreur, une migration de code fichier par fichier. Elle est risquée quand « terminé » est une affaire de jugement. Les risques sont ceux que la documentation d'Anthropic associe à l'autonomie : un coût qui grandit à chaque tour, des erreurs qui s'accumulent d'un tour à l'autre, et une boucle qui ne s'arrête pas faute de critère.</p>
+<table class="pc-table"><thead><tr><th>Avant de lancer une boucle</th><th>Avec Kwa</th></tr></thead><tbody>
+<tr><td>Un critère d'arrêt qu'une commande peut contrôler</td><td>Les critères de réussite de l'issue, et les commandes <code>verify</code> de la politique</td></tr>
+<tr><td>Un plafond de tours ou de budget</td><td>À fixer vous-même : Kwa n'en pose pas</td></tr>
+<tr><td>Des actions dangereuses bloquées, sans personne pour approuver</td><td>Les gardes (pas de push sur <code>main</code>, pas de secret écrit) tournent à chaque tour</td></tr>
+<tr><td>Une preuve à la fin, pas une affirmation</td><td>Pas de fusion sans preuve sur la PR</td></tr></tbody></table>""" +
+         reveal("Question", "<p>Vous lancez <code>/ralph-loop</code> avec « corrige les tests, écris FINI quand c'est vert », sans <code>--max-iterations</code>. Que peut-il se passer ? L'agent peut tourner indéfiniment si un test ne peut pas passer, ou écrire « FINI » sans que les tests soient verts : la phrase est un critère que le modèle déclare, pas une commande qui vérifie. Fixez un plafond, et faites vérifier le résultat par les tests eux-mêmes.</p>"),
+         "Distinguer la boucle de l'agent, la boucle autour de l'agent et la tâche planifiée, et donner le critère d'arrêt de chacune.",
+         "Un « c'est fini » écrit par le modèle n'est pas un critère d'arrêt : c'est une déclaration. Le critère, c'est une commande qui passe."),
+        ("8", "Risques et usages responsables", "Ce qu'on n'envoie pas, ce qu'on vérifie, qui décide.",
          """<ul class="pc-list">
 <li><strong>Données</strong> : ne pas coller de données personnelles, de secrets ni de données client réelles dans un outil que l'on ne maîtrise pas. Anonymiser ou fabriquer des exemples.</li>
 <li><strong>Vérification</strong> : relire, contrôler les chiffres, les références et les citations à la source.</li>
@@ -190,7 +222,7 @@ def culture() -> str:
          "« C'est l'IA qui l'a dit » ne tient devant personne. La personne qui diffuse un texte en répond."),
     ]
     out = "\n".join(stage(*x) for x in s)
-    return (intro("Sept étapes pour comprendre ce que fait vraiment un modèle de langage : le texte, les jetons, les erreurs qui en découlent, la fenêtre de contexte, la manière de demander, l'agent, les risques. Aucun outil à installer ; un outil d'IA au choix suffit pour les exercices. Environ deux heures et demie, à calibrer en séance.") +
+    return (intro("Huit étapes pour comprendre ce que fait vraiment un modèle de langage : le texte, les jetons, les erreurs qui en découlent, la fenêtre de contexte, la manière de demander, l'agent, les boucles, les risques. Aucun outil à installer ; un outil d'IA au choix suffit pour les exercices. Environ deux heures et demie, à calibrer en séance.") +
             nav(CULTURE_NAV) + out +
             checklist("Vous avez compris si vous savez", [
                 "dire pourquoi un modèle produit du texte plausible sans consulter une base de faits ;",
@@ -198,9 +230,17 @@ def culture() -> str:
                 "expliquer pourquoi remplir la fenêtre ne rend pas la réponse meilleure ;",
                 "réécrire une demande pour réduire le risque d'hallucination, puis vérifier à la source ;",
                 "décrire la boucle d'un agent, et nommer l'injection de prompt et deux parades ;",
+                "dire ce qui arrête une boucle d'agents, et pourquoi un plafond de tours est nécessaire ;",
                 "écrire une consigne qu'un collègue sans contexte pourrait exécuter."]) +
             sources([("https://www.anthropic.com/engineering/building-effective-agents", "Building effective agents (workflows et agents)"),
                      (DOC + "security", "Sécurité de Claude Code (injection de prompt)"),
+                     (DOC + "agent-sdk/agent-loop", "La boucle de l'agent (Agent SDK, maxTurns, maxBudgetUsd)"),
+                     (DOC + "scheduled-tasks", "Tâches planifiées et /loop"),
+                     (DOC + "routines", "Routines (/schedule)"),
+                     (DOC + "hooks", "Hooks (Stop, stop_hook_active)"),
+                     (DOC + "cli-reference", "Référence CLI (--max-turns, --max-budget-usd)"),
+                     ("https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum", "Plugin ralph-wiggum"),
+                     ("https://ghuntley.com/ralph/", "Ralph, la technique d'origine"),
                      (API + "build-with-claude/context-windows", "Fenêtres de contexte (jetons, context rot, compaction)"),
                      (API + "test-and-evaluate/strengthen-guardrails/reduce-hallucinations", "Réduire les hallucinations"),
                      (API + "build-with-claude/prompt-engineering/claude-prompting-best-practices", "Bonnes pratiques de prompting"),

@@ -158,24 +158,56 @@
   /* ---------- la boucle d'un agent ---------- */
   var loop = $('#loop');
   if (loop) {
-    var LP = [
-      [0, 'Le modèle lit la demande « corrige le test qui échoue » et décide : il faut d\'abord lancer les tests.'],
-      [1, 'Il appelle un outil : la commande de test.'],
-      [2, 'Le résultat (un test rouge, avec son message) entre dans le contexte.'],
-      [3, 'Est-ce terminé ? Non : le test est rouge. Il recommence.'],
-      [0, 'Il réfléchit : l\'erreur pointe vers un fichier, il faut le lire.'],
-      [1, 'Il appelle l\'outil de lecture, puis celui de modification.'],
-      [2, 'Il relance les tests : tout est vert. Le résultat entre dans le contexte.'],
-      [3, 'Terminé : le modèle juge que l\'objectif est atteint, la boucle s\'arrête et il répond. C\'est lui qui décide, d\'où l\'importance de lui donner un contrôle qu\'il peut lancer.']
+    var LP = [ /* [nœud, tour, au centre, légende] */
+      [0, 1, 'lancer les tests d\'abord', 'Le modèle lit la demande « corrige le test qui échoue » et décide : il faut d\'abord lancer les tests.'],
+      [1, 1, 'npm test', 'Il appelle un outil : la commande de test.'],
+      [2, 1, '1 test rouge', 'Le résultat (un test rouge, avec son message) entre dans le contexte.'],
+      [3, 1, 'non : on recommence', 'Est-ce terminé ? Non : le test est rouge. Il refait un tour.'],
+      [0, 2, 'lire le fichier en cause', 'Il réfléchit : l\'erreur pointe vers un fichier, il faut le lire.'],
+      [1, 2, 'lire, puis modifier', 'Il appelle l\'outil de lecture, puis celui de modification.'],
+      [2, 2, 'tous les tests verts', 'Il relance les tests : tout est vert. Le résultat entre dans le contexte.'],
+      [3, 2, 'oui : il répond', 'Terminé : le modèle juge que l\'objectif est atteint, la boucle s\'arrête et il répond. C\'est lui qui décide, d\'où l\'importance de lui donner un contrôle qu\'il peut lancer.']
     ];
-    var lpI = -1, lpCap = $('#loop-cap'), lpNodes = loop.querySelectorAll('.lp-ring span');
-    var lpShow = function () {
-      var st = LP[lpI];
-      Array.prototype.forEach.call(lpNodes, function (n) { n.classList.toggle('on', Number(n.getAttribute('data-n')) === st[0]); });
-      lpCap.textContent = st[1];
+    var lpRing = loop.querySelector('.lp-ring'), lpDot = loop.querySelector('.lp-dot'), lpMid = loop.querySelector('.lp-mid');
+    var lpTurn = loop.querySelector('.lp-turn'), lpSay = loop.querySelector('.lp-say'), lpCap = $('#loop-cap');
+    var lpNodes = loop.querySelectorAll('.lp-node'), lpAt = 0, lpRaf = 0;
+    var lpStill = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var lpPlace = function (q) { /* q : position sur l'anneau en quarts de tour, 0 en haut, sens horaire */
+      var t = (q * 90 - 90) * Math.PI / 180;
+      lpDot.setAttribute('cx', (50 + 34 * Math.cos(t)).toFixed(2));
+      lpDot.setAttribute('cy', (50 + 34 * Math.sin(t)).toFixed(2));
     };
-    if (window.KwaPlayer) KwaPlayer(loop, { count: LP.length, interval: 2200, show: function (i) { lpI = i; lpShow(); },
-      reset: function () { Array.prototype.forEach.call(lpNodes, function (n) { n.classList.remove('on'); }); } });
+    var lpMove = function (to) { /* toujours dans le sens de la boucle */
+      cancelAnimationFrame(lpRaf);
+      var from = lpAt, d = ((to - from) % 4 + 4) % 4, t0 = 0;
+      lpAt = to;
+      if (lpStill || !d || document.hidden) { lpPlace(to); return; }
+      var tick = function (now) {
+        if (!t0) t0 = now;
+        var k = Math.min((now - t0) / (260 * d + 300), 1), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        lpPlace(from + d * e);
+        if (k < 1) lpRaf = requestAnimationFrame(tick);
+      };
+      lpRaf = requestAnimationFrame(tick);
+    };
+    var lpShow = function (i) {
+      var st = LP[i];
+      lpRing.classList.add('run');
+      lpRing.classList.toggle('done', i === LP.length - 1);
+      Array.prototype.forEach.call(lpNodes, function (n) { n.classList.toggle('on', Number(n.getAttribute('data-n')) === st[0]); });
+      lpMove(st[0]);
+      lpTurn.textContent = 'Tour ' + st[1];
+      lpSay.textContent = st[2];
+      lpMid.classList.remove('pop'); void lpMid.offsetWidth; lpMid.classList.add('pop');
+      lpCap.textContent = st[3];
+    };
+    if (window.KwaPlayer) KwaPlayer(loop, { count: LP.length, interval: 2400, show: lpShow,
+      reset: function () {
+        cancelAnimationFrame(lpRaf); lpAt = 0; lpPlace(0);
+        lpRing.classList.remove('run', 'done');
+        Array.prototype.forEach.call(lpNodes, function (n) { n.classList.remove('on'); });
+        lpTurn.textContent = 'Tour 1'; lpSay.textContent = 'corrige le test qui échoue';
+      } });
   }
 
   /* ---------- le flux d'un développeur ---------- */
