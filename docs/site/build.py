@@ -161,7 +161,6 @@ def main():
         return css, js
 
     tpl = open(os.path.join(HERE, "template.html"), encoding="utf-8").read()
-    css, js = assets(["map", "board", "circuit", "terminal"])
     sys.path.insert(0, src)
     import shell, tree, pictos, workflows  # noqa: E402
     files = tree.project_files(man, kwa.module_files, {c["id"]: c["description"] for c in catalog})

@@ -1,62 +1,23 @@
 """Les cinq workflows de Kwa, mis en avant sur l'accueil : chaque workflow est une suite d'étapes typées (skill, garde,
-hook, agent, vous), animée par src/workflows.js. Les données sont ici ; un test vérifie que chaque skill citée existe."""
+hook, agent, vous, relais), animée par src/workflows.js. Les étapes viennent de src/flows.py, qui sert aussi la page
+Les workflows : un seul endroit à tenir à jour."""
 from __future__ import annotations
 
 import html
 
 import pictos
 
-KIND = {  # type d'étape -> (pictogramme, libellé)
-    "skill": ("sword", "Skill"),
-    "garde": ("shield", "Garde"),
-    "hook": ("hook", "Hook"),
-    "agent": ("agent", "Agent"),
-    "vous": ("user", "Vous"),
-}
+from flows import FLOWS, KIND  # une seule source : les étapes viennent des workflows animés
 
-WORKFLOWS = [  # (clé, pictogramme, titre, promesse, lien, [(type, nom, ce qui se passe)])
-    ("feature", "code", "Développer une fonctionnalité", "De l'idée floue à une PR prouvée.", "board.html#feature", [
-        ("skill", "/kwa:brainstorm", "cadrer l'intention, écrire une spec courte"),
-        ("vous", "validation", "vous approuvez la spec"),
-        ("skill", "/kwa:plan", "découper en tâches de quelques minutes"),
-        ("skill", "/kwa:start-dev", "ouvrir l'issue, la branche et son worktree"),
-        ("garde", "guard-write", "refuse le code produit sur main"),
-        ("skill", "/kwa:tdd", "test qui échoue, puis le code"),
-        ("agent", "kwa:reviewer", "relit en lecture seule"),
-        ("skill", "/kwa:ship", "PR liée à son issue, avec la preuve"),
-    ]),
-    ("bug", "bug", "Corriger un bug", "Pas de correctif avant la cause.", "board.html#bug", [
-        ("skill", "/kwa:debug", "reproduire, remonter à la cause racine"),
-        ("skill", "/kwa:start-dev", "issue et branche dédiée"),
-        ("skill", "/kwa:tdd", "un test rouge qui montre le bug"),
-        ("skill", "/kwa:simple", "le correctif le plus petit possible"),
-        ("skill", "/kwa:verify", "preuve : le test repasse au rouge sans le correctif"),
-        ("hook", "verify-stop", "refuse de finir sur des tests rouges, s'il est activé"),
-    ]),
-    ("review", "eye", "Relire", "Un regard neuf qui ne peut rien modifier.", "board.html#review", [
-        ("skill", "/kwa:review", "rassembler le diff et les critères"),
-        ("agent", "kwa:reviewer", "constats classés et verdict, en lecture seule"),
-        ("skill", "/kwa:review-feedback", "trier les retours avant d'en appliquer un"),
-        ("agent", "kwa:reviewer", "relecture ciblée des corrections"),
-        ("vous", "décision", "vous jugez que c'est prêt"),
-    ]),
-    ("ship", "send", "Livrer", "Chaque publication est une décision.", "board.html#ship", [
-        ("skill", "/kwa:verify", "vérifications du projet, sorties citées"),
-        ("skill", "/kwa:commit", "un commit par changement logique"),
-        ("garde", "guard-git", "pas de push sur main, push de branche confirmé"),
-        ("garde", "guard-github", "PR liée à une issue, fusion avec preuve"),
-        ("vous", "fusion", "vous donnez le feu vert"),
-        ("skill", "/kwa:deploy", "pré-vol, déploiement, vérification"),
-    ]),
-    ("learn", "book", "Capitaliser", "Chaque session enrichit la suivante.", "board.html#learn", [
-        ("hook", "signal-prompt", "note vos corrections et vos « retiens : »"),
-        ("garde", "refus d'un garde", "devient un signal d'apprentissage"),
-        ("hook", "memory-nudge", "propose de capitaliser, une fois par session"),
-        ("skill", "/kwa:learn", "range chaque leçon au bon endroit"),
-        ("vous", "accord", "rien n'est écrit sans vous"),
-        ("hook", "memory-context", "au démarrage suivant, la reprise"),
-    ]),
+META = [  # (clé, pictogramme, promesse)
+    ("feature", "code", "De l'idée floue à une PR prouvée."),
+    ("bug", "bug", "Pas de correctif avant la cause."),
+    ("review", "eye", "Un regard neuf qui ne peut rien modifier."),
+    ("ship", "send", "Chaque publication est une décision."),
+    ("learn", "book", "Chaque session enrichit la suivante."),
 ]
+WORKFLOWS = [(k, pic, FLOWS[k]["title"], promise, f"board.html#{k}", [(kind, name, what) for _b, kind, name, what in FLOWS[k]["steps"]])
+             for k, pic, promise in META]
 
 
 def section() -> str:

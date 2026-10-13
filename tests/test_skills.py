@@ -568,7 +568,7 @@ class SplitPages(unittest.TestCase):
             self.assertIn(f'href="{target}"', home, target)
 
 
-class Circuit(unittest.TestCase):
+class WorkflowsPage(unittest.TestCase):
     SITE = os.path.join(PACK, "docs", "site")
 
     def read(self, *p):
@@ -585,17 +585,21 @@ class Circuit(unittest.TestCase):
             self.assertIn(f'data-flow-tab="{name}"', text, name)
         self.assertNotIn("src/flows.js", self.read("index.html"), "l'accueil ne charge pas les widgets des pages dédiées")
 
-    def test_no_autoplay_and_every_step_has_a_label(self):
-        js = self.read("src", "circuit.js")
-        for banned in ("setInterval", "setTimeout", "Pause", "Vitesse", "Rejouer"):
-            self.assertNotIn(banned, js, "le circuit ne se lit pas tout seul : rien ne doit bouger hors de l'action de la personne")
-        data = self.read("src", "board.js")
-        for sid, count in (("feature", 12), ("bug", 8), ("delivery", 10)):
-            labels = re.search(sid + r": \[(.*?)\]", js, re.S).group(1)
-            self.assertEqual(len(re.findall(r"'(?:[^'\\]|\\.)*'", labels)), count, sid)
-        self.assertIn("data: { COLS: COLS", data)
-        self.assertIn("Étape précédente", js)
-        self.assertIn("Étape suivante", js)
+    def test_home_workflows_come_from_the_animated_ones(self):
+        """Une seule source : les étapes de l'accueil sont celles de la page Les workflows (#46)."""
+        sys.path.insert(0, os.path.join(PACK, "docs", "site", "src"))
+        import flows
+        import workflows
+        for key, _p, title, _promise, _link, steps in workflows.WORKFLOWS:
+            self.assertEqual(title, flows.FLOWS[key]["title"], key)
+            self.assertEqual(steps, [s[1:] for s in flows.FLOWS[key]["steps"]], key)
+
+    def test_no_dead_widget_is_left(self):
+        src = os.path.join(self.SITE, "src")
+        pages = "".join(self.read(f) for f in os.listdir(self.SITE) if f.endswith(".html") and f != "template.html")
+        for f in os.listdir(src):
+            if f.endswith((".js", ".css")) and f != "glossary-data.js":
+                self.assertIn(f"src/{f}", pages, f"{f} n'est chargé par aucune page")
 
 
 class BorderStyle(unittest.TestCase):
@@ -620,12 +624,12 @@ class MotionRespect(unittest.TestCase):
 
     def test_reduced_motion_is_honoured_wherever_there_is_animation(self):
         site = os.path.join(PACK, "docs", "site")
-        for rel in ("src/circuit.css", "src/parcours.css", "src/map.css", "src/shell.css"):
+        for rel in ("src/flows.css", "src/parcours.css", "src/map.css", "src/shell.css"):
             text = open(os.path.join(site, rel), encoding="utf-8").read()
             if "@keyframes" in text or "transition:" in text:
                 self.assertIn("prefers-reduced-motion", text, rel)
-        js = open(os.path.join(site, "src", "circuit.js"), encoding="utf-8").read()
-        self.assertIn("prefers-reduced-motion", js)
+        for rel in ("src/flows.js", "src/player.js"):
+            self.assertIn("prefers-reduced-motion", open(os.path.join(site, rel), encoding="utf-8").read(), rel)
         tpl = open(os.path.join(site, "template.html"), encoding="utf-8").read()
         self.assertIn("prefers-reduced-motion: reduce", tpl)
         self.assertIn("startViewTransition", tpl)
