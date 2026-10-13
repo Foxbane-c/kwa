@@ -603,6 +603,25 @@ class WorkflowsPage(unittest.TestCase):
             self.assertIn(term, ids)
         self.assertNotIn("Le jeton suit", self.read("board.html"))
 
+    def test_site_follows_the_lexicon(self):
+        """Un seul mot par idée (#54) : le mot écarté n'apparaît, hors code, que sur les pages qui l'expliquent."""
+        sys.path.insert(0, os.path.join(PACK, "docs", "site", "src"))
+        import glossary
+        for name in [f for f in os.listdir(self.SITE) if f.endswith(".html") and f != "template.html"]:
+            text = re.sub(r"<(script|style|code|pre)\b.*?</\1>", " ", self.read(name), flags=re.S)
+            text = re.sub(r"<[^>]+>", " ", text)
+            for kept, banned, allowed in glossary.LEXICON:
+                m = None if name in allowed else re.search(rf"(?i)(?<![\w/:.-]){re.escape(banned)}s?(?![\w/.-])", text)
+                self.assertIsNone(m, f"{name} : « {m and text[max(0, m.start() - 40):m.end() + 40]} » ; écrire « {kept} »")
+
+    def test_every_skill_has_one_family(self):
+        sys.path.insert(0, os.path.join(PACK, "docs", "site", "src"))
+        import mapdata
+        placed = [s for ids in mapdata.FAMILIES.values() for s in ids]
+        self.assertEqual(sorted(placed), sorted(set(placed)), "une skill dans deux familles")
+        self.assertEqual(set(placed), set(os.listdir(os.path.join(PACK, "plugin", "skills"))))
+        self.assertEqual(set(mapdata.FAMILIES), set(mapdata.FAMILY_RULE))
+
     def test_no_dead_widget_is_left(self):
         src = os.path.join(self.SITE, "src")
         pages = "".join(self.read(f) for f in os.listdir(self.SITE) if f.endswith(".html") and f != "template.html")
