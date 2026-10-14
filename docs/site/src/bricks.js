@@ -51,3 +51,27 @@
     });
   });
 })();
+
+/* La fenêtre de contexte au fil d'une session : chaque étape ajoute ce qu'elle fait entrer ; la compaction repart de zéro. */
+(function () {
+  'use strict';
+  var root = document.getElementById('br-tl'), dataEl = document.getElementById('br-tl-data');
+  if (!root || !dataEl || !window.KwaPlayer) return;
+  var steps = JSON.parse(dataEl.textContent), stack = document.getElementById('br-tl-stack'), note = document.getElementById('br-tl-note');
+  var lis = root.querySelectorAll('.br-tl-steps li'), last = steps.length - 1;
+  var row = function (item, fresh) {
+    var d = document.createElement('div');
+    d.className = 'br-tl-item br-k-' + item[1] + (fresh ? ' br-new' : '');
+    d.textContent = item[0];
+    return d;
+  };
+  var show = function (i) {
+    stack.innerHTML = '';
+    var from = i === last ? last : 0;  // la compaction remplace tout par ce qui est réinjecté
+    for (var k = from; k <= i; k++) steps[k].items.forEach(function (it) { stack.appendChild(row(it, k === i)); });
+    note.innerHTML = steps[i].note;
+    Array.prototype.forEach.call(lis, function (li, k) { li.classList.toggle('on', k === i); li.classList.toggle('done', k < i); });
+  };
+  KwaPlayer(root, { count: steps.length, interval: 3200, show: show, reset: function () { show(0); } });
+  show(0);
+})();

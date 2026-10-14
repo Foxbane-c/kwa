@@ -216,14 +216,14 @@ Application web (Next.js, pnpm). Répondre en français.
 <tr><td>Avec <code>paths</code> (motifs de fichiers)</td><td>Seulement quand l'agent lit, écrit ou modifie un fichier qui correspond</td></tr></tbody></table>
 <pre class="kd-code"><span class="sx-p">---</span>
 <span class="sx-k">paths</span><span class="sx-p">:</span>
-  - <span class="sx-s">"src/api/**/*.ts"</span>
+  - <span class="sx-s">"src/**/*.tsx"</span>
 <span class="sx-p">---</span>
 
-<span class="sx-h"># Règles de l'API</span>
+<span class="sx-h"># Composants React</span>
 
-<span class="sx-p">-</span> Valider toute entrée avant de l'utiliser.
-<span class="sx-p">-</span> Répondre aux erreurs avec le format commun (code, message, identifiant de requête).
-<span class="sx-p">-</span> Un endpoint nouveau a un test qui échoue avant d'être écrit.</pre>
+<span class="sx-p">-</span> Tester avec Testing Library, jamais avec Enzyme.
+<span class="sx-p">-</span> Un composant par fichier, nommé comme le fichier.
+<span class="sx-p">-</span> Pas de style en ligne : les classes du design system.</pre>
 <p>Le champ <code>paths</code> accepte des motifs comme <code>src/**/*.{ts,tsx}</code> ; c'est le seul champ que Claude Code lit dans une règle. Vos règles personnelles vont dans <code>~/.claude/rules/</code> et s'appliquent à tous vos projets ; elles sont chargées avant celles du projet, et si les deux se contredisent, l'agent peut suivre l'une ou l'autre : gardez-les cohérentes.</p>
 <p>Où ranger quoi ? Lisez les cinq cas puis pronostiquez :</p>
 <table class="pc-table"><thead><tr><th>Cas</th><th>Où</th></tr></thead><tbody>
@@ -236,17 +236,18 @@ Application web (Next.js, pnpm). Répondre en français.
 <p><strong>Exercice</strong> : prenez votre <code>AGENTS.md</code> et repérez deux paragraphes qui ne concernent qu'un type de fichier. Déplacez-les dans une règle avec <code>paths</code>.</p></div></section>
 <section class="pc-stage" id="etape-5"><div class="pc-main"><a class="pc-ref" href="briques.html#skill">Fiche : Skill, un fichier d'exemple →</a><p class="pc-kicker">Étape 5</p><h2 class="pc-h">Les skills</h2><p class="pc-tag">Une procédure chargée seulement quand elle sert.</p><p>Une skill est un dossier avec un fichier <code>SKILL.md</code> : un en-tête qui dit <strong>quand</strong> l'appeler, un corps qui dit <strong>comment</strong>. Claude l'invoque quand la description correspond à la conversation, ou vous la tapez avec <code>/nom</code>.</p>
 <pre class="kd-code"><span class="sx-p">---</span>
-<span class="sx-k">name</span><span class="sx-p">:</span> relance-client
-<span class="sx-k">description</span><span class="sx-p">:</span> Rédiger une relance commerciale. À utiliser quand l'utilisateur demande un mail de relance ou « relance ce client ».
-<span class="sx-k">disable-model-invocation</span><span class="sx-p">:</span> <span class="sx-b">false</span>
+<span class="sx-k">name</span><span class="sx-p">:</span> release-notes
+<span class="sx-k">description</span><span class="sx-p">:</span> Rédiger les notes de version à partir des PR fusionnées. À utiliser quand l'utilisateur demande « les notes de version », « le changelog » ou « qu'est-ce qui part en prod ».
 <span class="sx-p">---</span>
 
-<span class="sx-h"># Relance client</span>
+<span class="sx-h"># Notes de version</span>
 
-1. Demander la date et l'objet de la dernière proposition si absents.
-2. Rédiger un objet et trois phrases au plus, une question fermée.
-3. Relire : aucun montant ni date qui ne vienne de l'utilisateur.</pre>
-<p>Le point clé est le <strong>chargement progressif</strong> : seule la description reste toujours dans le contexte ; le corps n'est lu qu'à l'appel, et les fichiers annexes seulement au besoin. Une skill volumineuse ne coûte donc rien tant qu'on ne s'en sert pas.</p>
+1. Lister les PR fusionnées depuis la dernière étiquette :
+   <span class="sx-s">`gh pr list --state merged --search "merged:&gt;=&lt;date&gt;"`</span>.
+2. Les classer : nouveautés, corrections, technique.
+3. Une ligne par PR, au présent, sans jargon interne.
+4. Suivre le gabarit de <span class="sx-s">`modele.md`</span> (dans ce dossier).</pre>
+<p>Le point clé est le <strong>chargement progressif</strong> : seule la description reste toujours dans le contexte ; le corps n'est lu qu'à l'appel, et les fichiers annexes seulement au besoin. Une skill volumineuse ne coûte donc rien tant qu'on ne s'en sert pas ; une fois appelée, son corps reste dans la conversation jusqu'à la fin de la session.</p>
 <div class="pc-widget po" id="skl">
 <div class="pc-actions"><button type="button" class="kd-copy" data-skl="0" aria-pressed="true">Au démarrage</button>
 <button type="button" class="kd-copy" data-skl="1" aria-pressed="false">L'agent appelle la skill</button>
@@ -259,7 +260,7 @@ Application web (Next.js, pnpm). Répondre en français.
 <tr><td><code>~/.claude/skills/&lt;nom&gt;/SKILL.md</code></td><td>Personnel : tous vos projets</td></tr>
 <tr><td><code>.claude/skills/&lt;nom&gt;/SKILL.md</code></td><td>Ce dépôt, partagé en le versionnant</td></tr>
 <tr><td>Plugin</td><td>Là où le plugin est activé</td></tr></tbody></table>
-<p>Champs utiles : <code>disable-model-invocation: true</code> pour ne la lancer que par commande, <code>allowed-tools</code> pour pré-autoriser des outils pendant son exécution.</p>
+<p>Champs utiles : <code>disable-model-invocation: true</code> pour ne la lancer que par commande (le modèle ne la déclenche jamais seul), <code>allowed-tools</code> pour pré-autoriser des outils pendant son exécution.</p>
 <p><strong>Exercice</strong> : transformez une tâche que vous répétez (relance, compte rendu, revue) en skill. Écrivez d'abord la description : elle doit dire quand, jamais le déroulé.</p></div></section>
 <section class="pc-stage" id="etape-6"><div class="pc-main"><a class="pc-ref" href="briques.html#sous-agent">Fiche : Sous-agent, un fichier d'exemple →</a><p class="pc-kicker">Étape 6</p><h2 class="pc-h">Les agents</h2><p class="pc-tag">Un second collaborateur avec sa propre fenêtre de contexte.</p><p>Un <strong>sous-agent</strong> est un assistant spécialisé qui travaille dans une fenêtre de contexte isolée, avec ses propres consignes, ses propres outils et éventuellement un autre modèle. Il fait la tâche et ne renvoie qu'un résumé : la lecture de trente fichiers ne pollue pas la conversation principale. C'est la technique « déléguer à un contexte propre » du début du parcours.</p>
 <p>Dans un schéma <strong>orchestrateur</strong>, l'agent principal ne lit pas tout : il distribue à chaque sous-agent le <em>minimum</em> dont il a besoin (la tâche, les critères, les fichiers utiles), puis ne reçoit que des résumés. Comparez les deux modes :</p>
@@ -278,16 +279,17 @@ Application web (Next.js, pnpm). Répondre en français.
 <p class="po-cap" id="po-cap" aria-live="polite">Choisissez un mode pour lancer la scène.</p>
 <p class="pc-hint">Pourcentages illustratifs : ils montrent la logique, pas des mesures.</p></div>
 <pre class="kd-code"><span class="sx-p">---</span>
-<span class="sx-k">name</span><span class="sx-p">:</span> reviewer
-<span class="sx-k">description</span><span class="sx-p">:</span> Relit un diff et signale les risques. À utiliser après une modification, avant la PR.
-<span class="sx-k">tools</span><span class="sx-p">:</span> Read, Glob, Grep
+<span class="sx-k">name</span><span class="sx-p">:</span> security-reviewer
+<span class="sx-k">description</span><span class="sx-p">:</span> Relit un diff sous l'angle de la sécurité (entrées non validées, secrets, droits). À utiliser avant une PR qui touche l'authentification, les paiements ou les données personnelles.
+<span class="sx-k">tools</span><span class="sx-p">:</span> Read, Grep, Glob
 <span class="sx-k">model</span><span class="sx-p">:</span> sonnet
 <span class="sx-p">---</span>
 
-Tu relis un changement sans le modifier. Pour chaque constat : fichier, comportement observé, comment le reproduire,
-importance. N'affirme pas avoir exécuté une commande que tu ne peux pas lancer.</pre>
-<p>Le fichier vit dans <code>.claude/agents/</code> (projet) ou <code>~/.claude/agents/</code> (personnel). Les champs obligatoires sont <code>name</code> et <code>description</code> ; <code>tools</code> restreint ses outils (ici, lecture seule) et hérite de tout si on l'omet. On l'invoque en le nommant, par @-mention, ou pour toute la session.</p>
-<p>Limites à connaître : un sous-agent n'a pas votre conversation et un nouvel appel repart d'un contexte vide (un sous-agent terminé peut toutefois être repris), il consomme du quota comme la session principale, et le nombre d'agents simultanés et la profondeur d'imbrication sont bornés.</p>
+Tu relis un changement sans le modifier. Pour chaque constat : le fichier et la
+ligne, ce qui peut arriver, comment le reproduire, la gravité. Si rien ne pose
+problème, dis-le en une phrase : n'invente pas de constat.</pre>
+<p>Le fichier vit dans <code>.claude/agents/</code> (projet) ou <code>~/.claude/agents/</code> (personnel). Les champs obligatoires sont <code>name</code> et <code>description</code> ; <code>tools</code> restreint ses outils (ici, lecture seule) et hérite de tout si on l'omet. On l'invoque en le nommant (« utilise security-reviewer »), par mention (<code>@agent-security-reviewer relis mon diff</code>, ou <code>@</code> puis le choisir dans la liste), ou pour toute la session.</p>
+<p>Limites à connaître : un sous-agent n'a pas votre conversation et chaque nouvel appel démarre sans mémoire des appels précédents, sauf si l'on demande explicitement de reprendre le même sous-agent, il consomme du quota comme la session principale, et le nombre d'agents simultanés et la profondeur d'imbrication sont bornés.</p>
 <p><strong>Exercice</strong> : écrivez un agent « relecteur » en lecture seule pour votre projet. Quelles sont les trois informations que vous lui donnez avec sa tâche, puisqu'il n'a pas votre conversation ?</p><details class="pc-reveal"><summary>Piste</summary><div><p>La demande d'origine et ses critères de réussite, le diff ou les fichiers touchés, et les résultats des vérifications déjà faites. Un agent ne voit que ce qu'on lui envoie : un résumé vague produit une relecture vague.</p></div></details></div></section>
 <section class="pc-stage" id="etape-7"><div class="pc-main"><a class="pc-ref" href="briques.html#mcp">Fiche : Serveur MCP, un fichier d'exemple →</a><p class="pc-kicker">Étape 7</p><h2 class="pc-h">MCP : brancher des outils</h2><p class="pc-tag">Un protocole commun pour donner à l'agent l'accès à des données et à des services.</p><p>Le <strong>Model Context Protocol</strong> (MCP) permet à l'agent d'utiliser des serveurs externes : base de données, tracker, documentation, navigateur.</p>
 <h3 class="pc-h3">Une API, pour un agent</h3>
@@ -339,7 +341,14 @@ importance. N'affirme pas avoir exécuté une commande que tu ne peux pas lancer
 <tr><td>Utilisateur</td><td>Tous vos projets, vous seul</td><td><code>~/.claude.json</code></td></tr></tbody></table>
 <p>Un fichier <code>.mcp.json</code> de projet :</p><pre class="kd-code"><span class="sx-p">{</span>
   <span class="sx-k">"mcpServers"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
-    <span class="sx-k">"base-de-donnees"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+    <span class="sx-k">"context7"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+      <span class="sx-k">"type"</span><span class="sx-p">:</span> <span class="sx-s">"http"</span><span class="sx-p">,</span>
+      <span class="sx-k">"url"</span><span class="sx-p">:</span> <span class="sx-s">"https://mcp.context7.com/mcp"</span><span class="sx-p">,</span>
+      <span class="sx-k">"headers"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+        <span class="sx-k">"Authorization"</span><span class="sx-p">:</span> <span class="sx-s">"Bearer ${CONTEXT7_API_KEY}"</span>
+      <span class="sx-p">}</span>
+    <span class="sx-p">}</span><span class="sx-p">,</span>
+    <span class="sx-k">"base"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
       <span class="sx-k">"type"</span><span class="sx-p">:</span> <span class="sx-s">"stdio"</span><span class="sx-p">,</span>
       <span class="sx-k">"command"</span><span class="sx-p">:</span> <span class="sx-s">"npx"</span><span class="sx-p">,</span>
       <span class="sx-k">"args"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
@@ -347,14 +356,7 @@ importance. N'affirme pas avoir exécuté une commande que tu ne peux pas lancer
         <span class="sx-s">"@bytebase/dbhub"</span>
       <span class="sx-p">]</span><span class="sx-p">,</span>
       <span class="sx-k">"env"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
-        <span class="sx-k">"DSN"</span><span class="sx-p">:</span> <span class="sx-s">"${DB_CONNECTION_STRING}"</span>
-      <span class="sx-p">}</span>
-    <span class="sx-p">}</span><span class="sx-p">,</span>
-    <span class="sx-k">"api-interne"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
-      <span class="sx-k">"type"</span><span class="sx-p">:</span> <span class="sx-s">"http"</span><span class="sx-p">,</span>
-      <span class="sx-k">"url"</span><span class="sx-p">:</span> <span class="sx-s">"https://mcp.example.org/mcp"</span><span class="sx-p">,</span>
-      <span class="sx-k">"headers"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
-        <span class="sx-k">"Authorization"</span><span class="sx-p">:</span> <span class="sx-s">"Bearer ${API_TOKEN}"</span>
+        <span class="sx-k">"DSN"</span><span class="sx-p">:</span> <span class="sx-s">"${DB_URL}"</span>
       <span class="sx-p">}</span>
     <span class="sx-p">}</span>
   <span class="sx-p">}</span>
@@ -444,23 +446,23 @@ graphify update .                      # refaire la carte du code, sans modèle<
 <pre class="kd-code"><span class="sx-p">{</span>
   <span class="sx-k">"permissions"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
     <span class="sx-k">"allow"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
-      <span class="sx-s">"Bash(npm test *)"</span><span class="sx-p">,</span>
+      <span class="sx-s">"Bash(pnpm test *)"</span><span class="sx-p">,</span>
       <span class="sx-s">"Bash(git status)"</span>
     <span class="sx-p">]</span><span class="sx-p">,</span>
     <span class="sx-k">"ask"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
       <span class="sx-s">"Bash(git push *)"</span>
     <span class="sx-p">]</span><span class="sx-p">,</span>
     <span class="sx-k">"deny"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
-      <span class="sx-s">"Read(./.env)"</span><span class="sx-p">,</span>
-      <span class="sx-s">"Read(./secrets/**)"</span><span class="sx-p">,</span>
+      <span class="sx-s">"Read(.env)"</span><span class="sx-p">,</span>
+      <span class="sx-s">"Read(secrets/**)"</span><span class="sx-p">,</span>
       <span class="sx-s">"Bash(rm -rf *)"</span><span class="sx-p">,</span>
       <span class="sx-s">"mcp__playwright__browser_run_code_unsafe"</span>
     <span class="sx-p">]</span>
   <span class="sx-p">}</span>
 <span class="sx-p">}</span></pre>
 <p>Trois listes, évaluées dans cet ordre : <strong>deny</strong>, puis <strong>ask</strong>, puis <strong>allow</strong>. La première qui correspond décide, quelle que soit la précision des règles. Pronostiquez :</p>
-<table class="pc-table"><thead><tr><th>Cas</th><th>Résultat</th></tr></thead><tbody><tr><td>allow Bash(aws s3 ls) et deny Bash(aws *) : que se passe-t-il pour aws s3 ls ?</td><td><details class="pc-reveal"><summary>Mon pronostic</summary><div><span class="kd-pill deny">refusé</span> Refusé. Une règle d'interdiction large bloque aussi ce qu'une règle d'autorisation plus précise voudrait laisser passer.</div></details></td></tr><tr><td>allow Bash(git push *) et ask Bash(git push *) : que se passe-t-il pour git push origin feat ?</td><td><details class="pc-reveal"><summary>Mon pronostic</summary><div><span class="kd-pill ask">demande</span> Une confirmation est demandée. Une règle « demander » l'emporte sur une règle « autoriser ».</div></details></td></tr><tr><td>Un hook PreToolUse répond « autoriser » mais deny Read(./.env) existe : lecture de .env ?</td><td><details class="pc-reveal"><summary>Mon pronostic</summary><div><span class="kd-pill deny">refusé</span> Refusée. Les règles d'interdiction et de confirmation sont évaluées quel que soit le résultat d'un hook.</div></details></td></tr></tbody></table>
-<p>Les <strong>modes</strong> règlent le niveau d'autonomie : <code>default</code> (demande à la première utilisation), <code>acceptEdits</code> (accepte les modifications de fichiers), <code>plan</code> (explore sans modifier), <code>auto</code> (un classifieur vérifie les actions), <code>dontAsk</code> (refuse ce qui demanderait), <code>bypassPermissions</code> (aucune demande : réservé aux environnements isolés).</p>
+<table class="pc-table"><thead><tr><th>Cas</th><th>Résultat</th></tr></thead><tbody><tr><td>allow Bash(aws s3 ls) et deny Bash(aws *) : que se passe-t-il pour aws s3 ls ?</td><td><details class="pc-reveal"><summary>Mon pronostic</summary><div><span class="kd-pill deny">refusé</span> Refusé. Une règle d'interdiction large bloque aussi ce qu'une règle d'autorisation plus précise voudrait laisser passer.</div></details></td></tr><tr><td>allow Bash(git push *) et ask Bash(git push *) : que se passe-t-il pour git push origin feat ?</td><td><details class="pc-reveal"><summary>Mon pronostic</summary><div><span class="kd-pill ask">demande</span> Une confirmation est demandée. Une règle « demander » l'emporte sur une règle « autoriser ».</div></details></td></tr><tr><td>Un hook PreToolUse répond « autoriser » mais deny Read(.env) existe : lecture de .env ?</td><td><details class="pc-reveal"><summary>Mon pronostic</summary><div><span class="kd-pill deny">refusé</span> Refusée. Les règles d'interdiction et de confirmation sont évaluées quel que soit le résultat d'un hook.</div></details></td></tr></tbody></table>
+<p>Les <strong>modes</strong> règlent le niveau d'autonomie : <code>default</code> (le mode « Manuel » dans l'interface : demande à la première utilisation), <code>acceptEdits</code> (accepte les modifications de fichiers), <code>plan</code> (explore sans modifier), <code>auto</code> (un classifieur vérifie les actions), <code>dontAsk</code> (refuse ce qui demanderait), <code>bypassPermissions</code> (aucune demande : réservé aux environnements isolés).</p>
 <p><strong>Limite à connaître</strong> : une règle sur une commande shell lit le texte que l'agent écrit. Elle couvre la forme habituelle d'un appel, pas toutes ses variantes : ce n'est pas une frontière de sécurité autour d'un programme. Pour bloquer la lecture d'un fichier par les outils de fichiers, on écrit une règle <code>Read</code> sur son chemin.</p>
 <p>Ce que les règles ne savent pas dire (« pas de commit sur main », « une PR doit être liée à une issue ») se règle avec des <strong>hooks</strong>. Un hook est un script que l'outil lance à un moment précis du travail (avant un outil, après une modification, à la fin d'une réponse). Il reçoit du JSON sur son entrée, et s'il termine avec le code <strong>2</strong>, l'action est bloquée et son message d'erreur revient à l'agent comme retour. C'est l'objet du parcours Harness, où l'on en écrit un.</p></div></section>
 <section class="pc-stage" id="etape-10"><div class="pc-main"><p class="pc-kicker">Étape 10</p><h2 class="pc-h">Choisir le bon mécanisme</h2><p class="pc-tag">Chaque besoin a son bon support : la synthèse du parcours.</p><p>Vous connaissez maintenant les mécanismes, qui ont chacun leur fiche, avec un fichier d'exemple, sur la page <a href="briques.html">Les briques</a>. Le piège classique est d'utiliser le mauvais : tout mettre dans <code>AGENTS.md</code>, ou espérer qu'une instruction tienne lieu d'interdiction. Un critère simple : <strong>à quelle fréquence l'agent en a-t-il besoin, et est-ce une suggestion ou une garantie ?</strong></p>
@@ -473,7 +475,7 @@ graphify update .                      # refaire la carte du code, sans modèle<
 <tr><td>Une commande ou un fichier toujours interdit</td><td>Règle de permission (<code>deny</code>)</td><td>Aucun, appliqué par l'outil</td></tr>
 <tr><td>Une décision qui dépend du contexte (la branche, le contenu) et ne doit jamais dépendre du modèle</td><td>Hook</td><td>Aucun, appliqué par l'outil</td></tr>
 <tr><td>Partager le tout avec une équipe</td><td>Dépôt versionné, ou plugin qui regroupe skills, hooks, agents et serveurs</td><td>Selon ce qu'il contient</td></tr></tbody></table>
-<p>Cas pratique : « les composants React se testent avec Testing Library, jamais avec Enzyme ». Où l'écrire ? Une règle avec <code>paths: src/**/*.tsx</code>, parce que cela ne concerne que ces fichiers. Et « ne jamais supprimer une migration » ? Un hook, parce que c'est une garantie.</p>
+<p>Cas pratique : « les composants React se testent avec Testing Library, jamais avec Enzyme ». Où l'écrire ? Une règle avec <code>paths: src/**/*.tsx</code>, parce que cela ne concerne que ces fichiers. Et « ne jamais supprimer une migration » ? Une permission <code>deny</code> ne lit que le texte de la commande : <code>rm</code> serait bloqué, mais <code>git rm</code>, <code>mv</code> ou un chemin écrit autrement lui échapperaient. Un hook, lui, peut regarder quels fichiers la commande vise et refuser si l'un d'eux est dans <code>migrations/</code> : il reconnaît bien plus de formes de commande, sans être infaillible. C'est une décision qui dépend du contexte.</p>
 <p>Pour la gestion d'équipe, deux compléments existent : les <strong>plugins</strong> (un paquet installable qui regroupe skills, hooks, sous-agents et serveurs MCP) et les réglages gérés par l'organisation. Le parcours Harness montre comment l'ensemble s'assemble.</p></div></section><div class="pc-check"><h2>Vous avez compris si vous savez</h2><ul><li>lister ce qui remplit la fenêtre d'une session d'agent, et la technique qui répond à chaque problème ;</li><li>écrire des instructions vérifiables et dire pourquoi elles ne contraignent pas ;</li><li>ranger une consigne au bon endroit : AGENTS.md, règle avec ou sans paths, skill ou hook ;</li><li>écrire une skill, un sous-agent, et choisir leur emplacement ;</li><li>configurer un serveur MCP sans secret en clair, avec la bonne portée ;</li><li>prédire le résultat de règles deny, ask et allow, et nommer ce qu'elles ne garantissent pas ;</li><li>brancher Context7 et Playwright et obtenir une évolution vérifiée par des captures ;</li><li>construire la carte d'un dépôt avec Graphify et dire ce qui reste sur la machine ;</li><li>choisir, pour une consigne donnée, entre AGENTS.md, règle, skill, sous-agent, MCP et hook.</li></ul></div><div class="pc-check"><h2>Sources</h2><p class="kd-note" style="margin:0 0 12px">Les documentations officielles font foi. Les noms de réglages et les limites évoluent avec les versions : vérifiez avant une séance.</p><ul><li><a href="https://code.claude.com/docs/en/memory">Instructions, mémoire et règles (CLAUDE.md, AGENTS.md, .claude/rules)</a></li><li><a href="https://code.claude.com/docs/en/skills">Skills</a></li><li><a href="https://code.claude.com/docs/en/sub-agents">Sous-agents</a></li><li><a href="https://code.claude.com/docs/en/mcp">MCP : portées et configuration</a></li><li><a href="https://github.com/upstash/context7">Context7</a></li><li><a href="https://github.com/microsoft/playwright-mcp">Playwright MCP</a></li><li><a href="https://github.com/Graphify-Labs/graphify">Graphify</a></li><li><a href="https://pypi.org/project/graphifyy/">Graphify sur PyPI (graphifyy)</a></li><li><a href="https://code.claude.com/docs/en/best-practices">Bonnes pratiques de Claude Code (sessions, vérification)</a></li><li><a href="https://code.claude.com/docs/en/features-overview">Choisir entre skills, sous-agents, hooks et MCP</a></li><li><a href="https://code.claude.com/docs/en/permissions">Permissions</a></li><li><a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">Effective context engineering for AI agents</a></li></ul></div>
 </main>
 </div></div>

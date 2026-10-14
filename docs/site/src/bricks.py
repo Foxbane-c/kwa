@@ -12,191 +12,15 @@ import html
 import json
 
 import pictos
+import shell
 from parcours import code
 
 REPO = "https://github.com/nesyouyou/kwa/blob/main/"
 DOC = "https://code.claude.com/docs/en/"
 
-AGENTS_MD = """# AGENTS.md
-
-Application web (Next.js, pnpm). Répondre en français.
-
-## Vérifier avant de dire « fait »
-- `pnpm typecheck` puis `pnpm test` : citer le résultat.
-
-## Pièges
-- Après un changement de schéma : `pnpm db:migrate:create <nom>`.
-
-## Interdit
-- Pas de commit sur main : une branche par sujet."""
-
-CLAUDE_MD = "@AGENTS.md"
-
-RULE_MD = """---
-paths:
-  - "src/**/*.tsx"
----
-
-# Composants React
-
-- Tester avec Testing Library, jamais avec Enzyme.
-- Un composant par fichier, nommé comme le fichier.
-- Pas de style en ligne : les classes du design system."""
-
-SKILL_MD = """---
-name: release-notes
-description: Rédiger les notes de version à partir des PR fusionnées. À utiliser quand l'utilisateur demande « les notes de version », « le changelog » ou « qu'est-ce qui part en prod ».
----
-
-# Notes de version
-
-1. Lister les PR fusionnées depuis la dernière étiquette :
-   `gh pr list --state merged --search "merged:>=<date>"`.
-2. Les classer : nouveautés, corrections, technique.
-3. Une ligne par PR, au présent, sans jargon interne.
-4. Suivre le gabarit de `modele.md` (dans ce dossier)."""
-
-SKILL_ANNEX = """## Version <x.y.z> (<date>)
-
-### Nouveautés
-- …
-
-### Corrections
-- …"""
-
-AGENT_MD = """---
-name: security-reviewer
-description: Relit un diff sous l'angle de la sécurité (entrées non validées, secrets, droits). À utiliser avant une PR qui touche l'authentification, les paiements ou les données personnelles.
-tools: Read, Grep, Glob
-model: sonnet
----
-
-Tu relis un changement sans le modifier. Pour chaque constat : le fichier et la
-ligne, ce qui peut arriver, comment le reproduire, la gravité. Si rien ne pose
-problème, dis-le en une phrase : n'invente pas de constat."""
-
-HOOK_SETTINGS = {
-    "hooks": {
-        "PreToolUse": [
-            {"matcher": "Bash", "hooks": [{"type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/no-commit-on-main.py"}]}
-        ],
-        "PostToolUse": [
-            {"matcher": "Edit|Write", "hooks": [{"type": "command", "command": "npx tsx \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format.ts"}]}
-        ],
-    }
-}
-
-HOOK_PY = """#!/usr/bin/env python3
-\"\"\"PreToolUse : refuser git commit sur main. Un filet contre l'erreur, pas une barrière.\"\"\"
-import json
-import re
-import subprocess
-import sys
-
-COMMIT = re.compile(r"\\bgit(\\s+-[cC]\\s+\\S+)*\\s+commit\\b")  # git commit, git -C dir commit, git -c x=y commit
+from examples import (AGENTS_MD, AGENTS_BAD, CLAUDE_MD, RULE_MD, SKILL_MD, SKILL_ANNEX, AGENT_MD, HOOK_SETTINGS, HOOK_PY, HOOK_TS, MCP_JSON, PERMISSIONS_JSON, SANDBOX_JSON, PLUGIN_TREE, PLUGIN_JSON, POLICY_JSON, PROJECT_TREE, _j)  # noqa: F401
 
 
-def refuse(reason):
-    print(json.dumps({"hookSpecificOutput": {
-        "hookEventName": "PreToolUse",
-        "permissionDecision": "deny",
-        "permissionDecisionReason": reason,
-    }}))
-    sys.exit(0)
-
-
-try:
-    event = json.load(sys.stdin)  # ce que l'agent s'apprête à faire
-    command = event.get("tool_input", {}).get("command", "")
-    parts = re.split(r"&&|\\|\\||;|\\|", command)  # cd app && git commit : chaque morceau compte
-    if not any(COMMIT.search(p) for p in parts):
-        sys.exit(0)  # sans sortie : la décision suit son cours normal
-    branch = subprocess.run(["git", "branch", "--show-current"], cwd=event.get("cwd"),
-                            capture_output=True, text=True, check=True).stdout.strip()
-except Exception as error:  # un garde qui plante doit refuser, pas laisser passer
-    refuse(f"Garde en erreur ({error}) : vérifier le hook avant de committer.")
-if branch == "main":
-    refuse("Pas de commit sur main : créer une branche de travail.")"""
-
-HOOK_TS = """// PostToolUse : formater le fichier que l'agent vient d'écrire.
-import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-
-const event = JSON.parse(readFileSync(0, "utf8"));
-const file: string | undefined = event.tool_input?.file_path;
-if (file && /\\.(ts|tsx|css)$/.test(file)) {
-  execFileSync("npx", ["--no-install", "prettier", "--write", file], { stdio: "ignore" });
-}"""
-
-MCP_JSON = {
-    "mcpServers": {
-        "context7": {"type": "http", "url": "https://mcp.context7.com/mcp", "headers": {"Authorization": "Bearer ${CONTEXT7_API_KEY}"}},
-        "base": {"type": "stdio", "command": "npx", "args": ["-y", "@bytebase/dbhub"], "env": {"DSN": "${DB_URL}"}},
-    }
-}
-
-PERMISSIONS_JSON = {
-    "permissions": {
-        "allow": ["Bash(pnpm test *)", "Bash(git status)"],
-        "ask": ["Bash(git push *)"],
-        "deny": ["Read(.env)", "Bash(rm -rf *)"],
-    }
-}
-
-SANDBOX_JSON = {
-    "sandbox": {
-        "enabled": True,
-        "allowUnsandboxedCommands": False,
-        "network": {"allowedDomains": ["registry.npmjs.org"]},
-        "filesystem": {"allowWrite": ["/tmp/build"]},
-    }
-}
-
-PLUGIN_TREE = """mon-plugin/
-├── .claude-plugin/
-│   └── plugin.json          le manifeste : nom, version, où sont les hooks
-├── skills/
-│   └── release-notes/SKILL.md
-├── agents/
-│   └── security-reviewer.md
-├── hooks/hooks.json         les hooks, au format du bloc hooks de settings.json
-└── .mcp.json                facultatif : les serveurs MCP"""
-
-PLUGIN_JSON = {"name": "mon-plugin", "version": "0.1.0", "description": "Les skills, agents et garde-fous de l'équipe."}
-
-POLICY_JSON = {
-    "kwa": 1,
-    "modules": ["core", "craft", "issue-flow"],
-    "bash": {"deny": [{"id": "deploy-prod", "reason": "La production part par la PR, pas par ce script.", "all": ["npm run deploy:prod"]}]},
-    "verify": {"commands": ["pnpm typecheck", "pnpm test"]},
-}
-
-PROJECT_TREE = """mon-projet/
-├── AGENTS.md                      instructions, lues à chaque session
-├── CLAUDE.md                      @AGENTS.md (un pointeur)
-├── .mcp.json                      serveurs MCP du projet
-└── .claude/
-    ├── settings.json              permissions et hooks (partagés)
-    ├── settings.local.json        vos réglages à vous (hors git)
-    ├── rules/                     règles par sujet
-    │   └── composants.md
-    ├── skills/                    procédures
-    │   └── release-notes/
-    │       ├── SKILL.md
-    │       └── modele.md          annexe, lue au besoin
-    ├── agents/                    sous-agents
-    │   └── security-reviewer.md
-    ├── hooks/                     scripts des hooks
-    │   ├── no-commit-on-main.py
-    │   └── format.ts
-    └── kwa.policy.json            avec Kwa : la politique du projet
-
-~/.claude/                         les mêmes dossiers, pour tous vos projets
-├── CLAUDE.md   ├── rules/   ├── skills/   ├── agents/   └── settings.json"""
-
-
-def _j(obj) -> str:
-    return json.dumps(obj, indent=2, ensure_ascii=False)
 
 
 # Une brique : (id, pictogramme, nom, phrase, nature, pourquoi, quand, pas quand, qui la déclenche, où, coût,
@@ -226,14 +50,14 @@ BRICKS = [
      "Un fait à connaître en permanence (AGENTS.md) ou une contrainte qui doit tenir même si l'agent l'oublie (un hook).",
      "Le modèle, quand la description correspond à la demande ; ou vous, en tapant <code>/release-notes</code>.",
      "<code>.claude/skills/&lt;nom&gt;/SKILL.md</code>, ses annexes à côté ; <code>~/.claude/skills/</code> pour vous ; ou un plugin.",
-     "La description (1 536 caractères au plus) en permanence. Une fois appelée, le corps reste dans la conversation jusqu'à la fin ; après une compaction, les skills récentes sont réattachées (5 000 jetons chacune, 25 000 au total).",
+     "La description (1 536 caractères au plus) dès le démarrage. Une fois appelée, le corps reste dans la conversation jusqu'à la fin ; après une compaction, les skills appelées sont réattachées (5 000 jetons chacune, 25 000 au total), mais la liste des descriptions ne revient pas : l'agent ne pense plus tout seul aux skills qu'il n'a pas encore utilisées. Vous pouvez toujours la lancer avec <code>/nom</code>.",
      [(".claude/skills/release-notes/SKILL.md", SKILL_MD), (".claude/skills/release-notes/modele.md", SKILL_ANNEX)],
      ("plugin/skills/tdd/SKILL.md", "/kwa:tdd, le test d'abord")),
     ("sous-agent", "agent", "Sous-agent (.claude/agents/)", "Un second collaborateur, avec sa propre fenêtre de contexte.", "mixte",
      "Lire trente fichiers remplit la fenêtre de l'agent principal. Un sous-agent le fait à part et ne rend qu'un résumé. Il peut aussi avoir moins d'outils : un relecteur qui ne peut pas écrire relit mieux.",
      "Un travail de lecture volumineux, une relecture indépendante, plusieurs tâches en parallèle.",
      "Une petite tâche : le brief et le résumé coûtent plus que de la faire dans la session.",
-     "Le modèle, ou une skill qui le lance ; vous, en le demandant (« lance le relecteur »).",
+     "Le modèle, ou une skill qui le lance ; vous, en le nommant : tapez <code>@</code> et choisissez-le, ou écrivez <code>@agent-security-reviewer relis mon diff</code>.",
      "<code>.claude/agents/&lt;nom&gt;.md</code> ; <code>~/.claude/agents/</code> pour vous ; ou un plugin.",
      "Sa propre fenêtre, où il relit les fichiers d'instructions ; seul son résumé revient. La description de chaque sous-agent reste dans la fenêtre principale.",
      [(".claude/agents/security-reviewer.md", AGENT_MD)],
@@ -296,7 +120,8 @@ BRICKS = [
 
 # Ce qu'il faut savoir pour lire chaque fichier d'exemple : (repère dans le fichier, explication)
 NOTES = {
-    "CLAUDE.md": [("@AGENTS.md", "un import : Claude Code lit AGENTS.md à la place, et Codex lit AGENTS.md directement. Un seul fichier à tenir.")],
+    "CLAUDE.md": [("@AGENTS.md", "un import : Claude Code lit AGENTS.md à la place, et Codex lit AGENTS.md directement. Un seul fichier à tenir."),
+                  ("pourquoi le garder", "Claude Code récent lit AGENTS.md même sans ce pointeur, mais un simple <code>CLAUDE.local.md</code> suffit à le lui faire ignorer. Le pointeur évite ce piège.")],
     ".claude/rules/composants.md": [
         ("--- … ---", "l'en-tête, en YAML : des paires « clé: valeur » que l'outil lit, le modèle ne les voit pas comme du texte."),
         ("paths", "les fichiers concernés. <code>**</code> veut dire « dans tous les sous-dossiers », <code>*.tsx</code> « tout fichier qui finit par .tsx ». Sans <code>paths</code>, la règle est lue à chaque session, comme AGENTS.md : on la range à part seulement pour garder AGENTS.md court."),
@@ -308,7 +133,7 @@ NOTES = {
     ],
     ".claude/agents/security-reviewer.md": [
         ("tools", "les seuls outils qu'il aura : ici lire et chercher, pas écrire. C'est l'outil qui l'applique : la partie imposée d'un sous-agent. Le reste du fichier est du texte qu'il suit."),
-        ("model", "le modèle qui le fait tourner : <code>sonnet</code>, <code>opus</code>, <code>haiku</code>, ou absent pour garder celui de la session."),
+        ("model", "le modèle qui le fait tourner : <code>sonnet</code>, <code>opus</code>, <code>haiku</code>, ou <code>inherit</code> pour celui de la session. Absent, Claude Code choisit selon ses réglages, en général celui de la session."),
         ("le texte sous l'en-tête", "ses consignes. Il ne voit rien de votre conversation : seulement la tâche que l'agent principal lui donne. Sans Bash, il ne lance pas <code>git diff</code> : le diff lui est fourni dans la demande (le relecteur de Kwa a Bash, en lecture seule, gardé par un hook)."),
     ],
     ".claude/settings.json#hooks": [
@@ -337,7 +162,7 @@ NOTES = {
         ("DSN", "le nom de variable que ce serveur attend pour la base : chaque serveur documente les siens."),
     ],
     ".claude/settings.json#permissions": [
-        ("Bash(pnpm test *)", "la commande <code>pnpm test</code> suivie de n'importe quoi (l'étoile)."),
+        ("Bash(pnpm test *)", "la commande <code>pnpm test</code>, seule ou suivie d'arguments (l'étoile)."),
         ("Read(.env)", "un nom de fichier seul vaut à toute profondeur (comme dans un .gitignore) ; <code>./.env</code> ne viserait que le dossier courant. <code>.env.local</code> demande sa propre ligne."),
         ("Bash(rm -rf *)", "un filet : <code>rm -fr</code> ou <code>/bin/rm</code> passent à côté. Une règle Bash lit le texte de la commande."),
         ("deny, ask, allow", "évaluées dans cet ordre : un refus l'emporte toujours, même sur une autorisation plus précise, et vaut aussi pour chaque morceau d'une commande composée."),
@@ -348,7 +173,7 @@ NOTES = {
     ],
     ".claude/settings.json#sandboxs": [
         ("allowUnsandboxedCommands: false", "sans cela, Claude peut demander à relancer une commande hors du bac à sable quand elle échoue."),
-        ("network.allowedDomains", "les seuls sites joignables par le shell ; la liste part vide."),
+        ("network.allowedDomains", "les sites que le shell joint sans demander ; la liste part vide. Pour un autre site, le mode de permission de la session décide : une demande s'affiche en mode Manuel (<code>default</code>), <code>acceptEdits</code> ou <code>plan</code> ; le site est refusé en <code>dontAsk</code>, et en <code>auto</code> sauf si la commande l'a déclaré et que le classifieur l'a validé ; la connexion passe sans demande en <code>bypassPermissions</code>. Pour un refus net partout, <code>network.strictAllowlist: true</code>, à mettre dans vos réglages personnels (il est ignoré dans ceux du projet)."),
         ("filesystem.allowWrite", "les dossiers où écrire, en plus du projet."),
     ],
     ".claude/kwa.policy.json": [
@@ -389,14 +214,65 @@ CHECK = {
     "instructions": ("<code>/context</code> dans une session", "AGENTS.md (ou CLAUDE.md) dans la liste des fichiers de mémoire chargés"),
     "regle": ("<code>/context</code>, puis demander à l'agent de modifier un fichier <code>.tsx</code>", "la règle apparaît dans le contexte après la lecture du fichier"),
     "skill": ("<code>/skills</code>, puis taper <code>/release-notes</code>", "la skill dans la liste ; à l'appel, l'agent suit ses étapes"),
-    "sous-agent": ("demander « utilise security-reviewer pour relire mon diff »", "l'agent lance le sous-agent, qui travaille à part puis rend son résumé"),
+    "sous-agent": ("écrire <code>@agent-security-reviewer relis mon diff</code>", "l'agent lance le sous-agent, qui travaille à part puis rend son résumé"),
     "hook": ("<code>/hooks</code>, puis demander un commit sur main", "le hook dans la liste ; le commit est refusé avec la raison du script"),
     "mcp": ("<code>/mcp</code>", "le serveur connecté et ses outils"),
     "permission": ("<code>/permissions</code>", "vos règles, rangées par portée (projet, local, personnel)"),
-    "sandbox": ("<code>/sandbox</code>, puis demander à l'agent « curl https://example.com »", "le bac à sable actif ; la requête est refusée, le domaine n'étant pas autorisé"),
+    "sandbox": ("<code>/sandbox</code>, puis demander à l'agent « curl https://example.com »", "le bac à sable actif ; en mode Manuel (<code>default</code>, celui où l'outil vous demande avant d'agir), une demande d'autorisation pour example.com s'affiche ; en <code>dontAsk</code> ou avec <code>strictAllowlist</code>, un refus net"),
     "plugin": ("<code>/plugin</code>", "le plugin installé et activé ; ses skills dans <code>/skills</code>"),
     "politique": ("<code>kwa doctor .</code> dans le terminal", "« cible conforme », ou la liste de ce qui manque"),
 }
+
+# Portées : où une brique peut vivre, et qui l'emporte quand elle existe à plusieurs endroits (docs Claude Code, 2026-10-14)
+SCOPES = [  # (brique, emplacements du plus large au plus précis, en cas de doublon)
+    ("instructions", "géré (organisation) · <code>~/.claude/CLAUDE.md</code> · <code>CLAUDE.md</code> du projet · <code>CLAUDE.local.md</code>",
+     "Rien n'écrase rien : tout est mis bout à bout. Deux consignes contraires ? Le modèle suit l'une ou l'autre : à éviter."),
+    ("regle", "<code>~/.claude/rules/</code> · <code>.claude/rules/</code>", "Les deux sont chargées, les vôtres d'abord ; aucune n'annule l'autre."),
+    ("skill", "organisation · <code>~/.claude/skills/</code> · <code>.claude/skills/</code> · plugin",
+     "Même nom : organisation, puis la vôtre, puis celle du projet. Celles d'un plugin ont leur préfixe, donc pas de conflit."),
+    ("sous-agent", "géré · <code>--agents</code> · <code>.claude/agents/</code> · <code>~/.claude/agents/</code> · plugin",
+     "Même nom : géré, puis la ligne de commande, puis le projet, puis le vôtre, puis le plugin."),
+    ("hook", "réglages personnels, du projet, locaux, gérés · plugin · en-tête d'une skill ou d'un agent",
+     "Tous s'additionnent et tournent en parallèle. Un hook identique dans deux fichiers de réglages ne tourne qu'une fois ; la copie d'un plugin ou d'une skill tourne en plus."),
+    ("mcp", "plugin · <code>~/.claude.json</code> (vous) · <code>.mcp.json</code> (projet) · local",
+     "Même nom : local, puis projet, puis le vôtre, puis le plugin. L'entrée gagnante est prise entière, sans mélange."),
+    ("permission", "<code>~/.claude/settings.json</code> · <code>.claude/settings.json</code> · <code>.claude/settings.local.json</code> · ligne de commande · géré",
+     "Les listes s'additionnent ; un <code>deny</code> venu de n'importe où bloque un <code>allow</code> d'ailleurs."),
+    ("plugin", "vous (user) · projet · local · géré", "Activé ou non : local, puis projet, puis le vôtre ; l'organisation peut l'imposer."),
+]
+
+# Le même rôle sous Codex (docs Codex, 2026-10-14). Ce que Kwa écrit pour Codex : README, section « Claude Code et Codex ».
+CODEX = {
+    "instructions": "<code>AGENTS.md</code> du projet, et <code>~/.codex/AGENTS.md</code> ; du dossier racine au dossier courant, le plus proche pèse le plus.",
+    "regle": "pas d'équivalent : un <code>AGENTS.md</code> par sous-dossier joue ce rôle.",
+    "skill": "<code>.agents/skills/&lt;nom&gt;/SKILL.md</code> ou <code>~/.agents/skills/</code>, même format ; on l'appelle avec <code>$nom</code>.",
+    "sous-agent": "un fichier TOML dans <code>.codex/agents/</code> ou <code>~/.codex/agents/</code> (<code>name</code>, <code>description</code>, <code>developer_instructions</code>).",
+    "hook": "<code>.codex/hooks.json</code>, <code>~/.codex/hooks.json</code> ou des tables <code>[hooks]</code> dans <code>config.toml</code>. Des événements de même nom (<code>PreToolUse</code>, <code>PostToolUse</code>, <code>Stop</code>, <code>SessionStart</code>…), mais une douzaine au lieu d'une trentaine. Les hooks du projet ne se chargent que si le projet est approuvé, et chaque hook doit être validé dans <code>/hooks</code>, puis revalidé s'il change.",
+    "mcp": "une table <code>[mcp_servers.&lt;nom&gt;]</code> dans <code>~/.codex/config.toml</code>, ou <code>codex mcp add</code>.",
+    "permission": "<code>approval_policy</code> dans <code>config.toml</code>, et des règles de commandes <code>prefix_rule(…)</code> dans <code>.codex/rules/*.rules</code>.",
+    "sandbox": "<code>sandbox_mode</code> dans <code>config.toml</code> : <code>read-only</code>, <code>workspace-write</code> ou <code>danger-full-access</code>.",
+    "plugin": "des plugins Codex existent aussi (skills, serveurs MCP, hooks), installés depuis <code>/plugins</code>.",
+    "politique": "la même politique : Kwa la traduit en hooks et en règles de commandes pour Codex.",
+}
+
+# La fenêtre de contexte au fil d'une session : (moment, [(ce qui entre, nature)], commentaire)
+TIMELINE = [
+    ("Démarrage", [("Consignes du système et de l'environnement", "fixe"), ("CLAUDE.md : le vôtre et celui du projet", "fixe"),
+                   ("Mémoire automatique (MEMORY.md)", "fixe"),
+                   ("Règles sans paths", "fixe"), ("Descriptions des skills et des sous-agents", "fixe"), ("Noms des outils MCP", "fixe")],
+     "Avant votre premier message, la fenêtre n'est déjà pas vide. Les définitions complètes des outils MCP attendent qu'on en ait besoin."),
+    ("Lecture de src/Button.tsx", [("Le fichier lu", "travail"), ("La règle composants.md (paths)", "regle")],
+     "La règle entre parce que le fichier correspond à ses <code>paths</code>."),
+    ("Appel de /release-notes", [("Le corps de la skill", "skill"), ("La sortie de gh pr list", "travail")],
+     "Le corps de la skill reste là jusqu'à la fin de la session."),
+    ("Relecture par un sous-agent", [("Son résumé, quelques lignes", "travail")],
+     "Il lit trente fichiers dans sa propre fenêtre ; seul le résumé revient ici."),
+    ("Après /compact", [("Consignes du système (toujours là)", "fixe"),
+                        ("CLAUDE.md, mémoire automatique et règles sans paths, relus", "fixe"), ("Noms des outils MCP", "fixe"),
+                        ("Le résumé de la conversation", "travail"), ("Jusqu'à 5 fichiers lus ou modifiés, relus (les plus récents)", "travail"),
+                        ("Les skills appelées, réattachées (5 000 jetons chacune, 25 000 en tout)", "skill")],
+     "Le reste de la conversation est résumé. La règle à <code>paths</code> reviendra au prochain fichier concerné ; la liste des skills n'est pas réinjectée, seules les skills appelées le sont."),
+]
 
 NEEDS = [  # (besoin, brique, pourquoi)
     ("L'agent doit savoir comment lancer les tests", "instructions", "un fait valable à chaque session"),
@@ -410,7 +286,7 @@ NEEDS = [  # (besoin, brique, pourquoi)
     ("Partager les mêmes skills et gardes entre cinq dépôts", "plugin", "une seule source, mise à jour d'un coup"),
     ("Interdire npm run deploy:prod dans ce projet", "permission", "une ligne deny : Bash(npm run deploy:prod*) ; une politique Kwa seulement s'il faut aussi l'appliquer sous Codex"),
     ("Refuser un curl qui contient à la fois prod et reset", "politique", "une combinaison de motifs (all, any), qu'une règle de permission ne sait pas dire"),
-    ("Empêcher le shell de joindre autre chose que le registre npm", "sandbox", "une limite que le système d'exploitation fait respecter, quelle que soit la commande"),
+    ("Empêcher le shell de joindre autre chose que le registre npm", "sandbox", "une limite que le système d'exploitation fait respecter, quelle que soit la commande ; avec strictAllowlist dans vos réglages personnels, les autres sites sont refusés sans demande"),
     ("Une procédure que je lance seulement à la main", "skill", "avec disable-model-invocation: true, le modèle ne la déclenche jamais seul"),
     ("Ne pas rendre la main tant que les tests sont rouges", "hook", "un hook Stop ; attention à la boucle, Claude Code s'arrête après 8 relances"),
 ]
@@ -446,6 +322,7 @@ def card(b) -> str:
 <div><dt>Qui le déclenche</dt><dd>{who}</dd></div>
 <div><dt>Où il vit</dt><dd>{where}</dd></div>
 <div><dt>Ce qu'il coûte au contexte</dt><dd>{cost}</dd></div>
+{f'<div><dt>Sous Codex</dt><dd>{CODEX[bid]}</dd></div>' if bid in CODEX else ""}
 <div class="br-check"><dt>Vérifier que ça marche</dt><dd>{do} : {see}.</dd></div>
 </dl>
 {pit}
@@ -457,6 +334,10 @@ def card(b) -> str:
 def page() -> str:
     names = {b[0]: b[2] for b in BRICKS}
     nav = "".join(f'<a href="#{b[0]}">{pictos.svg(b[1])}{html.escape(b[2].split(" (")[0])}</a>' for b in BRICKS)
+    scopes = "".join(f'<tr><td><a href="#{i}">{html.escape(names[i].split(" (")[0])}</a></td><td>{w}</td><td>{d}</td></tr>' for i, w, d in SCOPES)
+    tl_steps = "".join(f'<li>{html.escape(t)}</li>' for t, _items, _note in TIMELINE)
+    tl_json = json.dumps([{"items": items, "note": note} for _t, items, note in TIMELINE], ensure_ascii=False).replace("</", "<\\/")
+    player = shell.player("Dérouler la session")
     lis = lambda ids: "".join(f'<li><a href="#{i}">{html.escape(names[i].split(" (")[0])}</a></li>' for i in ids)
     guess = "".join(f'<button type="button" class="br-g" data-g="{b[0]}">{html.escape(b[2].split(" (")[0])}</button>' for b in BRICKS)
     needs = "".join(f'<button type="button" class="br-need" aria-pressed="false" data-to="{to}" data-why="{html.escape(why)}">{html.escape(need)}</button>'
@@ -475,7 +356,7 @@ Chaque fiche dit pourquoi la brique existe, quand s'en servir, où elle vit, et 
 <p>Claude Code (ou Kwa) l'applique avant ou après chaque action, sans demander l'avis du modèle.</p>
 <ul>{lis(["hook", "permission", "politique"])}<li>la liste <code>tools</code> d'un sous-agent</li></ul></div>
 </div>
-<p class="kd-note">Une brique « mixte » a les deux : un sous-agent suit son texte, mais ne peut utiliser que les outils permis. Un plugin vaut ce qu'il contient. Page écrite pour Claude Code ; Codex lit le même <code>AGENTS.md</code>, et ses autres emplacements sont dans le <a href="https://github.com/nesyouyou/kwa#claude-code-et-codex">README de Kwa</a>.</p></section>
+<p class="kd-note"><span class="kd-kind kd-kind--barrière">barrière</span> Un troisième cas : le <a href="#sandbox">bac à sable</a>, où c'est le système d'exploitation qui contraint la commande elle-même, quoi qu'elle dise. Une brique « mixte » a les deux premiers : un sous-agent suit son texte, mais ne peut utiliser que les outils permis. Un plugin vaut ce qu'il contient. Page écrite pour Claude Code ; Codex lit le même <code>AGENTS.md</code>, et ses autres emplacements sont dans le <a href="https://github.com/nesyouyou/kwa#claude-code-et-codex">README de Kwa</a>.</p></section>
 
 <section class="br-trip" aria-labelledby="br-trip-h"><h2 id="br-trip-h" class="br-h">Le trajet d'une commande</h2>
 <p class="kd-note">L'agent veut lancer <code>git commit</code>. Voici, dans l'ordre, ce qui peut l'arrêter. Chaque étape est une brique.</p>
@@ -503,6 +384,18 @@ Chaque fiche dit pourquoi la brique existe, quand s'en servir, où elle vit, et 
 <section class="br-where" aria-labelledby="br-where-h"><h2 id="br-where-h">Où tout cela vit</h2>
 <p class="kd-note">Un projet qui utilise toutes les briques. Rien n'est obligatoire : la plupart des projets commencent par <code>AGENTS.md</code> et une ou deux règles.</p>
 {code(PROJECT_TREE)}</section>
+
+<section class="br-ctx" aria-labelledby="br-ctx-h"><h2 id="br-ctx-h" class="br-h">La fenêtre de contexte, au fil d'une session</h2>
+<p class="kd-note">Ce que chaque brique fait entrer dans la fenêtre, et ce qui en sort à la compaction. Avancez pas à pas.</p>
+<div class="br-tl" id="br-tl">{player}
+<ol class="br-tl-steps">{tl_steps}</ol>
+<div class="br-tl-win" aria-live="polite"><div class="br-tl-stack" id="br-tl-stack"></div><p class="br-tl-note" id="br-tl-note"></p></div>
+<ul class="br-tl-key"><li class="br-k-fixe">chargé au démarrage</li><li class="br-k-regle">règle</li><li class="br-k-skill">skill</li><li class="br-k-travail">le travail de la session</li></ul></div>
+<script type="application/json" id="br-tl-data">{tl_json}</script></section>
+
+<section class="br-scopes" aria-labelledby="br-scopes-h"><h2 id="br-scopes-h" class="br-h">Portées : qui l'emporte</h2>
+<p class="kd-note">Une brique peut exister chez vous, dans le projet, dans un plugin ou être imposée par l'organisation. Quand elle existe deux fois, la règle n'est pas la même partout.</p>
+<div class="kd-wrap"><table><thead><tr><th>Brique</th><th>Où elle peut vivre</th><th>En cas de doublon</th></tr></thead><tbody>{scopes}</tbody></table></div></section>
 
 {"".join(card(b) for b in BRICKS)}
 
