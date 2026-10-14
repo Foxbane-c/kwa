@@ -149,7 +149,7 @@ class Parcours(unittest.TestCase):
 
     def test_context_examples_are_valid_and_secret_free(self):
         text = self.page("parcours-contexte.html")
-        self.assertIn("${DB_CONNECTION_STRING}", text)
+        self.assertIn("${DB_URL}", text)
         self.assertIsNone(re.search(r"sk-[A-Za-z0-9]{8,}", text))
 
     def test_no_temp_path_or_private_term(self):

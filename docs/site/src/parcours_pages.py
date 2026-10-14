@@ -23,6 +23,13 @@ TOC = {  # barre latérale : (ancre, libellé) sous la page courante
     "parcours-harness.html": [(f"etape-{n}", f"{n} · {t}" if n != "0" else t) for n, t in HARNESS_NAV],
 }
 
+import examples  # noqa: E402
+
+# Les exemples viennent de examples.py : les mêmes que sur la page « Les briques »
+AGENTS_GOOD, AGENTS_BAD = examples.AGENTS_MD, examples.AGENTS_BAD
+RULE_EX, SKILL_EX, AGENT_EX = examples.RULE_MD, examples.SKILL_MD, examples.AGENT_MD
+MCP_EX, SETTINGS_EX = examples.MCP_JSON, examples.PERMISSIONS_JSON
+
 DOC = "https://code.claude.com/docs/en/"
 API = "https://platform.claude.com/docs/en/"
 
@@ -177,14 +184,15 @@ def culture() -> str:
 <tr><td><strong>La boucle de l'agent</strong> (étape 6)</td><td>Un tour : réfléchir, appeler un outil, lire le résultat</td><td>Le modèle, quand sa réponse ne demande plus d'outil</td></tr>
 <tr><td><strong>La boucle autour de l'agent</strong></td><td>Toute la session, avec le même prompt, tant qu'une condition n'est pas remplie</td><td>Un critère écrit à l'avance, ou un nombre maximal de tours</td></tr>
 <tr><td><strong>La tâche planifiée</strong></td><td>Une session à intervalle fixe ou sur un événement</td><td>Une date d'expiration, ou vous</td></tr></tbody></table>
-<h3 class="pc-h3">Ce qui existe vraiment</h3>
-<ul class="pc-list">
+<p>À retenir pour la suite : une boucle n'est utile que si une <strong>commande</strong> peut dire quand c'est fini (des tests qui passent), et elle doit avoir un <strong>plafond</strong> de tours.</p>""" +
+         reveal("Pour aller plus loin : les outils de boucle, un par un", """<ul class="pc-list">
 <li><strong>« Ralph »</strong> : une technique popularisée par un développeur, qui la résume à une ligne de shell : <code>while :; do cat PROMPT.md | claude-code ; done</code>. L'agent repart du même prompt à chaque tour, et ce qu'il a écrit dans les fichiers sert de mémoire. Le plugin officiel <code>ralph-wiggum</code> de Claude Code en fait une commande, <code>/ralph-loop</code>, qui s'arrête quand l'agent écrit une phrase convenue (<code>--completion-promise</code>) ou après un nombre de tours (<code>--max-iterations</code>, illimité par défaut : la documentation recommande de toujours le fixer).</li>
 <li><strong>Le hook <code>Stop</code></strong>, le mécanisme qui rend cela possible : quand l'agent veut s'arrêter, un hook peut répondre « bloquer » avec une raison, et l'agent continue. Claude Code limite ces relances à huit d'affilée par défaut, et le champ <code>stop_hook_active</code> permet au hook de savoir qu'il a déjà relancé.</li>
+<li><strong><code>/goal &lt;condition&gt;</code></strong> dans Claude Code : la boucle autour de l'agent, prête à l'emploi. Après chaque tour, un petit modèle juge la condition d'après la conversation (il ne lance aucune commande) ; tant qu'elle n'est pas remplie, Claude repart. Bornez-le dans la condition (« ou arrête après 20 tours »). C'est un hook <code>Stop</code> à prompt, fourni par Claude Code.</li>
 <li><strong><code>/loop</code></strong> dans Claude Code : relance un prompt à intervalle (<code>/loop 5m …</code>), ou laisse Claude choisir l'attente. Ces tâches vivent dans la session ouverte et expirent après sept jours.</li>
 <li><strong>Les routines</strong> (<code>/schedule</code>) tournent dans le cloud d'Anthropic, sur un horaire, un appel d'API ou un événement GitHub, même ordinateur éteint, et sans demande d'autorisation pendant l'exécution. Une GitHub Action (<code>claude-code-action</code>) peut faire de même sur un <code>cron</code>.</li>
 <li><strong>Les limites intégrées</strong> : <code>claude -p --max-turns 3</code> ou <code>--max-budget-usd</code> en ligne de commande, <code>maxTurns</code> et <code>maxBudgetUsd</code> dans l'Agent SDK. Sans elles, il n'y a pas de limite.</li>
-</ul>
+</ul>""") + f"""
 <h3 class="pc-h3">Quand c'est utile, et ce que ça coûte</h3>
 <p>Une boucle vaut la peine quand le résultat se <strong>vérifie par une machine</strong> : des tests qui passent, une compilation sans erreur, une migration de code fichier par fichier. Elle est risquée quand « terminé » est une affaire de jugement. Les risques sont ceux que la documentation d'Anthropic associe à l'autonomie : un coût qui grandit à chaque tour, des erreurs qui s'accumulent d'un tour à l'autre, et une boucle qui ne s'arrête pas faute de critère.</p>
 <table class="pc-table"><thead><tr><th>Avant de lancer une boucle</th><th>Avec Kwa</th></tr></thead><tbody>
@@ -240,74 +248,11 @@ def culture() -> str:
 # Parcours 2 : context engineering
 # ---------------------------------------------------------------------------------------------------------------------
 
-AGENTS_GOOD = """# AGENTS.md
 
-Application web (Next.js, pnpm). Répondre en français.
 
-## Vérifier avant de dire « fait »
-- `npx tsc --noEmit` puis `pnpm test` : citer le résultat.
-- `pnpm lint` signale à tort les fichiers générés : lancer `pnpm lint src`.
 
-## Pièges
-- Le serveur de développement écoute sur le port 4000, fixé dans `.env.example`.
-- Après un changement de schéma : `pnpm db:migrate:create <nom>` puis `pnpm db:migrate`.
 
-## Interdit
-- Pas de commit sur main : une branche par sujet, une PR par branche."""
 
-AGENTS_BAD = """# AGENTS.md
-
-Tu es un expert senior. Écris du code propre, performant et maintenable.
-Fais attention à la sécurité. Teste bien ton code. Sois prudent."""
-
-RULE_EX = """---
-paths:
-  - "src/api/**/*.ts"
----
-
-# Règles de l'API
-
-- Valider toute entrée avant de l'utiliser.
-- Répondre aux erreurs avec le format commun (code, message, identifiant de requête).
-- Un endpoint nouveau a un test qui échoue avant d'être écrit."""
-
-SKILL_EX = """---
-name: relance-client
-description: Rédiger une relance commerciale. À utiliser quand l'utilisateur demande un mail de relance ou « relance ce client ».
-disable-model-invocation: false
----
-
-# Relance client
-
-1. Demander la date et l'objet de la dernière proposition si absents.
-2. Rédiger un objet et trois phrases au plus, une question fermée.
-3. Relire : aucun montant ni date qui ne vienne de l'utilisateur."""
-
-AGENT_EX = """---
-name: reviewer
-description: Relit un diff et signale les risques. À utiliser après une modification, avant la PR.
-tools: Read, Glob, Grep
-model: sonnet
----
-
-Tu relis un changement sans le modifier. Pour chaque constat : fichier, comportement observé, comment le reproduire,
-importance. N'affirme pas avoir exécuté une commande que tu ne peux pas lancer."""
-
-MCP_EX = {
-    "mcpServers": {
-        "base-de-donnees": {
-            "type": "stdio",
-            "command": "npx",
-            "args": ["-y", "@bytebase/dbhub"],
-            "env": {"DSN": "${DB_CONNECTION_STRING}"},
-        },
-        "api-interne": {
-            "type": "http",
-            "url": "https://mcp.example.org/mcp",
-            "headers": {"Authorization": "Bearer ${API_TOKEN}"},
-        },
-    }
-}
 
 GRAPHIFY_CMDS = """graphify query "qu'est-ce qui relie l'authentification à la base ?"
 graphify path "LoginForm" "users"      # le plus court chemin entre deux nœuds
@@ -354,13 +299,6 @@ MCP_DEV = {
     }
 }
 
-SETTINGS_EX = {
-    "permissions": {
-        "allow": ["Bash(npm test *)", "Bash(git status)"],
-        "ask": ["Bash(git push *)"],
-        "deny": ["Read(./.env)", "Read(./secrets/**)", "Bash(rm -rf *)", "mcp__playwright__browser_run_code_unsafe"],
-    }
-}
 
 
 def parse_front(text: str) -> dict:
@@ -435,7 +373,7 @@ def contexte() -> str:
     rule_quiz = [
         ("allow Bash(aws s3 ls) et deny Bash(aws *) : que se passe-t-il pour aws s3 ls ?", pill("deny") + " Refusé. Une règle d'interdiction large bloque aussi ce qu'une règle d'autorisation plus précise voudrait laisser passer."),
         ("allow Bash(git push *) et ask Bash(git push *) : que se passe-t-il pour git push origin feat ?", pill("ask") + " Une confirmation est demandée. Une règle « demander » l'emporte sur une règle « autoriser »."),
-        ("Un hook PreToolUse répond « autoriser » mais deny Read(./.env) existe : lecture de .env ?", pill("deny") + " Refusée. Les règles d'interdiction et de confirmation sont évaluées quel que soit le résultat d'un hook."),
+        ("Un hook PreToolUse répond « autoriser » mais deny Read(.env) existe : lecture de .env ?", pill("deny") + " Refusée. Les règles d'interdiction et de confirmation sont évaluées quel que soit le résultat d'un hook."),
     ]
     quiz_rows = "".join(f"<tr><td>{esc(q)}</td><td>{reveal('Mon pronostic', a)}</td></tr>" for q, a in rule_quiz)
 
@@ -497,21 +435,21 @@ def contexte() -> str:
         ("5", "Les skills", "Une procédure chargée seulement quand elle sert.",
          f"""<p>Une skill est un dossier avec un fichier <code>SKILL.md</code> : un en-tête qui dit <strong>quand</strong> l'appeler, un corps qui dit <strong>comment</strong>. Claude l'invoque quand la description correspond à la conversation, ou vous la tapez avec <code>/nom</code>.</p>
 {code(SKILL_EX)}
-<p>Le point clé est le <strong>chargement progressif</strong> : seule la description reste toujours dans le contexte ; le corps n'est lu qu'à l'appel, et les fichiers annexes seulement au besoin. Une skill volumineuse ne coûte donc rien tant qu'on ne s'en sert pas.</p>
+<p>Le point clé est le <strong>chargement progressif</strong> : seule la description reste toujours dans le contexte ; le corps n'est lu qu'à l'appel, et les fichiers annexes seulement au besoin. Une skill volumineuse ne coûte donc rien tant qu'on ne s'en sert pas ; une fois appelée, son corps reste dans la conversation jusqu'à la fin de la session.</p>
 {SKL}
 <table class="pc-table"><thead><tr><th>Emplacement</th><th>Portée</th></tr></thead><tbody>
 <tr><td><code>~/.claude/skills/&lt;nom&gt;/SKILL.md</code></td><td>Personnel : tous vos projets</td></tr>
 <tr><td><code>.claude/skills/&lt;nom&gt;/SKILL.md</code></td><td>Ce dépôt, partagé en le versionnant</td></tr>
 <tr><td>Plugin</td><td>Là où le plugin est activé</td></tr></tbody></table>
-<p>Champs utiles : <code>disable-model-invocation: true</code> pour ne la lancer que par commande, <code>allowed-tools</code> pour pré-autoriser des outils pendant son exécution.</p>
+<p>Champs utiles : <code>disable-model-invocation: true</code> pour ne la lancer que par commande (le modèle ne la déclenche jamais seul), <code>allowed-tools</code> pour pré-autoriser des outils pendant son exécution.</p>
 <p><strong>Exercice</strong> : transformez une tâche que vous répétez (relance, compte rendu, revue) en skill. Écrivez d'abord la description : elle doit dire quand, jamais le déroulé.</p>"""),
         ("6", "Les agents", "Un second collaborateur avec sa propre fenêtre de contexte.",
          f"""<p>Un <strong>sous-agent</strong> est un assistant spécialisé qui travaille dans une fenêtre de contexte isolée, avec ses propres consignes, ses propres outils et éventuellement un autre modèle. Il fait la tâche et ne renvoie qu'un résumé : la lecture de trente fichiers ne pollue pas la conversation principale. C'est la technique « déléguer à un contexte propre » du début du parcours.</p>
 <p>Dans un schéma <strong>orchestrateur</strong>, l'agent principal ne lit pas tout : il distribue à chaque sous-agent le <em>minimum</em> dont il a besoin (la tâche, les critères, les fichiers utiles), puis ne reçoit que des résumés. Comparez les deux modes :</p>
 {ORCH}
 {code(AGENT_EX)}
-<p>Le fichier vit dans <code>.claude/agents/</code> (projet) ou <code>~/.claude/agents/</code> (personnel). Les champs obligatoires sont <code>name</code> et <code>description</code> ; <code>tools</code> restreint ses outils (ici, lecture seule) et hérite de tout si on l'omet. On l'invoque en le nommant, par @-mention, ou pour toute la session.</p>
-<p>Limites à connaître : un sous-agent n'a pas votre conversation et un nouvel appel repart d'un contexte vide (un sous-agent terminé peut toutefois être repris), il consomme du quota comme la session principale, et le nombre d'agents simultanés et la profondeur d'imbrication sont bornés.</p>
+<p>Le fichier vit dans <code>.claude/agents/</code> (projet) ou <code>~/.claude/agents/</code> (personnel). Les champs obligatoires sont <code>name</code> et <code>description</code> ; <code>tools</code> restreint ses outils (ici, lecture seule) et hérite de tout si on l'omet. On l'invoque en le nommant (« utilise security-reviewer »), par mention (<code>@agent-security-reviewer relis mon diff</code>, ou <code>@</code> puis le choisir dans la liste), ou pour toute la session.</p>
+<p>Limites à connaître : un sous-agent n'a pas votre conversation et chaque nouvel appel démarre sans mémoire des appels précédents, sauf si l'on demande explicitement de reprendre le même sous-agent, il consomme du quota comme la session principale, et le nombre d'agents simultanés et la profondeur d'imbrication sont bornés.</p>
 <p><strong>Exercice</strong> : écrivez un agent « relecteur » en lecture seule pour votre projet. Quelles sont les trois informations que vous lui donnez avec sa tâche, puisqu'il n'a pas votre conversation ?</p>""" +
          reveal("Piste", "<p>La demande d'origine et ses critères de réussite, le diff ou les fichiers touchés, et les résultats des vérifications déjà faites. Un agent ne voit que ce qu'on lui envoie : un résumé vague produit une relecture vague.</p>")),
         ("7", "MCP : brancher des outils", "Un protocole commun pour donner à l'agent l'accès à des données et à des services.",
@@ -560,7 +498,7 @@ def contexte() -> str:
 {code(settings_json)}
 <p>Trois listes, évaluées dans cet ordre : <strong>deny</strong>, puis <strong>ask</strong>, puis <strong>allow</strong>. La première qui correspond décide, quelle que soit la précision des règles. Pronostiquez :</p>
 <table class="pc-table"><thead><tr><th>Cas</th><th>Résultat</th></tr></thead><tbody>{quiz_rows}</tbody></table>
-<p>Les <strong>modes</strong> règlent le niveau d'autonomie : <code>default</code> (demande à la première utilisation), <code>acceptEdits</code> (accepte les modifications de fichiers), <code>plan</code> (explore sans modifier), <code>auto</code> (un classifieur vérifie les actions), <code>dontAsk</code> (refuse ce qui demanderait), <code>bypassPermissions</code> (aucune demande : réservé aux environnements isolés).</p>
+<p>Les <strong>modes</strong> règlent le niveau d'autonomie : <code>default</code> (le mode « Manuel » dans l'interface : demande à la première utilisation), <code>acceptEdits</code> (accepte les modifications de fichiers), <code>plan</code> (explore sans modifier), <code>auto</code> (un classifieur vérifie les actions), <code>dontAsk</code> (refuse ce qui demanderait), <code>bypassPermissions</code> (aucune demande : réservé aux environnements isolés).</p>
 <p><strong>Limite à connaître</strong> : une règle sur une commande shell lit le texte que l'agent écrit. Elle couvre la forme habituelle d'un appel, pas toutes ses variantes : ce n'est pas une frontière de sécurité autour d'un programme. Pour bloquer la lecture d'un fichier par les outils de fichiers, on écrit une règle <code>Read</code> sur son chemin.</p>
 <p>Ce que les règles ne savent pas dire (« pas de commit sur main », « une PR doit être liée à une issue ») se règle avec des <strong>hooks</strong>. Un hook est un script que l'outil lance à un moment précis du travail (avant un outil, après une modification, à la fin d'une réponse). Il reçoit du JSON sur son entrée, et s'il termine avec le code <strong>2</strong>, l'action est bloquée et son message d'erreur revient à l'agent comme retour. C'est l'objet du parcours Harness, où l'on en écrit un.</p>"""),
         ("10", "Choisir le bon mécanisme", "Chaque besoin a son bon support : la synthèse du parcours.",
@@ -574,7 +512,7 @@ def contexte() -> str:
 <tr><td>Une commande ou un fichier toujours interdit</td><td>Règle de permission (<code>deny</code>)</td><td>Aucun, appliqué par l'outil</td></tr>
 <tr><td>Une décision qui dépend du contexte (la branche, le contenu) et ne doit jamais dépendre du modèle</td><td>Hook</td><td>Aucun, appliqué par l'outil</td></tr>
 <tr><td>Partager le tout avec une équipe</td><td>Dépôt versionné, ou plugin qui regroupe skills, hooks, agents et serveurs</td><td>Selon ce qu'il contient</td></tr></tbody></table>
-<p>Cas pratique : « les composants React se testent avec Testing Library, jamais avec Enzyme ». Où l'écrire ? Une règle avec <code>paths: src/**/*.tsx</code>, parce que cela ne concerne que ces fichiers. Et « ne jamais supprimer une migration » ? Un hook, parce que c'est une garantie.</p>
+<p>Cas pratique : « les composants React se testent avec Testing Library, jamais avec Enzyme ». Où l'écrire ? Une règle avec <code>paths: src/**/*.tsx</code>, parce que cela ne concerne que ces fichiers. Et « ne jamais supprimer une migration » ? Une permission <code>deny</code> ne lit que le texte de la commande : <code>rm</code> serait bloqué, mais <code>git rm</code>, <code>mv</code> ou un chemin écrit autrement lui échapperaient. Un hook, lui, peut regarder quels fichiers la commande vise et refuser si l'un d'eux est dans <code>migrations/</code> : il reconnaît bien plus de formes de commande, sans être infaillible. C'est une décision qui dépend du contexte.</p>
 <p>Pour la gestion d'équipe, deux compléments existent : les <strong>plugins</strong> (un paquet installable qui regroupe skills, hooks, sous-agents et serveurs MCP) et les réglages gérés par l'organisation. Le parcours Harness montre comment l'ensemble s'assemble.</p>"""),
     ]
     out = "\n".join(stage(*x) for x in s)
