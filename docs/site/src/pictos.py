@@ -18,6 +18,11 @@ PICTOS = {  # nom -> (style, contenu SVG sur une grille 24x24 ou 16x16)
     "eye": ("stroke", "24", '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
     "user": ("stroke", "24", '<circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/>'),
     "hook": ("stroke", "24", '<path d="M12 3v11"/><path d="M6 14a6 6 0 0 0 12 0"/><circle cx="12" cy="5" r="1.6"/>'),
+    "list": ("stroke", "24", '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h1M4 12h1M4 18h1"/>'),
+    "plug": ("stroke", "24", '<path d="M9 3v5M15 3v5"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v4"/>'),
+    "box": ("stroke", "24", '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>'),
+    "lock": ("stroke", "24", '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>'),
+    "settings": ("stroke", "24", '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'),
     # petite tête d'agent en pixels : antenne, grosses joues, yeux et sourire en creux
     "agent": ("fill", "16", '<path fill-rule="evenodd" d="M7 1h2v3h4v1h1v1h1v4h-1v1h-1v1H3v-1H2v-1H1V6h1V5h1V4h4z'
                              'M5 6h2v3H5zM9 6h2v3H9zM7 10h2v1H7zM3 9h1v1H3zM12 9h1v1h-1z"/>'),

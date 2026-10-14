@@ -630,6 +630,70 @@ class WorkflowsPage(unittest.TestCase):
                 self.assertIn(f"src/{f}", pages, f"{f} n'est chargé par aucune page")
 
 
+class Bricks(unittest.TestCase):
+    """Page « Les briques » : chaque fiche est complète et ses exemples sont justes."""
+    SITE = os.path.join(PACK, "docs", "site")
+
+    def setUp(self):
+        sys.path.insert(0, os.path.join(self.SITE, "src"))
+        import bricks
+        self.b = bricks
+
+    def test_every_brick_has_its_facts_an_example_and_a_real_kwa_file(self):
+        ids = [x[0] for x in self.b.BRICKS]
+        self.assertEqual(len(ids), len(set(ids)))
+        for bid, _pic, _name, _line, _nature, why, when, when_not, who, where, cost, files, real in self.b.BRICKS:
+            for field in (why, when, when_not, who, where, cost):
+                self.assertTrue(field.strip(), bid)
+            self.assertTrue(files, bid)
+            target = os.path.join(self.SITE, real[0].split("#")[0]) if ".html" in real[0] else os.path.join(PACK, real[0])
+            self.assertTrue(os.path.exists(target), f"{bid} : {real[0]}")
+            self.assertIn(bid, self.b.CHECK, f"{bid} : pas de « Vérifier que ça marche »")
+        self.assertEqual({to for _n, to, _w in self.b.NEEDS} - set(ids), set())
+
+    def test_mcp_examples_use_the_variable_dbhub_reads(self):
+        """@bytebase/dbhub lit DSN (ou --dsn), pas DATABASE_URL : sinon le serveur démarre sans base."""
+        sys.path.insert(0, os.path.join(self.SITE, "src"))
+        import parcours_pages
+        for servers in (self.b.MCP_JSON["mcpServers"], parcours_pages.MCP_EX["mcpServers"]):
+            for name, cfg in servers.items():
+                if "@bytebase/dbhub" in cfg.get("args", []):
+                    self.assertIn("DSN", cfg.get("env", {}), name)
+
+    def test_examples_are_valid_files(self):
+        for bid, *_rest, files, _real in self.b.BRICKS:
+            for path, content in files:
+                if path.endswith(".json"):
+                    json.loads(content)
+                if path.endswith(".md") and content.startswith("---"):
+                    head = content.split("---")[1]
+                    self.assertIn("name:" if "/rules/" not in path else "paths:", head, path)
+                if path.endswith(".py"):
+                    compile(content, path, "exec")
+
+    def test_the_python_hook_example_really_denies_a_commit_on_main(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run(["git", "init", "-q", "-b", "main", tmp], check=True)
+            hook = os.path.join(tmp, "hook.py")
+            open(hook, "w").write(self.b.HOOK_PY)
+            run = lambda cmd: subprocess.run([sys.executable, hook], input=json.dumps(
+                {"hook_event_name": "PreToolUse", "tool_name": "Bash", "tool_input": {"command": cmd}, "cwd": tmp}),
+                capture_output=True, text=True)
+            for cmd in ("git commit -m wip", "cd . && git commit -m wip", "git -C . commit -m wip", "git -c x=y commit"):
+                out = json.loads(run(cmd).stdout)["hookSpecificOutput"]
+                self.assertEqual(out["permissionDecision"], "deny", cmd)
+                self.assertIn("main", out["permissionDecisionReason"], cmd)
+            self.assertEqual(run("git status").stdout, "")
+            subprocess.run(["git", "-C", tmp, "switch", "-q", "-c", "feat/x"], check=True)
+            self.assertEqual(run("git commit -m wip").stdout, "", "sur une branche de travail, le commit passe")
+
+    def test_page_is_built_and_linked(self):
+        text = open(os.path.join(self.SITE, "briques.html"), encoding="utf-8").read()
+        self.assertEqual(text.count('class="br-card"'), len(self.b.BRICKS))
+        self.assertIn('href="briques.html" aria-current="page"', text)
+        self.assertIn("src/bricks.js", text)
+
+
 class BorderStyle(unittest.TestCase):
     """Choix de style : un trait épais d'un seul côté est permis sur un rectangle, jamais sur un coin arrondi."""
 

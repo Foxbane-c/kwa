@@ -22,6 +22,7 @@ il ne demande aucune installation.</p>
 <li><strong>Python 3</strong> : les garde-fous de Kwa sont de petits scripts Python, sans dépendance.</li>
 <li><strong>GitHub CLI</strong> (<code>gh</code>), connecté avec <code>gh auth login</code> : Kwa ouvre les issues et les pull requests avec. Les captures jointes aux issues passent par <code>gh issue comment --attach</code> (vérifié avec gh 2.102).</li>
 <li><strong>Node.js</strong>, seulement pour les serveurs MCP du parcours 2 (Context7, Playwright).</li>
+<li><strong>uv</strong>, seulement pour installer Graphify (parcours 2, étape 8).</li>
 </ul></li>
 
 <li><h2 class="kw-section-title">Installer un agent de code</h2>
@@ -50,5 +51,5 @@ il ne demande aucune installation.</p>
 <p class="kd-note">Sous Codex en ligne de commande, les hooks passent par la commande <code>kwa</code>, qui doit alors être dans le PATH : <code>git clone https://github.com/nesyouyou/kwa ~/kwa</code>, puis ajouter <code>export PATH="$HOME/kwa/bin:$PATH"</code> à <code>~/.zshrc</code>. Validez ensuite les hooks du projet avec <code>/hooks</code>.</p></li>
 
 <li><h2 class="kw-section-title">Et ensuite</h2>
-<p>Si vous débutez : les parcours <a href="parcours-culture.html">1</a> et <a href="parcours-contexte.html">2</a> pour comprendre le modèle et son contexte, le <a href="premier-pas.html">premier pas en 30 minutes</a> sur un projet d'exercice, puis le <a href="parcours-harness.html">parcours 3</a> pour l'encadrer avec Kwa. Si vous travaillez déjà avec un agent : le premier pas, le parcours 3, puis <a href="impose.html">Imposé ou suggéré</a> et <a href="alleger.html">Quand alléger</a>. Un mot vous échappe ? Le <a href="glossaire.html">glossaire</a> traduit chaque terme anglais.</p></li>
+<p>Si vous débutez : le <a href="parcours-culture.html">parcours 1</a> pour comprendre le modèle, la page <a href="briques.html">Les briques</a> pour voir à quoi ressemble chaque mécanisme, le <a href="parcours-contexte.html">parcours 2</a> pour le contexte, le <a href="premier-pas.html">premier pas en 30 minutes</a> sur un projet d'exercice, puis le <a href="parcours-harness.html">parcours 3</a> pour l'encadrer avec Kwa. Si vous travaillez déjà avec un agent : le premier pas, le parcours 3, puis <a href="impose.html">Imposé ou suggéré</a> et <a href="alleger.html">Quand alléger</a>. Un mot vous échappe ? Le <a href="glossaire.html">glossaire</a> traduit chaque terme anglais.</p></li>
 </ol>"""

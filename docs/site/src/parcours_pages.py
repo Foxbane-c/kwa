@@ -15,7 +15,7 @@ import shell
 from parcours import code, cmd, esc, pill, reveal, stage
 
 CULTURE_NAV = [("1", "Le modèle"), ("2", "Les jetons"), ("3", "Les hallucinations"), ("4", "Le contexte"), ("5", "Le prompt"), ("6", "L'agent"), ("7", "Les boucles"), ("8", "Risques")]
-CONTEXTE_NAV = [("1", "Le contexte"), ("2", "La session"), ("3", "AGENTS.md"), ("4", "Règles"), ("5", "Skills"), ("6", "Agents"), ("7", "MCP"), ("8", "Context7 et Playwright"), ("9", "Permissions"), ("10", "Choisir")]
+CONTEXTE_NAV = [("1", "Le contexte"), ("2", "La session"), ("3", "AGENTS.md"), ("4", "Règles"), ("5", "Skills"), ("6", "Agents"), ("7", "MCP"), ("8", "Context7, Playwright, Graphify"), ("9", "Permissions"), ("10", "Choisir")]
 HARNESS_NAV = [("0", "L'histoire"), ("1", "Instructions"), ("2", "Un garde"), ("3", "Branchement"), ("4", "Événements"), ("5", "Politique"), ("6", "Une skill"), ("7", "Mémoire"), ("8", "Workflow"), ("9", "Le flux"), ("10", "Limites")]
 TOC = {  # barre latérale : (ancre, libellé) sous la page courante
     "parcours-culture.html": [(f"etape-{n}", f"{n} · {t}") for n, t in CULTURE_NAV],
@@ -130,15 +130,11 @@ def culture() -> str:
         ("1", "Ce qu'est un modèle de langage", "Un outil qui prolonge un texte, pas une base de connaissances.",
          """<p>Un modèle de langage a lu une très grande quantité de textes et calcule, mot après mot, la suite la plus plausible de ce qu'on lui donne. Il ne consulte pas une base de faits : il produit du texte vraisemblable. De là viennent ses deux forces (rédiger, reformuler, transformer) et ses deux faiblesses (inventer, ignorer ce qui s'est passé après son entraînement).</p>
 <p><strong>À essayer</strong> avec l'outil de votre choix : posez trois fois exactement la même question ouverte (par exemple « propose-moi un plan pour présenter notre offre »). Comparez les trois réponses.</p>
-""" + reveal("Ce qu'on observe", "<p>Les réponses diffèrent : le modèle tire sa suite parmi plusieurs possibles, il ne rejoue pas une réponse stockée. Pour une tâche qui doit être identique à chaque fois (un calcul, un contrôle), on ne s'en remet pas au texte du modèle : on utilise un programme, et le modèle ne fait que lire ou rédiger.</p>"),
-         "Expliquer en deux phrases pourquoi deux réponses à la même question peuvent différer.",
-         "« Il sait » ou « il a cherché » : le modèle ne cherche pas, il produit. Les outils de recherche ou de lecture de fichiers sont ajoutés à côté."),
+""" + reveal("Ce qu'on observe", "<p>Les réponses diffèrent : le modèle tire sa suite parmi plusieurs possibles, il ne rejoue pas une réponse stockée. Pour une tâche qui doit être identique à chaque fois (un calcul, un contrôle), on ne s'en remet pas au texte du modèle : on utilise un programme, et le modèle ne fait que lire ou rédiger.</p>")),
         ("2", "Les jetons", "L'unité de texte que le modèle lit, écrit, et que l'on compte.",
          """<p>Le modèle ne lit pas des lettres ni des mots entiers : il découpe le texte en morceaux appelés <strong>jetons</strong> (tokens). Tout se mesure en jetons : la longueur de ce qu'il peut lire, la longueur de sa réponse, les limites d'usage et le coût d'un appel à l'API. Un texte plus long, ou une langue découpée plus finement, consomme plus de jetons.</p>
 <p>Ce découpage a une conséquence importante : le modèle ne « comprend » pas une phrase puis répond. À chaque pas, il calcule <strong>une probabilité pour chaque jeton qui pourrait suivre</strong>, en tire un, l'ajoute, et recommence. Ce sont des statistiques sur des quantités énormes de texte, appliquées par des calculs mathématiques. Deux phrases possibles après « Il était une fois » : la plus probable n'est pas toujours tirée, d'où des réponses différentes à chaque essai.</p>
-<p>Choisissez une phrase, déplacez la température, puis tirez 20 fois. Ensuite, estimez un de vos textes : le résultat est un <strong>ordre de grandeur</strong>, le vrai compte dépend du modèle et l'API propose un compteur exact (voir les sources).</p>""" + tok,
-         "Expliquer pourquoi une réponse est un tirage parmi des probabilités, et donner l'ordre de grandeur d'un document en jetons.",
-         "Compter en pages ou en mots donne une idée, jamais le chiffre : deux textes de même longueur peuvent coûter des jetons différents."),
+<p>Choisissez une phrase, déplacez la température, puis tirez 20 fois. Ensuite, estimez un de vos textes : le résultat est un <strong>ordre de grandeur</strong>, le vrai compte dépend du modèle et l'API propose un compteur exact (voir les sources).</p>""" + tok),
         ("3", "Les hallucinations", "Un texte faux dit avec assurance.",
          """<p>Puisque le modèle tire la suite la plus plausible, et non la plus vraie, il peut produire une affirmation fausse ou une source qui n'existe pas, avec le même ton que le vrai. On parle d'<strong>hallucination</strong> : c'est une conséquence directe de ce que vous venez de voir, pas un bogue rare. Aucune phrase magique ne la supprime : on la réduit par la manière de demander, puis on la contrôle.</p>
 <p>Quatre leviers documentés :</p>
@@ -151,15 +147,11 @@ def culture() -> str:
 <p>Réécrivez cette demande avec au moins deux leviers :</p>""" +
          pair("Avant", "Résume les risques juridiques de ce contrat et dis-moi ce qu'on doit négocier.", "Une version possible",
               "Voici le contrat entre <contrat> et </contrat> (ces balises de délimitation sont expliquées à l'étape 5).\n1. Extrais d'abord les passages exacts qui parlent de responsabilité, de résiliation et de pénalités. Si tu n'en trouves pas, écris « aucun passage trouvé ».\n2. Analyse les risques en citant le numéro de chaque passage. N'utilise rien d'autre que ce contrat.\n3. Si un point te semble manquer, dis « je ne peux pas l'affirmer à partir du document ».") +
-         reveal("Ce que ça ne règle pas", "<p>Ces techniques réduisent les hallucinations, elles ne les suppriment pas. Pour une décision importante, une personne relit les passages cités dans le document d'origine. Un chiffre, une date, une référence légale ou une citation s'écrivent dans un texte seulement après vérification à la source.</p>"),
-         "Réécrire une demande pour qu'elle autorise l'incertitude et exige des passages, puis vérifier un passage cité à la main.",
-         "Une réponse bien rédigée peut être fausse : le ton d'assurance ne dit rien de l'exactitude."),
+         reveal("Ce que ça ne règle pas", "<p>Ces techniques réduisent les hallucinations, elles ne les suppriment pas. Pour une décision importante, une personne relit les passages cités dans le document d'origine. Un chiffre, une date, une référence légale ou une citation s'écrivent dans un texte seulement après vérification à la source.</p>")),
         ("4", "La fenêtre de contexte", "Tout ce que le modèle peut voir à un instant donné, et rien d'autre.",
          """<p>La fenêtre de contexte est la « mémoire de travail » du modèle : <strong>tout</strong> ce qu'il peut consulter pour répondre, sa réponse comprise. Elle contient bien plus que votre dernier message : consignes du système, fichiers d'instructions, définitions des outils, historique de la conversation, fichiers lus, résultats des outils. Le modèle n'a pas de mémoire en dehors de cette fenêtre : une nouvelle session repart de zéro.</p>
 <p>Une fenêtre plus grande n'améliore pas la réponse : à mesure que le contexte grossit, la précision et le rappel peuvent baisser : c'est ce que la documentation appelle <em>context rot</em>. Choisir ce qui entre compte autant que la place disponible.</p>
-<p>Regardez la fenêtre se remplir au fil d'une session d'agent, puis se compacter.</p>""" + gauge,
-         "Citer ce qui occupe une fenêtre en dehors de votre message, et dire pourquoi la remplir n'est pas un but.",
-         "Les valeurs de l'animation sont des exemples pour comprendre, pas des mesures. Une interface de chat peut aussi faire glisser la conversation en oubliant les débuts."),
+<p>Regardez la fenêtre se remplir au fil d'une session d'agent, puis se compacter.</p>""" + gauge),
         ("5", "Le prompt engineering", "Écrire pour un lecteur très compétent qui n'a aucun contexte.",
          """<p>Un prompt est un texte de travail : on le rédige comme une consigne à un collègue brillant qui arrive ce matin. La règle d'or de la documentation : montrez votre consigne à quelqu'un qui n'a pas le contexte et demandez-lui de l'exécuter. S'il hésite, le modèle hésitera aussi.</p>
 <ul class="pc-list">
@@ -172,17 +164,13 @@ def culture() -> str:
 <p>Améliorez cette demande :</p>""" +
          pair("Avant", "Fais-moi un mail de relance client.", "Une version possible",
               "Tu rédiges pour une ESN. Écris un e-mail de relance à un client dont la proposition est restée sans réponse depuis dix jours.\nContexte : première relance, ton cordial et direct, sans pression commerciale.\nFormat : objet, puis trois phrases au plus, une question fermée pour avancer.\n<exemple>\nObjet : Votre avis sur la proposition\nBonjour, je reviens vers vous au sujet de la proposition du 3. Avez-vous pu la relire ? Je peux répondre à vos questions cette semaine.\n</exemple>") +
-         reveal("Pourquoi la seconde marche mieux", "<p>Elle dit pour qui on écrit, dans quelle situation, avec quel ton, quel format, et montre un exemple. Rien n'est laissé à deviner. Notez aussi ce qu'elle ne fait pas : elle n'empile pas vingt règles. Le but est le plus petit ensemble d'informations qui change vraiment le résultat.</p>"),
-         "Transformer une demande vague en consigne qu'un collègue sans contexte pourrait exécuter.",
-         "Ajoutez au prompt ce qui manque au lecteur ; ce qui rassure l'auteur l'alourdit sans l'améliorer."),
+         reveal("Pourquoi la seconde marche mieux", "<p>Elle dit pour qui on écrit, dans quelle situation, avec quel ton, quel format, et montre un exemple. Rien n'est laissé à deviner. Notez aussi ce qu'elle ne fait pas : elle n'empile pas vingt règles. Le but est le plus petit ensemble d'informations qui change vraiment le résultat.</p>")),
         ("6", "De l'assistant à l'agent", "Un modèle, des outils et une boucle.",
          f"""<p>Un assistant de conversation répond puis s'arrête. Un <strong>agent</strong> reçoit un objectif et <strong>boucle</strong> : il réfléchit, appelle un outil (lire un fichier, lancer une commande, chercher), lit le résultat qui entre dans son contexte, puis décide de continuer ou de s'arrêter. Tout ce que vous venez de voir (jetons, fenêtre, probabilités) se rejoue à chaque tour de cette boucle.</p>
 {LOOP}
 <p>Deux familles de systèmes se distinguent : dans un <strong>workflow</strong>, le chemin est écrit à l'avance dans du code et le modèle remplit des étapes ; dans un <strong>agent</strong>, c'est le modèle qui décide des étapes et des outils. Le conseil constant de la documentation d'Anthropic : commencer par la solution la plus simple (un seul appel, bien contextualisé) et n'ajouter de l'autonomie que si la tâche l'exige, parce que l'autonomie coûte en latence, en argent et en risque d'erreurs qui s'accumulent.</p>
 <p>Deux conséquences pour la suite. D'abord, <strong>chaque outil est une porte ouverte</strong> : lire un fichier est bénin, lancer une commande ou écrire dans une base ne l'est pas, d'où les permissions du parcours suivant. Ensuite, <strong>ce qui entre dans la boucle</strong> (pages web, fichiers, résultats d'outils) est du texte que le modèle lit : s'il est hostile, il peut tenter de détourner l'agent (étape 8).</p>""" +
-         reveal("Question", "<p>Dans l'exemple, qu'est-ce qui décide que la boucle s'arrête ? Aucun compteur : le modèle juge que le test est vert. D'où l'intérêt de lui donner un contrôle qu'il peut lancer, plutôt que de lui faire confiance sur parole (parcours Harness).</p>"),
-         "Décrire la boucle d'un agent et dire ce qui distingue un workflow d'un agent.",
-         "Plus d'autonomie n'améliore pas le résultat : une tâche aux étapes connues se traite mieux avec un workflow, plus simple à contrôler."),
+         reveal("Question", "<p>Dans l'exemple, qu'est-ce qui décide que la boucle s'arrête ? Aucun compteur : le modèle juge que le test est vert. D'où l'intérêt de lui donner un contrôle qu'il peut lancer, plutôt que de lui faire confiance sur parole (parcours Harness).</p>")),
         ("7", "Les boucles d'agents", "Relancer un agent jusqu'à une condition : utile, à condition de savoir quand il s'arrête.",
          f"""<p>Le mot <em>loop</em> revient partout sur les réseaux, pour désigner des choses différentes. Il y a trois étages, du plus petit au plus grand.</p>
 <table class="pc-table"><thead><tr><th>Boucle</th><th>Ce qu'elle relance</th><th>Qui l'arrête</th></tr></thead><tbody>
@@ -204,9 +192,7 @@ def culture() -> str:
 <tr><td>Un plafond de tours ou de budget</td><td>À fixer vous-même : Kwa n'en pose pas</td></tr>
 <tr><td>Des actions dangereuses bloquées, sans personne pour approuver</td><td>Les gardes (pas de push sur <code>main</code>, pas de secret écrit) tournent à chaque tour</td></tr>
 <tr><td>Une preuve à la fin, pas une affirmation</td><td>Pas de fusion sans preuve sur la PR</td></tr></tbody></table>""" +
-         reveal("Question", "<p>Vous lancez <code>/ralph-loop</code> avec « corrige les tests, écris FINI quand c'est vert », sans <code>--max-iterations</code>. Que peut-il se passer ? L'agent peut tourner indéfiniment si un test ne peut pas passer, ou écrire « FINI » sans que les tests soient verts : la phrase est un critère que le modèle déclare, pas une commande qui vérifie. Fixez un plafond, et faites vérifier le résultat par les tests eux-mêmes.</p>"),
-         "Distinguer la boucle de l'agent, la boucle autour de l'agent et la tâche planifiée, et donner le critère d'arrêt de chacune.",
-         "Un « c'est fini » écrit par le modèle n'est pas un critère d'arrêt : c'est une déclaration. Le critère, c'est une commande qui passe."),
+         reveal("Question", "<p>Vous lancez <code>/ralph-loop</code> avec « corrige les tests, écris FINI quand c'est vert », sans <code>--max-iterations</code>. Que peut-il se passer ? L'agent peut tourner indéfiniment si un test ne peut pas passer, ou écrire « FINI » sans que les tests soient verts : la phrase est un critère que le modèle déclare, pas une commande qui vérifie. Fixez un plafond, et faites vérifier le résultat par les tests eux-mêmes.</p>")),
         ("8", "Risques et usages responsables", "Ce qu'on n'envoie pas, ce qu'on vérifie, qui décide.",
          """<ul class="pc-list">
 <li><strong>Données</strong> : ne pas coller de données personnelles, de secrets ni de données client réelles dans un outil que l'on ne maîtrise pas. Anonymiser ou fabriquer des exemples.</li>
@@ -221,9 +207,7 @@ def culture() -> str:
 <tr><td>Limiter les permissions et isoler (bac à sable, machine virtuelle)</td><td>Un agent détourné ne peut faire que ce qu'on lui a permis</td></tr>
 <tr><td>Ne brancher que des serveurs MCP de confiance</td><td>Ils agissent avec vos droits et renvoient du texte que l'agent lira</td></tr></tbody></table>
 <p>Ces réflexes figurent dans la documentation de sécurité de Claude Code, qui ajoute qu'aucune protection n'est complète. Un exemple concret au parcours suivant : les documentations et les pages web que l'agent consulte avec Context7 ou Playwright sont aussi des entrées non fiables.</p>
-<p>Prochaine étape : passer d'un prompt isolé à un <strong>contexte entretenu</strong>, avec des fichiers, des skills et des outils. C'est le parcours suivant.</p>""",
-         "Dire ce qu'on ne colle jamais dans un outil d'IA, nommer l'injection de prompt et ses parades, et dire qui répond du résultat.",
-         "« C'est l'IA qui l'a dit » ne tient devant personne. La personne qui diffuse un texte en répond."),
+<p>Prochaine étape : passer d'un prompt isolé à un <strong>contexte entretenu</strong>, avec des fichiers, des skills et des outils. C'est le parcours suivant.</p>"""),
     ]
     out = "\n".join(stage(*x) for x in s)
     return (intro("Huit étapes pour comprendre ce que fait vraiment un modèle de langage : le texte, les jetons, les erreurs qui en découlent, la fenêtre de contexte, la manière de demander, l'agent, les boucles, les risques. Aucun outil à installer ; un outil d'IA au choix suffit pour les exercices. Environ deux heures et demie, à calibrer en séance.") +
@@ -315,7 +299,7 @@ MCP_EX = {
             "type": "stdio",
             "command": "npx",
             "args": ["-y", "@bytebase/dbhub"],
-            "env": {"DATABASE_URL": "${DB_CONNECTION_STRING}"},
+            "env": {"DSN": "${DB_CONNECTION_STRING}"},
         },
         "api-interne": {
             "type": "http",
@@ -324,6 +308,27 @@ MCP_EX = {
         },
     }
 }
+
+GRAPHIFY_CMDS = """graphify query "qu'est-ce qui relie l'authentification à la base ?"
+graphify path "LoginForm" "users"      # le plus court chemin entre deux nœuds
+graphify explain "useSession"          # un nœud et ses voisins, en clair
+graphify update .                      # refaire la carte du code, sans modèle"""
+
+GRAPHIFY_SVG = """<figure class="gf-fig"><div class="gf-wrap"><svg class="gf-svg" viewBox="0 -34 720 248" role="img" aria-labelledby="gf-t gf-d">
+<title id="gf-t">Comment Graphify construit puis sert la carte d'un dépôt</title>
+<desc id="gf-d">Le code passe par tree-sitter en local, la documentation par un modèle ; les deux donnent graphify-out, que l'agent interroge avant d'ouvrir les fichiers utiles.</desc>
+<defs><marker id="gf-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="gf-head"/></marker></defs>
+<g class="gf-box"><rect x="10" y="30" width="150" height="56" rx="10"/><text x="85" y="54">Le code</text><text x="85" y="72" class="gf-s">fonctions, imports, appels</text></g>
+<g class="gf-box"><rect x="10" y="150" width="150" height="56" rx="10"/><text x="85" y="174">Docs, PDF, images</text><text x="85" y="192" class="gf-s">optionnel</text></g>
+<g class="gf-box gf-local"><rect x="205" y="30" width="150" height="56" rx="10"/><text x="280" y="54">tree-sitter</text><text x="280" y="72" class="gf-s">local, sans modèle</text></g>
+<g class="gf-box gf-cost"><rect x="205" y="150" width="150" height="56" rx="10"/><text x="280" y="174">Un modèle</text><text x="280" y="192" class="gf-s">payant, sort de la machine</text></g>
+<g class="gf-box gf-out"><rect x="400" y="80" width="150" height="76" rx="10"/><text x="475" y="104">graphify-out/</text><text x="475" y="122" class="gf-s">graph.json · rapport</text><text x="475" y="138" class="gf-s">graph.html</text></g>
+<g class="gf-box gf-agent"><rect x="595" y="80" width="115" height="76" rx="10"/><text x="652" y="104">L'agent</text><text x="652" y="122" class="gf-s">query, path,</text><text x="652" y="138" class="gf-s">explain</text></g>
+<path d="M160 58 H200" class="gf-l" marker-end="url(#gf-a)"/><path d="M160 178 H200" class="gf-l gf-dash" marker-end="url(#gf-a)"/>
+<path d="M355 58 C378 58 378 104 396 104" class="gf-l" marker-end="url(#gf-a)"/><path d="M355 178 C378 178 378 132 396 132" class="gf-l gf-dash" marker-end="url(#gf-a)"/>
+<path d="M550 118 H590" class="gf-l" marker-end="url(#gf-a)"/>
+<path d="M652 80 C652 2 85 2 85 26" class="gf-l gf-back" marker-end="url(#gf-a)"/><text x="368" y="-14" class="gf-s">puis il n'ouvre que les fichiers utiles</text>
+</svg></div><figcaption class="kd-note">Le trait plein reste sur la machine ; le pointillé passe par un modèle.</figcaption></figure>"""
 
 PROMPT_DEV = """Ajoute la pagination à la liste des commandes avec TanStack Query. use context7
 
@@ -443,9 +448,7 @@ def contexte() -> str:
 <tr><td>Résumer quand la fenêtre se remplit</td><td>La compaction de la conversation</td></tr>
 <tr><td>Écrire des notes hors de la fenêtre</td><td>Les fichiers d'instructions, la mémoire automatique, les notes de session</td></tr>
 <tr><td>Déléguer à un contexte propre</td><td>Les sous-agents, qui renvoient un résumé</td></tr></tbody></table>
-<p>Revoyez l'animation de la fenêtre dans le parcours précédent et repérez les deux postes que vous contrôlez le mieux.</p>""",
-         "Nommer les six sources du contexte d'une session d'agent et associer une technique à chacun de ses problèmes.",
-         "Ajouter des informations « au cas où » alourdit le contexte. Ce qui n'aide pas la tâche la dessert."),
+<p>Revoyez l'animation de la fenêtre dans le parcours précédent et repérez les deux postes que vous contrôlez le mieux.</p>"""),
         ("2", "Piloter la session", "Une session est un outil qu'on conduit : l'effacer, la résumer, la rejouer.",
          """<p>Tout ce que vous venez de voir se joue pendant une <strong>session</strong>. Les bonnes pratiques de Claude Code tiennent en une contrainte : la fenêtre se remplit vite et la précision baisse quand elle se remplit. Presque chaque commande de session sert donc à garder le contexte utile.</p>
 <table class="pc-table"><thead><tr><th>Geste</th><th>Effet</th></tr></thead><tbody>
@@ -465,9 +468,7 @@ def contexte() -> str:
 <li><strong>L'exploration sans limite</strong> : « investigue » sans cadrer fait lire des centaines de fichiers. Remède : cadrer, ou déléguer à un sous-agent (étape 6).</li>
 </ul>
 <p><strong>Exercice</strong> : vous avez corrigé trois fois la même erreur et l'agent recommence. Que faites-vous ?</p>""" +
-         reveal("Piste", "<p>Ne pas corriger une quatrième fois. Noter ce qui a manqué (le fichier à suivre en exemple, la contrainte, le résultat attendu), faire <code>/clear</code>, et reformuler la demande avec ces éléments. Une session propre avec un meilleur prompt bat presque toujours une longue session de corrections.</p>"),
-         "Choisir entre <code>/clear</code>, <code>/compact</code> et <code>/rewind</code> face à trois situations données.",
-         "Les points de restauration ne suivent que les modifications faites par les outils d'édition de l'agent, pas celles d'une commande shell : ils ne remplacent pas git."),
+         reveal("Piste", "<p>Ne pas corriger une quatrième fois. Noter ce qui a manqué (le fichier à suivre en exemple, la contrainte, le résultat attendu), faire <code>/clear</code>, et reformuler la demande avec ces éléments. Une session propre avec un meilleur prompt bat presque toujours une longue session de corrections.</p>")),
         ("3", "Les fichiers d'instructions", "CLAUDE.md et AGENTS.md : du contexte persistant, pas une contrainte.",
          """<p>Chaque session démarre avec une fenêtre vide. Deux mécanismes transmettent la connaissance d'une session à l'autre : les fichiers d'instructions que <strong>vous</strong> écrivez (<code>CLAUDE.md</code>, ou <code>AGENTS.md</code> que Claude Code peut lire à la place), et la <strong>mémoire automatique</strong> que Claude écrit lui-même d'après vos corrections.</p>
 <p>Deux faits à retenir. D'abord, ces fichiers sont du <strong>contexte</strong> : l'agent les lit et peut s'en écarter. Pour interdire une action quelle que soit sa décision, il faut un hook (parcours suivant). Ensuite, plus une instruction est précise et courte, plus elle est suivie de manière constante.</p>
@@ -475,9 +476,7 @@ def contexte() -> str:
 <p>Lequel de ces deux fichiers est le plus utile à un agent qui arrive sur le projet ?</p>""" +
          pair("Fichier A", AGENTS_BAD, "Fichier B", AGENTS_GOOD) +
          reveal("Réponse", "<p>Le B. Il contient ce que l'agent ne peut pas deviner en lisant le code : les commandes de vérification, les pièges, ce qui est interdit. Le A dit des intentions que n'importe quel modèle suit déjà (« écris du code propre ») sans rien de vérifiable. Une bonne instruction se teste : on peut dire si elle a été suivie.</p>") +
-         "<p><strong>Exercice</strong> : écrivez dix lignes d'<code>AGENTS.md</code> pour un projet que vous connaissez, avec uniquement des commandes, des pièges et des interdits.</p>",
-         "Produire dix lignes d'instructions vérifiables, et expliquer pourquoi elles ne remplacent pas un garde-fou.",
-         "Un fichier trop long ou contradictoire dilue ce qui compte. Deux sources qui se contredisent valent pire qu'une seule."),
+         "<p><strong>Exercice</strong> : écrivez dix lignes d'<code>AGENTS.md</code> pour un projet que vous connaissez, avec uniquement des commandes, des pièges et des interdits.</p>"),
         ("4", "Les règles", "Des instructions rangées par sujet, chargées au bon moment.",
          f"""<p>Quand <code>AGENTS.md</code> grossit, tout y est lu à chaque session, même ce qui ne concerne qu'une partie du code. Les <strong>règles</strong> répondent à ce problème : un fichier Markdown par sujet dans <code>.claude/rules/</code> (<code>tests.md</code>, <code>api.md</code>, <code>securite.md</code>), découverts récursivement. Elles sont du contexte, comme les fichiers d'instructions : l'agent les lit et peut s'en écarter.</p>
 <p>Deux comportements, selon l'en-tête du fichier :</p>
@@ -494,9 +493,7 @@ def contexte() -> str:
 <tr><td>« Ne jamais pousser sur <code>main</code> »</td><td>{reveal("Mon pronostic", "<p>Un hook (parcours Harness) : une interdiction doit être appliquée par l'outil, pas suggérée au modèle. On peut aussi l'écrire en règle pour l'expliquer, mais elle ne suffit pas.</p>")}</td></tr>
 <tr><td>« Je préfère des réponses courtes »</td><td>{reveal("Mon pronostic", "<p><code>~/.claude/rules/</code> : une préférence personnelle, indépendante du projet.</p>")}</td></tr></tbody></table>
 <p><strong>À ne pas confondre</strong> : les « règles de permission » (deny, ask, allow) de l'étape 9 sont appliquées par l'outil, dans les réglages. Les règles de cette étape sont des instructions lues par le modèle.</p>
-<p><strong>Exercice</strong> : prenez votre <code>AGENTS.md</code> et repérez deux paragraphes qui ne concernent qu'un type de fichier. Déplacez-les dans une règle avec <code>paths</code>.</p>""",
-         "Écrire une règle avec <code>paths</code> et dire pourquoi elle ne se charge pas à chaque session.",
-         "Une règle est aussi peu contraignante qu'une ligne d'AGENTS.md : elle range les consignes sans rien garantir."),
+<p><strong>Exercice</strong> : prenez votre <code>AGENTS.md</code> et repérez deux paragraphes qui ne concernent qu'un type de fichier. Déplacez-les dans une règle avec <code>paths</code>.</p>"""),
         ("5", "Les skills", "Une procédure chargée seulement quand elle sert.",
          f"""<p>Une skill est un dossier avec un fichier <code>SKILL.md</code> : un en-tête qui dit <strong>quand</strong> l'appeler, un corps qui dit <strong>comment</strong>. Claude l'invoque quand la description correspond à la conversation, ou vous la tapez avec <code>/nom</code>.</p>
 {code(SKILL_EX)}
@@ -507,9 +504,7 @@ def contexte() -> str:
 <tr><td><code>.claude/skills/&lt;nom&gt;/SKILL.md</code></td><td>Ce dépôt, partagé en le versionnant</td></tr>
 <tr><td>Plugin</td><td>Là où le plugin est activé</td></tr></tbody></table>
 <p>Champs utiles : <code>disable-model-invocation: true</code> pour ne la lancer que par commande, <code>allowed-tools</code> pour pré-autoriser des outils pendant son exécution.</p>
-<p><strong>Exercice</strong> : transformez une tâche que vous répétez (relance, compte rendu, revue) en skill. Écrivez d'abord la description : elle doit dire quand, jamais le déroulé.</p>""",
-         "Écrire une skill dont la description déclenche au bon moment et dont le corps tient en dix lignes.",
-         "Une description qui résume les étapes pousse l'agent à les suivre sans lire le corps. Elle sert à choisir, pas à exécuter."),
+<p><strong>Exercice</strong> : transformez une tâche que vous répétez (relance, compte rendu, revue) en skill. Écrivez d'abord la description : elle doit dire quand, jamais le déroulé.</p>"""),
         ("6", "Les agents", "Un second collaborateur avec sa propre fenêtre de contexte.",
          f"""<p>Un <strong>sous-agent</strong> est un assistant spécialisé qui travaille dans une fenêtre de contexte isolée, avec ses propres consignes, ses propres outils et éventuellement un autre modèle. Il fait la tâche et ne renvoie qu'un résumé : la lecture de trente fichiers ne pollue pas la conversation principale. C'est la technique « déléguer à un contexte propre » du début du parcours.</p>
 <p>Dans un schéma <strong>orchestrateur</strong>, l'agent principal ne lit pas tout : il distribue à chaque sous-agent le <em>minimum</em> dont il a besoin (la tâche, les critères, les fichiers utiles), puis ne reçoit que des résumés. Comparez les deux modes :</p>
@@ -518,9 +513,7 @@ def contexte() -> str:
 <p>Le fichier vit dans <code>.claude/agents/</code> (projet) ou <code>~/.claude/agents/</code> (personnel). Les champs obligatoires sont <code>name</code> et <code>description</code> ; <code>tools</code> restreint ses outils (ici, lecture seule) et hérite de tout si on l'omet. On l'invoque en le nommant, par @-mention, ou pour toute la session.</p>
 <p>Limites à connaître : un sous-agent n'a pas votre conversation et un nouvel appel repart d'un contexte vide (un sous-agent terminé peut toutefois être repris), il consomme du quota comme la session principale, et le nombre d'agents simultanés et la profondeur d'imbrication sont bornés.</p>
 <p><strong>Exercice</strong> : écrivez un agent « relecteur » en lecture seule pour votre projet. Quelles sont les trois informations que vous lui donnez avec sa tâche, puisqu'il n'a pas votre conversation ?</p>""" +
-         reveal("Piste", "<p>La demande d'origine et ses critères de réussite, le diff ou les fichiers touchés, et les résultats des vérifications déjà faites. Un agent ne voit que ce qu'on lui envoie : un résumé vague produit une relecture vague.</p>"),
-         "Dire ce qu'un sous-agent gagne (un contexte propre) et ce qu'il perd (la conversation).",
-         "Restreindre les outils est une protection réelle pour un relecteur. Un agent qui peut tout modifier relit mal ce qu'il peut aussi corriger."),
+         reveal("Piste", "<p>La demande d'origine et ses critères de réussite, le diff ou les fichiers touchés, et les résultats des vérifications déjà faites. Un agent ne voit que ce qu'on lui envoie : un résumé vague produit une relecture vague.</p>")),
         ("7", "MCP : brancher des outils", "Un protocole commun pour donner à l'agent l'accès à des données et à des services.",
          f"""<p>Le <strong>Model Context Protocol</strong> (MCP) permet à l'agent d'utiliser des serveurs externes : base de données, tracker, documentation, navigateur.</p>
 {MCP_VS}
@@ -534,10 +527,8 @@ def contexte() -> str:
 {cmd("claude mcp add --transport http <nom> <url>")}{cmd("claude mcp list")}{cmd("claude mcp remove <nom>")}
 <p>Dans les règles de permission, un outil MCP se nomme <code>mcp__&lt;serveur&gt;__&lt;outil&gt;</code> (par exemple <code>mcp__notion__*</code> ou simplement <code>mcp__notion</code> pour tous les outils d'un serveur ; une règle <code>mcp__</code> avec des parenthèses est ignorée).</p>
 <p><strong>Exercice</strong> : écrivez le <code>.mcp.json</code> d'un serveur en lecture seule sur une base de test. Où va le mot de passe ?</p>""" +
-         reveal("Réponse", "<p>Dans une variable d'environnement, référencée par <code>${NOM}</code>, définie hors du dépôt. Le fichier versionné ne contient aucun secret. Pour la base elle-même, un compte en lecture seule : la permission la plus étroite possible est la première protection.</p>"),
-         "Choisir la bonne portée d'un serveur MCP et écrire sa configuration sans secret en clair.",
-         "Un serveur MCP agit avec vos droits, il ne se limite pas à lire. Chaque serveur ajouté alourdit aussi le contexte."),
-        ("8", "Context7 et Playwright", "Deux serveurs MCP que tout développeur devrait avoir : la doc à jour, et un navigateur pour vérifier.",
+         reveal("Réponse", "<p>Dans une variable d'environnement, référencée par <code>${NOM}</code>, définie hors du dépôt. Le fichier versionné ne contient aucun secret. Pour la base elle-même, un compte en lecture seule : la permission la plus étroite possible est la première protection.</p>")),
+        ("8", "Context7, Playwright et Graphify", "Trois outils qui attaquent trois défauts d'un agent : la doc à jour, un navigateur pour vérifier, une carte du dépôt.",
          f"""<p>Parmi tous les serveurs MCP possibles, deux changent le quotidien d'un développeur web, parce qu'ils attaquent deux défauts classiques d'un agent : <strong>il code avec des API périmées</strong>, et <strong>il affirme que l'interface marche sans l'avoir vue</strong>.</p>
 <h3 class="pc-h3">Context7 : la documentation à jour, à la version</h3>
 <p>Un modèle a été entraîné jusqu'à une date. Une bibliothèque a changé depuis : il écrit alors une API qui n'existe plus, avec assurance (c'est une hallucination, parcours Culture). <strong>Context7</strong> est un service qui fournit à l'agent la documentation et des exemples de code <em>de la version voulue</em>. Il expose deux outils : <code>resolve-library-id</code> (trouver l'identifiant d'une bibliothèque à partir de son nom) et <code>query-docs</code> (interroger sa documentation). On l'appelle en ajoutant « use context7 » à la demande, ou en nommant l'identifiant (<code>/supabase/supabase</code>) pour sauter la recherche. Une clé d'API gratuite relève les limites d'usage.</p>
@@ -548,10 +539,22 @@ def contexte() -> str:
 <p>Variante sans serveur MCP : Context7 propose aussi un mode « CLI + skill » (<code>npx ctx7 setup --claude</code>), et Claude Code peut piloter votre navigateur Chrome via son extension. Le principe reste le même : donner à l'agent un moyen de <strong>vérifier</strong>.</p>
 <p>Voici ce que ça donne en pratique. Demandez, avec ces deux serveurs branchés :</p>{code(PROMPT_DEV)}
 <p>L'agent lit la documentation de la bonne version, écrit le code, ouvre la page, capture les deux tailles et rapporte les erreurs. Vous relisez des preuves.</p>
-<p><strong>Exercice</strong> : branchez les deux serveurs sur un projet jetable, demandez une petite évolution d'interface, et obtenez deux captures (bureau et mobile) sans aucune erreur de console.</p>""" +
-         reveal("Sécurité : ce qu'il faut restreindre", "<p>Playwright n'est <strong>pas une frontière de sécurité</strong>. Son outil <code>browser_run_code_unsafe</code> exécute du JavaScript arbitraire côté serveur et équivaut à une exécution de code à distance : refusez-le dans les permissions (<code>mcp__playwright__browser_run_code_unsafe</code>). N'ouvrez que des sites de confiance : une page hostile est une entrée non fiable (injection de prompt). N'exposez jamais le serveur au réseau (<code>--host 0.0.0.0</code>). Pour Context7, la clé d'API se passe par variable d'environnement, jamais en clair dans le fichier versionné.</p>"),
-         "Obtenir, avec Context7 et Playwright, une évolution d'interface vérifiée par deux captures et une console propre.",
-         "Une capture n'est une preuve que si l'agent a ouvert la bonne page, dans la bonne taille. Demandez l'adresse, la taille et la date de chaque capture."),
+<p><strong>Exercice</strong> : branchez les deux serveurs sur un projet jetable, demandez une petite évolution d'interface, et obtenez deux captures (bureau et mobile) sans aucune erreur de console.</p>
+<h3 class="pc-h3">Graphify : une carte du dépôt, plutôt que relire les fichiers</h3>
+<p>Troisième défaut : sur un gros dépôt, l'agent <strong>cherche à l'aveugle</strong>. Graphify n'est pas un serveur MCP : c'est un outil en ligne de commande, livré avec une skill et un hook pour Claude Code. Pour comprendre « qui appelle quoi », il enchaîne les recherches de texte et relit des fichiers entiers, et chaque lecture remplit la fenêtre de contexte (étape 1). <strong>Graphify</strong> (open source) construit d'abord une <strong>carte du dépôt</strong> : un graphe de connaissances où les fonctions, les classes, les fichiers et les concepts sont des nœuds, reliés par leurs appels, leurs imports et leurs références. L'agent interroge la carte et n'ouvre ensuite que les fichiers utiles.</p>
+{GRAPHIFY_SVG}
+<ul class="pc-list">
+<li><strong>Le code</strong> est analysé sur votre machine, par l'analyseur syntaxique tree-sitter : sans modèle, sans clé, sans que rien ne sorte de la machine.</li>
+<li><strong>La documentation, les PDF et les images</strong> passent par un modèle (celui de l'agent, ou une clé d'API) pour en extraire les concepts : c'est payant, et leur contenu sort de la machine.</li>
+<li>Chaque lien porte son origine : <code>EXTRACTED</code> s'il est écrit dans le code, <code>INFERRED</code> s'il est déduit par Graphify. Un lien déduit est une hypothèse à vérifier dans le fichier.</li>
+<li>Le résultat va dans <code>graphify-out/</code> : <code>graph.json</code> (le graphe), <code>GRAPH_REPORT.md</code> (les concepts clés et des questions suggérées) et <code>graph.html</code>, une carte interactive à ouvrir dans un navigateur.</li>
+</ul>
+<p>Installation, une fois par machine (le paquet s'appelle <code>graphifyy</code> sur PyPI, avec deux « y » ; les autres paquets <code>graphify*</code> ne sont pas du même projet), puis la skill <code>/graphify</code> pour Claude Code seulement :</p>{cmd("uv tool install graphifyy")}{cmd("graphify install --platform claude")}
+<p>Dans une session ouverte sur le projet, <code>/graphify .</code> construit la carte. Ensuite, en ligne de commande ou par l'agent :</p>{code(GRAPHIFY_CMDS)}
+<p>Pour Claude Code, l'installation ajoute aussi un <strong>hook</strong> qui rappelle à l'agent de consulter la carte avant de chercher ou de lire des fichiers un par un (parcours Harness : un hook est exécuté par l'outil, pas par le modèle).</p>
+<p><strong>Exercice</strong> : construisez la carte d'un projet que vous connaissez, ouvrez <code>graph.html</code>, puis posez la même question (« d'où vient le titre de la page d'accueil ? ») à l'agent avec et sans la carte. Comparez les fichiers qu'il a lus.</p>""" +
+         reveal("Graphify : ce qu'il faut savoir avant de l'installer", "<p>Les gains annoncés (beaucoup moins de jetons par question) viennent des mesures du projet lui-même : mesurez sur votre dépôt. La carte vieillit avec le code : <code>graphify update .</code> la refait pour le code, sans modèle. Les questions posées sont journalisées dans <code>~/.cache/graphify-queries.log</code>. La commande <code>graphify install</code> sans option vise tous les outils détectés et écrit aussi pour Codex dans <code>AGENTS.md</code> : sur un projet qui a déjà ses fichiers d'instructions (Kwa, par exemple), préférez <code>--platform claude</code> et relisez ce qui a changé. Le graphe d'un dépôt est aussi une carte de son code : ne le publiez pas pour un projet privé.</p>") +
+         reveal("Sécurité : ce qu'il faut restreindre", "<p>Playwright n'est <strong>pas une frontière de sécurité</strong>. Son outil <code>browser_run_code_unsafe</code> exécute du JavaScript arbitraire côté serveur et équivaut à une exécution de code à distance : refusez-le dans les permissions (<code>mcp__playwright__browser_run_code_unsafe</code>). N'ouvrez que des sites de confiance : une page hostile est une entrée non fiable (injection de prompt). N'exposez jamais le serveur au réseau (<code>--host 0.0.0.0</code>). Pour Context7, la clé d'API se passe par variable d'environnement, jamais en clair dans le fichier versionné.</p>")),
         ("9", "Permissions et réglages", "Ce que l'agent peut faire, décidé hors de son texte.",
          f"""<p>Contrairement aux fichiers d'instructions, les <strong>règles de permission</strong> sont appliquées par l'outil, pas suggérées au modèle. Elles vivent dans les fichiers de réglages : <code>.claude/settings.json</code> (projet, partagé), <code>.claude/settings.local.json</code> (vos choix locaux, à garder hors du dépôt), <code>~/.claude/settings.json</code> (personnel), et des réglages d'organisation qui priment.</p>
 {code(settings_json)}
@@ -559,26 +562,26 @@ def contexte() -> str:
 <table class="pc-table"><thead><tr><th>Cas</th><th>Résultat</th></tr></thead><tbody>{quiz_rows}</tbody></table>
 <p>Les <strong>modes</strong> règlent le niveau d'autonomie : <code>default</code> (demande à la première utilisation), <code>acceptEdits</code> (accepte les modifications de fichiers), <code>plan</code> (explore sans modifier), <code>auto</code> (un classifieur vérifie les actions), <code>dontAsk</code> (refuse ce qui demanderait), <code>bypassPermissions</code> (aucune demande : réservé aux environnements isolés).</p>
 <p><strong>Limite à connaître</strong> : une règle sur une commande shell lit le texte que l'agent écrit. Elle couvre la forme habituelle d'un appel, pas toutes ses variantes : ce n'est pas une frontière de sécurité autour d'un programme. Pour bloquer la lecture d'un fichier par les outils de fichiers, on écrit une règle <code>Read</code> sur son chemin.</p>
-<p>Ce que les règles ne savent pas dire (« pas de commit sur main », « une PR doit être liée à une issue ») se règle avec des <strong>hooks</strong>. Un hook est un script que l'outil lance à un moment précis du travail (avant un outil, après une modification, à la fin d'une réponse). Il reçoit du JSON sur son entrée, et s'il termine avec le code <strong>2</strong>, l'action est bloquée et son message d'erreur revient à l'agent comme retour. C'est l'objet du parcours Harness, où l'on en écrit un.</p>""",
-         "Prédire le résultat d'un jeu de règles deny, ask et allow, et dire ce qu'elles ne couvrent pas.",
-         "Mettre le mode le plus permissif « pour aller vite » retire justement la couche qui rattrape les erreurs. Il se réserve aux environnements jetables."),
+<p>Ce que les règles ne savent pas dire (« pas de commit sur main », « une PR doit être liée à une issue ») se règle avec des <strong>hooks</strong>. Un hook est un script que l'outil lance à un moment précis du travail (avant un outil, après une modification, à la fin d'une réponse). Il reçoit du JSON sur son entrée, et s'il termine avec le code <strong>2</strong>, l'action est bloquée et son message d'erreur revient à l'agent comme retour. C'est l'objet du parcours Harness, où l'on en écrit un.</p>"""),
         ("10", "Choisir le bon mécanisme", "Chaque besoin a son bon support : la synthèse du parcours.",
-         f"""<p>Vous connaissez maintenant sept mécanismes. Le piège classique est d'utiliser le mauvais : tout mettre dans <code>AGENTS.md</code>, ou espérer qu'une instruction tienne lieu d'interdiction. Un critère simple : <strong>à quelle fréquence l'agent en a-t-il besoin, et est-ce une suggestion ou une garantie ?</strong></p>
+         f"""<p>Vous connaissez maintenant les mécanismes, qui ont chacun leur fiche, avec un fichier d'exemple, sur la page <a href="briques.html">Les briques</a>. Le piège classique est d'utiliser le mauvais : tout mettre dans <code>AGENTS.md</code>, ou espérer qu'une instruction tienne lieu d'interdiction. Un critère simple : <strong>à quelle fréquence l'agent en a-t-il besoin, et est-ce une suggestion ou une garantie ?</strong></p>
 <table class="pc-table"><thead><tr><th>Besoin</th><th>Mécanisme</th><th>Coût pour le contexte</th></tr></thead><tbody>
 <tr><td>Un fait valable dans toutes les sessions (commandes, pièges)</td><td><code>AGENTS.md</code></td><td>Toujours chargé</td></tr>
 <tr><td>Une consigne propre à un sujet ou à un type de fichier</td><td>Règle, avec ou sans <code>paths</code></td><td>Au lancement, ou à la lecture d'un fichier concerné</td></tr>
 <tr><td>Une procédure appelée pour une tâche</td><td>Skill</td><td>Description seule, corps à l'appel</td></tr>
 <tr><td>Un travail de lecture volumineux ou une revue indépendante</td><td>Sous-agent</td><td>Fenêtre séparée, un résumé revient</td></tr>
 <tr><td>Un accès à un service ou à des données (docs, navigateur, base)</td><td>Serveur MCP</td><td>Noms d'outils, définitions à la demande</td></tr>
-<tr><td>Une interdiction ou une obligation qui ne doit jamais dépendre du modèle</td><td>Hook, règle de permission</td><td>Aucun, appliqué par l'outil</td></tr>
+<tr><td>Une commande ou un fichier toujours interdit</td><td>Règle de permission (<code>deny</code>)</td><td>Aucun, appliqué par l'outil</td></tr>
+<tr><td>Une décision qui dépend du contexte (la branche, le contenu) et ne doit jamais dépendre du modèle</td><td>Hook</td><td>Aucun, appliqué par l'outil</td></tr>
 <tr><td>Partager le tout avec une équipe</td><td>Dépôt versionné, ou plugin qui regroupe skills, hooks, agents et serveurs</td><td>Selon ce qu'il contient</td></tr></tbody></table>
 <p>Cas pratique : « les composants React se testent avec Testing Library, jamais avec Enzyme ». Où l'écrire ? Une règle avec <code>paths: src/**/*.tsx</code>, parce que cela ne concerne que ces fichiers. Et « ne jamais supprimer une migration » ? Un hook, parce que c'est une garantie.</p>
-<p>Pour la gestion d'équipe, deux compléments existent : les <strong>plugins</strong> (un paquet installable qui regroupe skills, hooks, sous-agents et serveurs MCP) et les réglages gérés par l'organisation. Le parcours Harness montre comment l'ensemble s'assemble.</p>""",
-         "Placer cinq consignes de votre projet dans le bon mécanisme, en justifiant le coût et la garantie.",
-         "Une interdiction écrite dans AGENTS.md reste une demande polie : une garantie passe par un hook ou une règle de permission."),
+<p>Pour la gestion d'équipe, deux compléments existent : les <strong>plugins</strong> (un paquet installable qui regroupe skills, hooks, sous-agents et serveurs MCP) et les réglages gérés par l'organisation. Le parcours Harness montre comment l'ensemble s'assemble.</p>"""),
     ]
     out = "\n".join(stage(*x) for x in s)
-    return (intro("Du prompt isolé à un contexte entretenu : la session, les fichiers d'instructions, les règles, les skills, les agents, les serveurs MCP (dont Context7 et Playwright) et les permissions, avec les vrais fichiers de configuration. Les exemples sont des configurations valides, vérifiées à la génération de la page. Prérequis : le parcours Culture, ou une bonne pratique d'un assistant d'IA. Pour les exercices : Claude Code ou Codex installé (voir <a href='avant-de-commencer.html'>Avant de commencer</a>) et Node.js pour les serveurs MCP. Environ quatre heures, à calibrer en séance.") +
+    for n, brick, label in [("3", "instructions", "Instructions"), ("4", "regle", "Règle"), ("5", "skill", "Skill"), ("6", "sous-agent", "Sous-agent"),
+                            ("7", "mcp", "Serveur MCP"), ("9", "permission", "Permission")]:  # chaque étape renvoie à sa fiche de référence
+        out = out.replace(f'id="etape-{n}"><div class="pc-main">', f'id="etape-{n}"><div class="pc-main"><a class="pc-ref" href="briques.html#{brick}">Fiche : {label}, un fichier d\'exemple →</a>', 1)
+    return (intro("Du prompt isolé à un contexte entretenu : la session, les fichiers d'instructions, les règles, les skills, les agents, les serveurs MCP (dont Context7 et Playwright), une carte du dépôt avec Graphify et les permissions, avec les vrais fichiers de configuration. Les exemples sont des configurations valides, vérifiées à la génération de la page. Prérequis : le parcours Culture, ou une bonne pratique d'un assistant d'IA. Pour les exercices : Claude Code ou Codex installé (voir <a href='avant-de-commencer.html'>Avant de commencer</a>) et Node.js pour les serveurs MCP. Environ quatre heures, à calibrer en séance.") +
             UNTESTED + nav(CONTEXTE_NAV) + out +
             checklist("Vous avez compris si vous savez", [
                 "lister ce qui remplit la fenêtre d'une session d'agent, et la technique qui répond à chaque problème ;",
@@ -588,9 +591,10 @@ def contexte() -> str:
                 "configurer un serveur MCP sans secret en clair, avec la bonne portée ;",
                 "prédire le résultat de règles deny, ask et allow, et nommer ce qu'elles ne garantissent pas ;",
                 "brancher Context7 et Playwright et obtenir une évolution vérifiée par des captures ;",
+                "construire la carte d'un dépôt avec Graphify et dire ce qui reste sur la machine ;",
                 "choisir, pour une consigne donnée, entre AGENTS.md, règle, skill, sous-agent, MCP et hook."]) +
             sources([(DOC + "memory", "Instructions, mémoire et règles (CLAUDE.md, AGENTS.md, .claude/rules)"), (DOC + "skills", "Skills"), (DOC + "sub-agents", "Sous-agents"),
-                     (DOC + "mcp", "MCP : portées et configuration"), ("https://github.com/upstash/context7", "Context7"), ("https://github.com/microsoft/playwright-mcp", "Playwright MCP"), (DOC + "best-practices", "Bonnes pratiques de Claude Code (sessions, vérification)"), (DOC + "features-overview", "Choisir entre skills, sous-agents, hooks et MCP"), (DOC + "permissions", "Permissions"),
+                     (DOC + "mcp", "MCP : portées et configuration"), ("https://github.com/upstash/context7", "Context7"), ("https://github.com/microsoft/playwright-mcp", "Playwright MCP"), ("https://github.com/Graphify-Labs/graphify", "Graphify"), ("https://pypi.org/project/graphifyy/", "Graphify sur PyPI (graphifyy)"), (DOC + "best-practices", "Bonnes pratiques de Claude Code (sessions, vérification)"), (DOC + "features-overview", "Choisir entre skills, sous-agents, hooks et MCP"), (DOC + "permissions", "Permissions"),
                      ("https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents", "Effective context engineering for AI agents")]))
 
 
@@ -625,7 +629,7 @@ def history() -> str:
 <tr><td>Pull request avec preuve</td><td><code>/kwa:ship</code>, <code>guard-github</code></td></tr>
 <tr><td>Déploiement vérifié</td><td><code>/kwa:deploy</code></td></tr>
 <tr><td>Rétrospective</td><td><code>/kwa:learn</code>, mémoire de session</td></tr></tbody></table>
-<div class="pc-proof"><div><b>Preuve attendue</b><p>Placer cinq étapes de votre processus actuel et dire ce qui les remplace quand un agent travaille.</p></div><div><b>Piège</b><p>Un harness rend vérifiables par une machine des contrôles que l'équipe faisait déjà ; il ne doit pas en ajouter par réflexe.</p></div></div></div></section>"""
+</div></section>"""
 
 
 def harness(practice_html: str) -> str:
@@ -644,7 +648,7 @@ def hub() -> str:
          "Ce qu'est un modèle, les jetons et les probabilités, la fenêtre de contexte, l'agent, les hallucinations, le prompt engineering, les risques dont l'injection de prompt.",
          "Tout public. Aucun outil à installer."),
         ("2", "Context engineering", "parcours-contexte.html", "Environ 4 h",
-         "Le contexte et la session, AGENTS.md, les règles, les skills, les sous-agents, MCP avec Context7 et Playwright, les permissions, et comment choisir.",
+         "Le contexte et la session, AGENTS.md, les règles, les skills, les sous-agents, MCP avec Context7 et Playwright, Graphify, les permissions, et comment choisir.",
          "Avoir utilisé un assistant d'IA. Pour les exercices : un agent de code installé, Node.js."),
         ("3", "Harness", "parcours-harness.html", "Environ 4 h",
          "De l'histoire du processus de développement jusqu'à Kwa : gardes, événements de hooks, politique, skills, mémoire, workflow, et le flux complet d'un développeur aujourd'hui.",

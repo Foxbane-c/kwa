@@ -179,3 +179,21 @@
 .pc-card .pc-card-pic{display:block;width:30px;height:30px;margin:0 0 14px;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
 .pc-card:hover .pc-card-pic{transform:rotate(-8deg) scale(1.12)}
 @media(prefers-reduced-motion:reduce){.pc-card .pc-card-pic{transition:none}.pc-card:hover .pc-card-pic{transform:none}}
+
+/* Graphify : schéma de la carte du dépôt */
+.gf-fig{margin:16px 0 20px}
+.gf-wrap{overflow-x:auto}
+.gf-svg{width:100%;min-width:600px;height:auto;display:block;max-width:760px}
+.gf-box rect{fill:var(--kw-raise);stroke:var(--kw-rule);stroke-width:1}
+.gf-box text{font:500 14px Geist,system-ui,sans-serif;fill:var(--kw-fg);text-anchor:middle}
+.gf-svg .gf-s{font:400 11.5px Geist,system-ui,sans-serif;fill:var(--kw-mut);text-anchor:middle}
+.gf-local rect{stroke:var(--k2,#14b8a6)}
+.gf-cost rect{stroke:var(--k3,#f59e0b);stroke-dasharray:5 4}
+.gf-out rect{stroke:var(--acc,#8b5cf6)}
+.gf-agent rect{fill:var(--kw-fg)}.gf-agent text{fill:var(--kw-bg)}.gf-agent .gf-s{fill:var(--kw-bg);opacity:.75}
+.gf-l{fill:none;stroke:var(--kw-mut);stroke-width:1.5}
+.gf-dash{stroke-dasharray:5 4}
+.gf-back{stroke-dasharray:2 4}
+.gf-head{fill:var(--kw-mut)}
+.pc-ref{float:right;margin:4px 0 0 16px;font-size:13px;color:var(--kw-mut)}
+@media(max-width:700px){.pc-ref{float:none;display:block;margin:0 0 8px}}
