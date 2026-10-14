@@ -241,6 +241,8 @@ def main():
     open(os.path.join(HERE, "src", "glossary-data.js"), "w", encoding="utf-8").write(glossary.data_js())
     pages["glossaire.html"] = ("Glossaire", "Les mots du dev agentique, en français", "", glossary.page(), "")
     pages["avant-de-commencer.html"] = ("Avant de commencer", "Installer un agent, puis Kwa", "parcours", beginner.page(), "")
+    import bricks  # noqa: E402
+    pages["briques.html"] = ("Les briques", "Instructions, règles, skills, agents, hooks, MCP, permissions, plugins", "parcours+bricks", bricks.page(), "")
     pages["premier-pas.html"] = ("Premier pas en 30 minutes", "Kwa sur un projet d'exercice", "parcours", firststeps.page(), "")
     pages["delegation.html"] = ("Skills qui délèguent", "Des agents neufs, un prompt rempli", "delegation", delegation.page(), "")
     pages["parcours.html"] = ("Parcours d'apprentissage", "Trois parcours, du modèle au harness", "parcours", parcours_pages.hub(), "")
@@ -283,7 +285,7 @@ $('#ver2').textContent = DATA.version;
     # contrôle de syntaxe des scripts inline des pages générées (une apostrophe oubliée casse toute la page)
     import shutil, tempfile
     if shutil.which("node"):
-        for page in ["index.html", "skill-map.html", "board.html", "terminal.html", "parcours.html", "parcours-culture.html", "parcours-contexte.html", "parcours-harness.html", "delegation.html", "glossaire.html", "avant-de-commencer.html", "premier-pas.html"] + list(SPLIT):
+        for page in ["index.html", "skill-map.html", "board.html", "terminal.html", "parcours.html", "parcours-culture.html", "parcours-contexte.html", "parcours-harness.html", "delegation.html", "glossaire.html", "avant-de-commencer.html", "premier-pas.html", "briques.html"] + list(SPLIT):
             for i, code in enumerate(re.findall(r"<script>(.*?)</script>", open(os.path.join(HERE, page), encoding="utf-8").read(), re.S)):
                 with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
                     f.write(code)

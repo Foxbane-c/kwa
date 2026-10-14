@@ -25,7 +25,7 @@ TERMS = [
      "Une procédure écrite dans un fichier SKILL.md : un en-tête qui dit quand s'en servir, un corps qui dit comment. L'agent la suit quand la situation correspond, ou vous la lancez.",
      "/kwa:commit sous Claude Code, $kwa:commit sous Codex."),
     ("hook", "Hook (crochet)", "hook", ["hooks"],
-     "Un script que l'outil (Claude Code, Codex) exécute à un moment précis : avant une commande, après une modification, au démarrage, à la fin d'une réponse. Le modèle ne le lance pas et ne peut pas l'éviter : c'est ce qui le rend contraignant.",
+     "Un script que l'outil (Claude Code, Codex) exécute à un moment précis : avant une commande, après une modification, au démarrage, à la fin d'une réponse. Le modèle ne le lance pas et ne peut pas le sauter. Mais il juge un texte : une commande formulée autrement peut lui échapper. Un filet contre l'erreur, pas une barrière.",
      "Certains hooks de Kwa refusent (les gardes), d'autres automatisent (formatage, journal, rappel des skills)."),
     ("garde", "Garde (garde-fou)", "guard, guardrail", ["gardes", "garde-fou", "garde-fous"],
      "Un hook lancé avant les outils qu'il surveille (commandes shell, écriture, lecture de fichiers), qui répond : refuser, demander confirmation ou laisser passer. Un filet contre l'erreur, pas une barrière de sécurité.",
@@ -54,6 +54,12 @@ TERMS = [
     ("opt-in", "Opt-in (à activer)", "opt-in", [],
      "Désactivé par défaut : il faut l'activer soi-même.",
      "Exemple : verify-stop, activé par KWA_STOP_VERIFY=1."),
+    ("yaml", "YAML (en-tête)", "YAML", ["en-tête YAML", "frontmatter"],
+     "Le format des en-têtes placés entre deux lignes « --- » en haut d'un fichier Markdown : des paires « clé: valeur » que l'outil lit (name, description, paths, tools).", ""),
+    ("instructions", "Fichier d'instructions", "memory file", ["AGENTS.md", "CLAUDE.md"],
+     "Le fichier lu au début de chaque session (AGENTS.md, ou CLAUDE.md pour Claude Code) : ce que l'agent doit savoir du projet et ne peut pas deviner.", ""),
+    ("permission", "Permission", "permission", ["permissions"],
+     "Une règle de settings.json qui autorise, fait confirmer ou refuse un outil. Claude Code l'applique avant l'outil, sans demander au modèle.", ""),
     ("prompt", "Prompt (consigne)", "prompt", ["prompts"],
      "Le texte que l'on donne au modèle pour lui demander quelque chose : la demande, son contexte, le format attendu.", ""),
     ("jeton", "Jeton", "token", ["jetons", "token", "tokens"],
@@ -119,7 +125,7 @@ LEXICON = [
     ("sous-agent", "subagent", {"glossaire.html"}),
 ]
 
-SKIP_AUTO = {"pr", "ci", "adr", "branche", "commit", "merge", "push", "issue", "plugin", "regle"}  # trop courants pour une infobulle partout
+SKIP_AUTO = {"pr", "ci", "adr", "branche", "commit", "merge", "push", "issue", "plugin", "regle", "instructions", "permission"}  # trop courants pour une infobulle partout
 
 
 def data_js() -> str:
@@ -136,11 +142,18 @@ def data_js() -> str:
     return "window.KWA_GLOSSARY=" + json.dumps(items, ensure_ascii=False) + ";\n"
 
 
+BRICK_OF = {"hook": "hook", "garde": "hook", "skill": "skill", "sous-agent": "sous-agent", "regle": "regle", "plugin": "plugin",
+            "mcp": "mcp", "politique": "politique", "marketplace": "plugin",
+            "yaml": "regle", "instructions": "instructions", "permission": "permission"}  # terme -> fiche de briques.html
+
+
 def page() -> str:
     rows = []
     for tid, label, en, _forms, short, kwa in sorted(TERMS, key=lambda t: t[1].lower()):
         en_line = f'<span class="gl-en">anglais : <i>{html.escape(en)}</i></span>' if en else ""
         kwa_line = f'<p class="gl-kwa"><b>Dans Kwa</b> : {html.escape(kwa)}</p>' if kwa else ""
+        if tid in BRICK_OF:
+            kwa_line += f'<p class="gl-kwa"><a href="briques.html#{BRICK_OF[tid]}">Voir la fiche : où ça vit, un exemple de fichier</a></p>'
         rows.append(f'<div class="gl-item" id="{tid}" data-text="{html.escape((label + " " + en + " " + short).lower())}">'
                     f'<h2>{html.escape(label)}</h2>{en_line}<p>{html.escape(short)}</p>{kwa_line}</div>')
     return f"""<p class="kw-lead gl-lead">Le dev agentique arrive avec beaucoup de mots anglais. Voici chacun, en français, avec

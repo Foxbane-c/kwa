@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="fr" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<title>Les briques | Kwa</title>
+<script>try{if(localStorage.getItem('kwa-docs-theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}</script>
+<link rel="stylesheet" href="style/fonts.css"><link rel="stylesheet" href="style/tokens.css"><link rel="stylesheet" href="style/base.css"><link rel="stylesheet" href="src/shell.css"><link rel="stylesheet" href="src/parcours.css"><link rel="stylesheet" href="src/bricks.css">
+<style>
+/* Extensions propres à la documentation Kwa. Uniquement les tokens du design system : aucune couleur ajoutée. */
+html{scroll-behavior:smooth;overflow-x:clip}
+section{scroll-margin-top:84px}
+.kw-hero{grid-template-columns:minmax(0,1fr)}
+.kd-term{min-width:0}
+.kd-eyebrow{font:400 12px/1.4 'Geist Mono',ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--kw-mut);margin-bottom:20px}
+.kd-sk h3 .kd-pic{width:16px;height:16px;margin-right:6px;vertical-align:-2px}
+.kd-solo .kd-section{padding-top:36px}
+.kd-solo .kw-page-title{margin:0 0 14px}
+.kd-main strong{font-weight:600;color:var(--kw-fg)}
+.kd-def{margin-top:14px;font-size:15px}
+.kd-first{margin:36px 0 8px;padding:20px 22px;border:1px solid var(--kw-rule);border-radius:16px}
+.kw .kd-first h3{font:600 17px/1.4 Geist,system-ui,sans-serif;margin:0 0 12px}
+.kd-first ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 18px}
+.kd-first li{font-size:14px;color:var(--kw-body)}
+.kd-first li code{margin-right:6px}
+.kw .kd-first p{margin:12px 0 0;font-size:13px;color:var(--kw-mut)}
+.kd-rule{list-style:none;margin:0 0 18px;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--kw-mut)}
+.kd-rule b{color:var(--kw-fg);font-weight:500;margin-right:4px}
+.kw .kd-h3{font:600 18px/1.4 Geist,system-ui,sans-serif;margin:48px 0 0}
+.kd-impose{min-width:900px!important}.kd-impose td{vertical-align:top}.kd-impose td:first-child{min-width:150px}
+.kd-kind{display:inline-block;white-space:nowrap;font:500 11px 'Geist Mono',monospace;padding:2px 7px;border:1px solid var(--kw-rule);border-radius:6px;color:var(--kw-mut)}
+.kd-kind--imposé,.kd-kind--barrière{color:var(--kw-fg);border-color:var(--kw-fg)}
+.kd-lead{max-width:68ch;color:var(--kw-body);font-size:clamp(15px,1.4vw,17px);margin:0}
+.kd-head .kw-section-title{margin-bottom:20px}
+.kd-section{padding-top:128px}
+.kd-brand{display:flex;align-items:center;gap:14px;text-decoration:none;white-space:nowrap}
+.kd-theming, .kd-theming *, .kd-theming *::before, .kd-theming *::after{transition:background-color .35s ease,color .35s ease,border-color .35s ease,fill .35s ease,stroke .35s ease !important}
+.kd-theme{width:40px;height:40px;flex:none;border-radius:50%;border:1px solid var(--kw-rule);background:transparent;color:var(--kw-fg);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}.kd-theme:hover{background:var(--kw-raise)}.kd-theme svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.kd-theme .i-sun{display:none}html[data-theme="dark"] .kd-theme .i-sun{display:block}html[data-theme="dark"] .kd-theme .i-moon{display:none}
+.kd-word{font:700 20px/1 Geist,system-ui,sans-serif;letter-spacing:-.02em}.kd-word--big{font-size:30px}
+.kd-brand span{font:400 12px 'Geist Mono',monospace;letter-spacing:.08em;color:var(--kw-mut)}
+.kd-code{margin:0;background:var(--kw-brick);border:1px solid var(--kw-rule);border-radius:12px;padding:16px 18px;overflow-x:auto;font:13px/1.7 'Geist Mono',monospace;color:var(--kw-fg)}
+.kd-code .p{color:var(--kw-mut)} .kd-code .s{color:var(--kw-green)}
+.kd-term{margin-top:40px;max-width:760px}
+.kd-term .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font:400 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--kw-mut)}
+.kd-copy{font:400 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--kw-body);border:1px solid var(--kw-rule);border-radius:999px;padding:6px 12px;min-height:30px}
+.kd-copy:hover{background:var(--kw-raise)}
+code{font:.9em 'Geist Mono',monospace;background:var(--kw-tint);border:1px solid var(--kw-rule-soft);border-radius:6px;padding:1px 6px}
+.kd-start{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:22px 0 4px;padding:12px 14px;border:1px solid var(--kw-rule);border-radius:12px}
+.kd-start b{font-size:14px;margin-right:4px}
+.kd-start a{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;color:var(--kw-fg);text-decoration:none;font-size:14px;background:var(--kw-raise)}
+.kd-start a:hover{background:var(--kw-tint)}
+.kd-start i{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--kd-violet);color:#fff;font:normal 600 11px Geist,sans-serif}
+.kd-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.kd-stat{padding:24px;border:1px solid var(--kw-rule);border-radius:20px}
+.kd-stat .kd-pic{display:block;width:26px;height:26px;margin:0 0 14px;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.kd-stat:hover .kd-pic{transform:rotate(-10deg) scale(1.15)}
+.kd-stat .n{font:650 clamp(30px,3.4vw,40px)/1 Geist,system-ui,sans-serif;letter-spacing:-.02em}
+.kd-stat .l{margin-top:10px;color:var(--kw-body);font-size:14px}
+.kd-grid{display:grid;gap:12px}
+.kd-g2{grid-template-columns:repeat(2,minmax(0,1fr))}.kd-g3{grid-template-columns:repeat(3,minmax(0,1fr))}.kd-g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kd-card{min-width:0;padding:24px;border:1px solid var(--kw-rule);border-radius:20px;background:transparent;text-align:left;font:inherit;color:inherit}
+.kd-card h3{font:500 18px/1.4 Geist,sans-serif;margin:0 0 12px}
+.kd-card p{color:var(--kw-body);font-size:14px;line-height:1.625;margin:0}
+.kd-flow{display:grid;grid-template-columns:280px minmax(0,1fr);gap:12px;align-items:start}
+.kd-steps{display:grid;gap:8px}
+.kd-step{display:grid;grid-template-columns:30px minmax(0,1fr);align-items:center;gap:10px;text-align:left;min-height:44px;padding:10px 16px;border:1px solid var(--kw-rule);border-radius:12px;background:transparent;color:var(--kw-fg);font:500 14px Geist,sans-serif;transition:background .2s ease,color .2s ease}
+.kd-step i{font:400 11px 'Geist Mono',monospace;color:var(--kw-mut);font-style:normal}
+.kd-step:hover{background:var(--kw-raise)}
+.kd-step[aria-selected="true"]{background:var(--kw-invert-bg);color:var(--kw-invert-fg);border-color:transparent}
+.kd-step[aria-selected="true"] i{color:var(--kw-invert-fg);opacity:.7}
+.kd-panel{border:1px solid var(--kw-rule);border-radius:20px;padding:32px;min-height:420px}
+.kd-panel h3{font:650 clamp(22px,2.4vw,28px)/1.2 Geist,system-ui,sans-serif;letter-spacing:-.015em;margin:6px 0 16px}
+.kd-panel h3 strong{font-weight:700}
+.kd-panel .cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+.kd-panel h4,.kd-detail h4{margin:0 0 8px;font:400 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--kw-mut)}
+.kd-panel ul{margin:0;padding-left:18px;color:var(--kw-body);font-size:14px;line-height:1.7}
+.kd-panel p.v{font:14px/1.6 'Geist Mono',monospace;margin:0}
+.kd-tools{display:flex;flex-wrap:wrap;gap:8px;margin:32px 0 20px;align-items:center}
+.kw .kd-chip{font:500 13px/1.2 Geist,system-ui,sans-serif;background:transparent;color:var(--kw-body);border:1px solid var(--kw-rule);border-radius:6px;padding:6px 10px;transition:background .2s ease}
+.kw .kd-chip:hover{background:var(--kw-raise)}
+.kw .kd-chip[aria-pressed="true"]{background:var(--kw-invert-bg);color:var(--kw-invert-fg);border-color:transparent}
+.kd-search{flex:1;min-width:200px;background:transparent;border:1px solid var(--kw-rule);border-radius:6px;color:var(--kw-fg);padding:6px 10px;font:13px 'Geist Mono',monospace}
+.kd-table{border:1px solid var(--kw-rule);border-radius:20px;overflow:hidden}
+.kd-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:4px 20px;padding:16px 20px;border-top:1px solid var(--kw-rule-soft);align-items:start}
+.kd-row:first-child{border-top:0}
+.kd-pill{display:inline-flex;align-items:center;gap:8px;padding:2px 8px;border-radius:6px;border:1px solid var(--kw-rule);font:500 12px/1.4 Geist,system-ui,sans-serif}
+.kd-pill.deny{background:var(--kw-invert-bg);color:var(--kw-invert-fg);border-color:transparent}
+.kd-pill.ask{border-color:var(--kw-fg)}
+.kd-pill.allow{color:var(--kw-green);border-color:currentColor}
+.kd-row .cmd{font:13px/1.55 'Geist Mono',monospace;white-space:pre-wrap;word-break:break-word}
+.kd-row .meta{font:400 11px 'Geist Mono',monospace;letter-spacing:.06em;color:var(--kw-mut);text-transform:uppercase;margin-left:10px}
+.kd-row .why{grid-column:2;color:var(--kw-body);font-size:14px}
+.kd-note{margin-top:14px;font:400 12px 'Geist Mono',monospace;letter-spacing:.04em;color:var(--kw-mut)}
+.kd-legend{display:flex;flex-wrap:wrap;gap:10px 22px;margin:0 0 26px;font:400 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--kw-body)}
+.kd-legend span{display:inline-flex;align-items:center;gap:9px}
+.sw{width:24px;height:14px;display:inline-block;border:1px solid var(--kw-fg);border-radius:3px}
+.sw.hook{border-style:dashed}.sw.agent{border-style:double;border-width:4px}.sw.garde{border:2px solid var(--kw-fg)}.sw.humain{background:var(--kw-invert-bg);border-radius:10px;border-color:transparent}
+.kd-track{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:34px 36px}
+.kd-brick{position:relative;text-align:left;font:inherit;color:inherit;background:transparent;border:1px solid var(--kw-fg);border-radius:12px;padding:16px 18px;transition:translate .2s ease,background .2s ease}
+.kd-brick:hover{translate:0 -2px;background:var(--kw-tint)}
+.kd-brick[aria-pressed="true"]{background:var(--kw-raise)}
+.kd-brick .ty{display:block;margin-bottom:8px;font:400 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--kw-mut)}
+.kd-brick b{display:block;font:500 16px/1.35 Geist,sans-serif;margin-bottom:6px}
+.kd-brick .d{display:block;font-size:13.5px;line-height:1.55;color:var(--kw-body)}
+.kd-brick .when{display:block;margin-top:10px;font:400 11px/1.5 'Geist Mono',monospace;letter-spacing:.04em;color:var(--kw-mut)}
+.kd-brick.hook{border:1px dashed var(--kw-fg)}
+.kd-brick.agent{border:4px double var(--kw-fg);padding:13px 15px}
+.kd-brick.garde{border:2px solid var(--kw-fg)}
+.kd-brick.humain{background:var(--kw-invert-bg);color:var(--kw-invert-fg);border-color:transparent;border-radius:28px;padding:18px 22px}
+.kd-brick.humain .ty,.kd-brick.humain .d,.kd-brick.humain .when{color:var(--kw-invert-fg);opacity:.75}
+.kd-brick:not(:last-child)::after{content:"→";position:absolute;right:-28px;top:50%;translate:0 -50%;font:16px 'Geist Mono',monospace;color:var(--kw-mut)}
+.kd-detail{margin-top:26px;border:1px solid var(--kw-rule);border-radius:20px;padding:22px 26px;min-height:92px}
+.kd-detail p{margin:0;color:var(--kw-body);font-size:14.5px;line-height:1.65}
+.kd-sk{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.kd-sk .kd-card h3{font:500 16px 'Geist Mono',monospace;margin-top:10px}
+.kd-fam{font:400 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--kw-mut)}
+.kd-origin{display:inline-flex;align-items:center;gap:8px;margin:14px 6px 0 0;padding:3px 12px 3px 3px;border-radius:999px;background:var(--kw-invert-bg);color:var(--kw-invert-fg);font:10px/1.7 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
+.kd-origin img{width:22px;height:22px;border-radius:50%;object-fit:cover}
+.kd-origin.kwa{padding:3px 12px}
+.kd-av{width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid var(--kw-rule);flex:none}
+.kd-origin.kwa{background:transparent;color:var(--kw-fg);border:1px solid var(--kw-fg)}
+.kd-src{border:1px solid var(--kw-rule);border-radius:10px}
+.kd-src .kd-card{display:grid;grid-template-columns:260px minmax(0,1fr);gap:4px 32px;padding:14px 18px;border:0;border-radius:0;border-top:1px solid var(--kw-rule)}
+.kd-src .kd-card:first-child{border-top:0}
+.kd-src .who{display:flex;align-items:center;gap:10px}
+.kd-src h3{font:500 15px Geist,sans-serif;margin:0}
+.kd-src .sub{margin-top:4px;font-size:12px;color:var(--kw-mut)}
+.kd-src a{color:var(--kw-body);text-decoration:underline;text-underline-offset:2px}
+.kd-tag{display:inline-block;margin:6px 6px 0 0;padding:2px 7px;border:1px solid var(--kw-rule);border-radius:6px;font:12px 'Geist Mono',monospace;color:var(--kw-body)}
+.kd-loop{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:34px}
+.kd-node{position:relative;padding:20px;border:1px solid var(--kw-rule);border-radius:20px}
+.kd-node:not(:last-child)::after{content:"→";position:absolute;right:-28px;top:50%;translate:0 -50%;font:16px 'Geist Mono',monospace;color:var(--kw-mut)}
+.kd-node b{display:block;font:500 15px Geist,sans-serif;margin-bottom:8px}.kd-node span{display:block;font-size:13.5px;line-height:1.6;color:var(--kw-body)}
+.kd-gate{margin-top:12px;border:1px dashed var(--kw-dim);border-radius:20px;padding:18px 22px;display:flex;gap:16px;align-items:baseline;color:var(--kw-body);font-size:14px}
+.kd-gate b{font:400 12px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--kw-fg);white-space:nowrap}
+.kd-ob{display:grid;gap:12px}
+.kd-ob .item{display:grid;grid-template-columns:56px minmax(0,1fr);gap:20px;padding:24px;border:1px solid var(--kw-rule);border-radius:20px}
+.kd-ob .num{font:650 28px/1 Geist,system-ui,sans-serif;letter-spacing:-.02em;color:var(--kw-dim)}
+.kd-ob h3{font:500 18px Geist,sans-serif;margin:0 0 6px}.kd-ob p{margin:0 0 14px;color:var(--kw-body);font-size:14px}
+.kd-wrap{border:1px solid var(--kw-rule);border-radius:20px;overflow-x:auto}
+.kd-wrap table{width:100%;min-width:560px;border-collapse:collapse;font-size:14px}
+.kd-wrap th{font:400 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--kw-mut);text-align:left;padding:14px 20px;border-bottom:1px solid var(--kw-rule)}
+.kd-wrap td{padding:14px 20px;border-top:1px solid var(--kw-rule-soft);vertical-align:top;color:var(--kw-body);line-height:1.6}
+.kd-wrap td:first-child{color:var(--kw-fg);font-weight:500}
+#limites details{border-top:1px solid var(--kw-rule);padding:20px 0}
+#limites details summary{cursor:pointer;font:500 18px Geist,sans-serif;min-height:44px;display:flex;align-items:center}
+#limites details p{margin:10px 0 0;color:var(--kw-body);max-width:68ch}
+.kd-rv{opacity:1;transform:none}
+.js .kd-rv{opacity:0;transform:translateY(18px);transition:opacity .88s var(--kw-ease),transform .88s var(--kw-ease)}
+.js .kd-rv.in{opacity:1;transform:none}
+footer.kw-footer{margin-top:128px}
+@media (max-width:1023px){.kd-g4{grid-template-columns:repeat(2,minmax(0,1fr))}@media (max-width:900px){
+  .kd-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.kd-g2,.kd-g3{grid-template-columns:minmax(0,1fr)}
+  .kd-flow{grid-template-columns:minmax(0,1fr)}.kd-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.kd-panel{padding:22px;min-height:0}.kd-panel .cols{grid-template-columns:minmax(0,1fr)}
+  .kd-loop{grid-template-columns:minmax(0,1fr)}.kd-node:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-30px;translate:-50% 0}
+  .kd-track{grid-template-columns:minmax(0,1fr);gap:34px}.kd-brick:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-30px;translate:-50% 0}
+  .kd-src .kd-card{grid-template-columns:minmax(0,1fr)}.kd-row{grid-template-columns:minmax(0,1fr)}.kd-row .why{grid-column:1}
+  .kd-ob .item{grid-template-columns:minmax(0,1fr);padding:18px}.kd-ob .num{display:none}.kd-section{padding-top:88px}.kd-brand span{display:none}
+}
+@media (prefers-reduced-motion:reduce){.js .kd-rv{opacity:1;transform:none;transition:none}.kd-stat .kd-pic{transition:none}.kd-stat:hover .kd-pic{transform:none}}
+@media print{</style></head>
+<body class="kw">
+<header class="kd-top"><button type="button" class="kd-menu" id="menu" aria-label="Ouvrir la navigation" aria-expanded="false" aria-controls="side"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><a class="kd-brand" href="index.html" aria-label="Kwa, accueil"><b class="kd-word">kwa</b><span>/ workflows</span></a><span class="kd-spacer"></span><button type="button" class="kd-theme" id="theme" aria-label="Passer en thème clair" title="Changer de thème"><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 14.6A8.4 8.4 0 0 1 9.4 3.8a8.4 8.4 0 1 0 10.8 10.8z"/></svg></button></header>
+<div class="kd-layout"><aside class="kd-side" id="side" aria-label="Navigation"><nav><div class="kd-sg"><h2><svg class="kd-ico" style="--dot:var(--kd-blue)" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Kwa</h2><ul><li><a href="index.html#top">Présentation</a></li><li><a href="index.html#pourquoi">Pourquoi ce projet</a></li><li><a href="index.html#arborescence">Arborescence</a></li><li><a href="index.html#demarrer">Démarrer</a></li></ul></div><div class="kd-sg"><h2><svg class="kd-ico" style="--dot:var(--kd-violet)" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>Explorer</h2><ul><li><a href="board.html">Les workflows</a></li><li><a href="skills.html">Skills</a></li><li><a href="delegation.html">Skills qui délèguent</a></li><li><a href="gardes.html">Gardes en action</a></li><li><a href="memoire.html">Mémoire</a></li><li><a href="terminal.html">Terminal</a></li></ul></div><div class="kd-sg"><h2><svg class="kd-ico" style="--dot:var(--kd-green)" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.2 2.7 3 6 3s6-1.8 6-3v-4.5"/></svg>Apprendre</h2><ul><li><a href="avant-de-commencer.html">Avant de commencer</a></li><li><a href="briques.html" aria-current="page">Les briques</a></li><li><a href="premier-pas.html">Premier pas en 30 min</a></li><li><a href="parcours.html">Les trois parcours</a></li><li><a href="parcours-culture.html">1 · Culture IA générative</a></li><li><a href="parcours-contexte.html">2 · Context engineering</a></li><li><a href="parcours-harness.html">3 · Harness</a></li></ul></div><div class="kd-sg"><h2><svg class="kd-ico" style="--dot:var(--kd-amber)" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Référence</h2><ul><li><a href="glossaire.html">Glossaire</a></li><li><a href="impose.html">Imposé ou suggéré</a></li><li><a href="alleger.html">Quand alléger</a></li><li><a href="methode.html">Méthode</a></li><li><a href="migrer.html">Remplacer l&#x27;existant</a></li><li><a href="limites.html">Limites et suite</a></li><li><a href="credits.html">Crédits</a></li></ul></div></nav></aside><div class="kd-scrim" id="scrim"></div><div class="kd-main">
+<main class="kw-container pc-wrap" data-acc="briques" style="padding-top:32px">
+  <div class="kd-eyebrow">Instructions, règles, skills, agents, hooks, MCP, permissions, plugins</div>
+  <h1 class="kw-page-title">Les briques</h1>
+  <p class="kw-lead">Un agent de code se règle avec une poignée de briques. Elles ne se ressemblent pas : certaines sont du
+<strong>texte que le modèle lit</strong> et peut oublier, d'autres sont <strong>exécutées par l'outil</strong> et tiennent quoi qu'il arrive.
+Chaque fiche dit pourquoi la brique existe, quand s'en servir, où elle vit, et montre un vrai fichier.</p>
+<nav class="br-nav" aria-label="Les briques"><a href="#instructions"><svg class="kd-pic p-doc" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4"/><path d="M9 12h6M9 15.5h6"/></svg>Instructions</a><a href="#regle"><svg class="kd-pic p-list" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h1M4 12h1M4 18h1"/></svg>Règle</a><a href="#skill"><svg class="kd-pic p-sword" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.2 16.2 7.8 13.8z"/><path d="M5.5 11.5l7 7"/><path d="M9 15l-3.5 3.5"/><circle cx="4.6" cy="19.4" r="1.1"/></svg>Skill</a><a href="#sous-agent"><svg class="kd-pic p-agent pic-fill" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M7 1h2v3h4v1h1v1h1v4h-1v1h-1v1H3v-1H2v-1H1V6h1V5h1V4h4zM5 6h2v3H5zM9 6h2v3H9zM7 10h2v1H7zM3 9h1v1H3zM12 9h1v1h-1z"/></svg>Sous-agent</a><a href="#hook"><svg class="kd-pic p-hook" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><path d="M6 14a6 6 0 0 0 12 0"/><circle cx="12" cy="5" r="1.6"/></svg>Hook</a><a href="#mcp"><svg class="kd-pic p-plug" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v5M15 3v5"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v4"/></svg>Serveur MCP</a><a href="#permission"><svg class="kd-pic p-shield" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.5 3v5.2c0 4.6-3.1 8.2-7.5 9.8-4.4-1.6-7.5-5.2-7.5-9.8V6z"/><path d="m8.8 12 2.3 2.3 4.2-4.6"/></svg>Permission</a><a href="#sandbox"><svg class="kd-pic p-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>Bac à sable</a><a href="#plugin"><svg class="kd-pic p-box" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>Plugin</a><a href="#politique"><svg class="kd-pic p-settings" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Politique Kwa</a></nav>
+
+<section class="br-split" aria-labelledby="br-split-h"><h2 id="br-split-h" class="br-h">Lu par le modèle, ou exécuté par l'outil</h2>
+<div class="br-cols">
+<div class="br-col"><b><span class="kd-kind kd-kind--suggéré">suggéré</span> Le modèle lit</b>
+<p>Du texte qui entre dans sa fenêtre de contexte. Il le suit presque toujours, mais peut l'oublier ou s'en écarter.</p>
+<ul><li><a href="#instructions">Instructions</a></li><li><a href="#regle">Règle</a></li><li><a href="#skill">Skill</a></li><li>la description des outils MCP</li></ul></div>
+<div class="br-col br-col--tool"><b><span class="kd-kind kd-kind--imposé">imposé</span> L'outil exécute</b>
+<p>Claude Code (ou Kwa) l'applique avant ou après chaque action, sans demander l'avis du modèle.</p>
+<ul><li><a href="#hook">Hook</a></li><li><a href="#permission">Permission</a></li><li><a href="#politique">Politique Kwa</a></li><li>la liste <code>tools</code> d'un sous-agent</li></ul></div>
+</div>
+<p class="kd-note">Une brique « mixte » a les deux : un sous-agent suit son texte, mais ne peut utiliser que les outils permis. Un plugin vaut ce qu'il contient. Page écrite pour Claude Code ; Codex lit le même <code>AGENTS.md</code>, et ses autres emplacements sont dans le <a href="https://github.com/nesyouyou/kwa#claude-code-et-codex">README de Kwa</a>.</p></section>
+
+<section class="br-trip" aria-labelledby="br-trip-h"><h2 id="br-trip-h" class="br-h">Le trajet d'une commande</h2>
+<p class="kd-note">L'agent veut lancer <code>git commit</code>. Voici, dans l'ordre, ce qui peut l'arrêter. Chaque étape est une brique.</p>
+<ol class="br-steps">
+<li class="br-st-model"><b>Le modèle décide</b><span>guidé par les <a href="#instructions">instructions</a>, les <a href="#regle">règles</a> et la <a href="#skill">skill</a> en cours</span></li>
+<li class="br-st-tool"><b>Hooks <code>PreToolUse</code></b><span>tous en parallèle ; un refus arrête tout (<a href="#hook">hook</a>, gardes de <a href="#politique">Kwa</a>)</span></li>
+<li class="br-st-tool"><b>Permissions</b><span><code>deny</code>, puis <code>ask</code>, puis <code>allow</code>, puis le mode de la session (<a href="#permission">permission</a>)</span></li>
+<li class="br-st-os"><b>Bac à sable</b><span>la commande tourne dans les limites du système (<a href="#sandbox">bac à sable</a>)</span></li>
+<li class="br-st-tool"><b>Hooks <code>PostToolUse</code></b><span>formater, vérifier : l'action a déjà eu lieu</span></li>
+<li class="br-st-model"><b>Le résultat revient</b><span>dans la fenêtre de contexte : le modèle le lit et continue</span></li>
+</ol>
+<p class="kd-note">Hors de la machine, la <strong>protection de branche</strong> de GitHub refuse encore une fusion sans relecture : le dernier filet, et le plus solide.</p></section>
+
+<section class="br-pick" aria-labelledby="br-pick-h"><h2 id="br-pick-h" class="br-h">Laquelle choisir ?</h2>
+<p class="kd-note">Choisissez un besoin, puis faites votre pronostic parmi les briques : la page corrige, avec la raison.</p>
+<div class="br-needs"><button type="button" class="br-need" aria-pressed="false" data-to="instructions" data-why="un fait valable à chaque session">L&#x27;agent doit savoir comment lancer les tests</button><button type="button" class="br-need" aria-pressed="false" data-to="regle" data-why="ne concerne que certains fichiers">Les composants React se testent avec Testing Library</button><button type="button" class="br-need" aria-pressed="false" data-to="skill" data-why="une procédure, appelée quand on la demande">Rédiger les notes de version de la même façon à chaque fois</button><button type="button" class="br-need" aria-pressed="false" data-to="sous-agent" data-why="une fenêtre à part, des outils réduits">Relire une PR sans que le relecteur puisse modifier le code</button><button type="button" class="br-need" aria-pressed="false" data-to="hook" data-why="doit tenir sans dépendre du modèle">Ne jamais committer sur main, même si l&#x27;agent l&#x27;oublie</button><button type="button" class="br-need" aria-pressed="false" data-to="hook" data-why="automatique, à chaque écriture">Formater chaque fichier après son écriture</button><button type="button" class="br-need" aria-pressed="false" data-to="mcp" data-why="un accès à un service hors du dépôt">Lire la doc de la bonne version d&#x27;une bibliothèque</button><button type="button" class="br-need" aria-pressed="false" data-to="permission" data-why="une commande sûre, autorisée d&#x27;avance">Ne plus valider pnpm test à la main</button><button type="button" class="br-need" aria-pressed="false" data-to="plugin" data-why="une seule source, mise à jour d&#x27;un coup">Partager les mêmes skills et gardes entre cinq dépôts</button><button type="button" class="br-need" aria-pressed="false" data-to="permission" data-why="une ligne deny : Bash(npm run deploy:prod*) ; une politique Kwa seulement s&#x27;il faut aussi l&#x27;appliquer sous Codex">Interdire npm run deploy:prod dans ce projet</button><button type="button" class="br-need" aria-pressed="false" data-to="politique" data-why="une combinaison de motifs (all, any), qu&#x27;une règle de permission ne sait pas dire">Refuser un curl qui contient à la fois prod et reset</button><button type="button" class="br-need" aria-pressed="false" data-to="sandbox" data-why="une limite que le système d&#x27;exploitation fait respecter, quelle que soit la commande">Empêcher le shell de joindre autre chose que le registre npm</button><button type="button" class="br-need" aria-pressed="false" data-to="skill" data-why="avec disable-model-invocation: true, le modèle ne la déclenche jamais seul">Une procédure que je lance seulement à la main</button><button type="button" class="br-need" aria-pressed="false" data-to="hook" data-why="un hook Stop ; attention à la boucle, Claude Code s&#x27;arrête après 8 relances">Ne pas rendre la main tant que les tests sont rouges</button></div>
+<div class="br-guess" id="br-guess" hidden><span>Votre pronostic :</span><button type="button" class="br-g" data-g="instructions">Instructions</button><button type="button" class="br-g" data-g="regle">Règle</button><button type="button" class="br-g" data-g="skill">Skill</button><button type="button" class="br-g" data-g="sous-agent">Sous-agent</button><button type="button" class="br-g" data-g="hook">Hook</button><button type="button" class="br-g" data-g="mcp">Serveur MCP</button><button type="button" class="br-g" data-g="permission">Permission</button><button type="button" class="br-g" data-g="sandbox">Bac à sable</button><button type="button" class="br-g" data-g="plugin">Plugin</button><button type="button" class="br-g" data-g="politique">Politique Kwa</button></div>
+<p class="br-answer" id="br-answer" aria-live="polite"></p>
+<div class="br-forbid"><h3>Interdire quelque chose : trois façons</h3>
+<table class="pc-table"><thead><tr><th>Besoin</th><th>Le plus simple</th></tr></thead><tbody>
+<tr><td>Une commande ou un fichier toujours interdit, quelle que soit la situation</td><td><a href="#permission">Permission</a> <code>deny</code> : une ligne dans settings.json</td></tr>
+<tr><td>Un refus qui dépend du contexte : la branche, le contenu du fichier, l'heure</td><td><a href="#hook">Hook</a> : un script calcule la décision</td></tr>
+<tr><td>Un refus propre au projet, avec la raison expliquée à l'agent, sous Claude Code comme sous Codex</td><td><a href="#politique">Politique Kwa</a> : les gardes de Kwa l'appliquent</td></tr></tbody></table></div></section>
+
+<section class="br-where" aria-labelledby="br-where-h"><h2 id="br-where-h">Où tout cela vit</h2>
+<p class="kd-note">Un projet qui utilise toutes les briques. Rien n'est obligatoire : la plupart des projets commencent par <code>AGENTS.md</code> et une ou deux règles.</p>
+<pre class="kd-code">mon-projet/
+├── AGENTS.md                      instructions, lues à chaque session
+├── CLAUDE.md                      @AGENTS.md (un pointeur)
+├── .mcp.json                      serveurs MCP du projet
+└── .claude/
+    ├── settings.json              permissions et hooks (partagés)
+    ├── settings.local.json        vos réglages à vous (hors git)
+    ├── rules/                     règles par sujet
+    │   └── composants.md
+    ├── skills/                    procédures
+    │   └── release-notes/
+    │       ├── SKILL.md
+    │       └── modele.md          annexe, lue au besoin
+    ├── agents/                    sous-agents
+    │   └── security-reviewer.md
+    ├── hooks/                     scripts des hooks
+    │   ├── no-commit-on-main.py
+    │   └── format.ts
+    └── kwa.policy.json            avec Kwa : la politique du projet
+
+~/.claude/                         les mêmes dossiers, pour tous vos projets
+├── CLAUDE.md   ├── rules/   ├── skills/   ├── agents/   └── settings.json</pre></section>
+
+<article class="br-card" id="instructions">
+<header><span class="br-pic"><svg class="kd-pic p-doc" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4"/><path d="M9 12h6M9 15.5h6"/></svg></span><div><h2>Instructions (AGENTS.md)</h2><p>Ce que l&#x27;agent doit savoir sur le projet, à chaque session.</p></div>
+<span class="kd-kind kd-kind--suggéré">suggéré</span></header>
+<dl class="br-facts">
+<div><dt>Pourquoi</dt><dd>Une session repart de zéro. Ce fichier transmet ce que l'agent ne peut pas deviner en lisant le code : les commandes de vérification, les pièges, les interdits.</dd></div>
+<div><dt>Quand l'utiliser</dt><dd>Un fait valable partout et tout le temps : comment lancer les tests, le port du serveur, la convention de branche.</dd></div>
+<div><dt>Quand ce n'est pas le bon outil</dt><dd>Une consigne qui ne concerne qu'une partie du code (une règle), une procédure longue (une skill), une interdiction qui doit tenir (un hook).</dd></div>
+<div><dt>Qui le déclenche</dt><dd>Personne : il est chargé au démarrage de chaque session.</dd></div>
+<div><dt>Où il vit</dt><dd><code>AGENTS.md</code> à la racine ; <code>CLAUDE.md</code> pour Claude Code, qui peut n'être qu'un pointeur.</dd></div>
+<div><dt>Ce qu'il coûte au contexte</dt><dd>Toujours dans la fenêtre : restez court.</dd></div>
+<div class="br-check"><dt>Vérifier que ça marche</dt><dd><code>/context</code> dans une session : AGENTS.md (ou CLAUDE.md) dans la liste des fichiers de mémoire chargés.</dd></div>
+</dl>
+
+<div class="br-ex"><div class="br-tabs" role="tablist" aria-label="Fichiers d'exemple"><button type="button" class="br-tab" role="tab" id="instructions-t0" aria-controls="instructions-f0" aria-selected="true" tabindex="0" data-f="0">AGENTS.md</button><button type="button" class="br-tab" role="tab" id="instructions-t1" aria-controls="instructions-f1" aria-selected="false" tabindex="-1" data-f="1">CLAUDE.md</button></div><div class="br-file" role="tabpanel" id="instructions-f0" aria-labelledby="instructions-t0" data-f="0"><pre class="kd-code"><span class="sx-h"># AGENTS.md</span>
+
+Application web (Next.js, pnpm). Répondre en français.
+
+<span class="sx-h">## Vérifier avant de dire « fait »</span>
+<span class="sx-p">-</span> <span class="sx-s">`pnpm typecheck`</span> puis <span class="sx-s">`pnpm test`</span> : citer le résultat.
+
+<span class="sx-h">## Pièges</span>
+<span class="sx-p">-</span> Après un changement de schéma : <span class="sx-s">`pnpm db:migrate:create &lt;nom&gt;`</span>.
+
+<span class="sx-h">## Interdit</span>
+<span class="sx-p">-</span> Pas de commit sur main : une branche par sujet.</pre></div><div class="br-file" role="tabpanel" id="instructions-f1" aria-labelledby="instructions-t1" data-f="1" hidden><pre class="kd-code">@AGENTS.md</pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>@AGENTS.md</code> un import : Claude Code lit AGENTS.md à la place, et Codex lit AGENTS.md directement. Un seul fichier à tenir.</li></ul></div>
+<p class="br-real">Dans Kwa : <a href="https://github.com/nesyouyou/kwa/blob/main/core/templates/agents-block.md">le bloc que Kwa gère dans AGENTS.md</a></p></div>
+</article><article class="br-card" id="regle">
+<header><span class="br-pic"><svg class="kd-pic p-list" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h1M4 12h1M4 18h1"/></svg></span><div><h2>Règle (.claude/rules/)</h2><p>Une consigne rangée par sujet, chargée quand elle sert.</p></div>
+<span class="kd-kind kd-kind--suggéré">suggéré</span></header>
+<dl class="br-facts">
+<div><dt>Pourquoi</dt><dd>Quand AGENTS.md grossit, tout y est lu à chaque fois. Une règle isole un sujet ; avec <code>paths</code>, elle n'entre dans le contexte que quand l'agent touche un fichier concerné.</dd></div>
+<div><dt>Quand l'utiliser</dt><dd>Une convention propre à un dossier ou à un type de fichier : les composants React, les migrations, l'API.</dd></div>
+<div><dt>Quand ce n'est pas le bon outil</dt><dd>Un fait général (AGENTS.md) ou une étape à exécuter dans l'ordre (une skill).</dd></div>
+<div><dt>Qui le déclenche</dt><dd>Personne : chargée au démarrage, ou quand l'agent lit, écrit ou modifie un fichier qui correspond à <code>paths</code> (après une compaction, elle revient au prochain fichier concerné).</dd></div>
+<div><dt>Où il vit</dt><dd><code>.claude/rules/*.md</code> dans le projet, <code>~/.claude/rules/</code> pour vous.</dd></div>
+<div><dt>Ce qu'il coûte au contexte</dt><dd>Au démarrage sans <code>paths</code> ; seulement au besoin avec.</dd></div>
+<div class="br-check"><dt>Vérifier que ça marche</dt><dd><code>/context</code>, puis demander à l'agent de modifier un fichier <code>.tsx</code> : la règle apparaît dans le contexte après la lecture du fichier.</dd></div>
+</dl>
+
+<div class="br-ex"><div class="br-tabs" role="tablist" aria-label="Fichiers d'exemple"><button type="button" class="br-tab" role="tab" id="regle-t0" aria-controls="regle-f0" aria-selected="true" tabindex="0" data-f="0">.claude/rules/composants.md</button></div><div class="br-file" role="tabpanel" id="regle-f0" aria-labelledby="regle-t0" data-f="0"><pre class="kd-code"><span class="sx-p">---</span>
+<span class="sx-k">paths</span><span class="sx-p">:</span>
+  - <span class="sx-s">"src/**/*.tsx"</span>
+<span class="sx-p">---</span>
+
+<span class="sx-h"># Composants React</span>
+
+<span class="sx-p">-</span> Tester avec Testing Library, jamais avec Enzyme.
+<span class="sx-p">-</span> Un composant par fichier, nommé comme le fichier.
+<span class="sx-p">-</span> Pas de style en ligne : les classes du design system.</pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>--- … ---</code> l'en-tête, en YAML : des paires « clé: valeur » que l'outil lit, le modèle ne les voit pas comme du texte.</li><li><code>paths</code> les fichiers concernés. <code>**</code> veut dire « dans tous les sous-dossiers », <code>*.tsx</code> « tout fichier qui finit par .tsx ». Sans <code>paths</code>, la règle est lue à chaque session, comme AGENTS.md : on la range à part seulement pour garder AGENTS.md court.</li></ul></div>
+<p class="br-real">Dans Kwa : <a href="https://github.com/nesyouyou/kwa/blob/main/core/rules/git-discipline.md">une règle commune de Kwa, rappelée au démarrage</a></p></div>
+</article><article class="br-card" id="skill">
+<header><span class="br-pic"><svg class="kd-pic p-sword" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.2 16.2 7.8 13.8z"/><path d="M5.5 11.5l7 7"/><path d="M9 15l-3.5 3.5"/><circle cx="4.6" cy="19.4" r="1.1"/></svg></span><div><h2>Skill (SKILL.md)</h2><p>Une procédure que l&#x27;agent suit quand la situation correspond.</p></div>
+<span class="kd-kind kd-kind--suggéré">suggéré</span></header>
+<dl class="br-facts">
+<div><dt>Pourquoi</dt><dd>Une tâche qui revient se fait toujours de la même façon. La skill l'écrit une fois ; seule sa description reste dans le contexte, le corps n'est lu qu'à l'appel.</dd></div>
+<div><dt>Quand l'utiliser</dt><dd>Une procédure à étapes, déclenchée par une demande : rédiger des notes de version, livrer une PR, déboguer.</dd></div>
+<div><dt>Quand ce n'est pas le bon outil</dt><dd>Un fait à connaître en permanence (AGENTS.md) ou une contrainte qui doit tenir même si l'agent l'oublie (un hook).</dd></div>
+<div><dt>Qui le déclenche</dt><dd>Le modèle, quand la description correspond à la demande ; ou vous, en tapant <code>/release-notes</code>.</dd></div>
+<div><dt>Où il vit</dt><dd><code>.claude/skills/&lt;nom&gt;/SKILL.md</code>, ses annexes à côté ; <code>~/.claude/skills/</code> pour vous ; ou un plugin.</dd></div>
+<div><dt>Ce qu'il coûte au contexte</dt><dd>La description (1 536 caractères au plus) en permanence. Une fois appelée, le corps reste dans la conversation jusqu'à la fin ; après une compaction, les skills récentes sont réattachées (5 000 jetons chacune, 25 000 au total).</dd></div>
+<div class="br-check"><dt>Vérifier que ça marche</dt><dd><code>/skills</code>, puis taper <code>/release-notes</code> : la skill dans la liste ; à l'appel, l'agent suit ses étapes.</dd></div>
+</dl>
+<details class="br-pit"><summary>Les pièges</summary><ul class="pc-list">
+<li>Un champ mal orthographié dans l'en-tête est ignoré sans erreur.</li>
+<li>Une skill personnelle (<code>~/.claude/skills/</code>) l'emporte sur une skill du projet qui porte le même nom.</li>
+<li><code>disable-model-invocation: true</code> la réserve à vous : utile pour ce qui a des effets (déployer, publier).</li>
+</ul></details>
+<div class="br-ex"><div class="br-tabs" role="tablist" aria-label="Fichiers d'exemple"><button type="button" class="br-tab" role="tab" id="skill-t0" aria-controls="skill-f0" aria-selected="true" tabindex="0" data-f="0">.claude/skills/release-notes/SKILL.md</button><button type="button" class="br-tab" role="tab" id="skill-t1" aria-controls="skill-f1" aria-selected="false" tabindex="-1" data-f="1">.claude/skills/release-notes/modele.md</button></div><div class="br-file" role="tabpanel" id="skill-f0" aria-labelledby="skill-t0" data-f="0"><pre class="kd-code"><span class="sx-p">---</span>
+<span class="sx-k">name</span><span class="sx-p">:</span> release-notes
+<span class="sx-k">description</span><span class="sx-p">:</span> Rédiger les notes de version à partir des PR fusionnées. À utiliser quand l'utilisateur demande « les notes de version », « le changelog » ou « qu'est-ce qui part en prod ».
+<span class="sx-p">---</span>
+
+<span class="sx-h"># Notes de version</span>
+
+1. Lister les PR fusionnées depuis la dernière étiquette :
+   <span class="sx-s">`gh pr list --state merged --search "merged:&gt;=&lt;date&gt;"`</span>.
+2. Les classer : nouveautés, corrections, technique.
+3. Une ligne par PR, au présent, sans jargon interne.
+4. Suivre le gabarit de <span class="sx-s">`modele.md`</span> (dans ce dossier).</pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>name</code> le nom de la commande : <code>/release-notes</code>. Dans un plugin, il prend le préfixe du plugin (<code>/kwa:tdd</code>) ; sous Codex, on tape <code>$</code> au lieu de <code>/</code>.</li><li><code>description</code> la seule partie toujours chargée. Le modèle la compare à votre demande pour décider d'appeler la skill : dites quand l'utiliser, avec les mots que l'on emploie vraiment.</li><li><code>modele.md</code> une annexe : lue seulement si la skill en a besoin, donc gratuite le reste du temps.</li></ul></div><div class="br-file" role="tabpanel" id="skill-f1" aria-labelledby="skill-t1" data-f="1" hidden><pre class="kd-code"><span class="sx-h">## Version &lt;x.y.z&gt; (&lt;date&gt;)</span>
+
+<span class="sx-h">### Nouveautés</span>
+<span class="sx-p">-</span> …
+
+<span class="sx-h">### Corrections</span>
+<span class="sx-p">-</span> …</pre></div>
+<p class="br-real">Dans Kwa : <a href="https://github.com/nesyouyou/kwa/blob/main/plugin/skills/tdd/SKILL.md">/kwa:tdd, le test d&#x27;abord</a></p></div>
+</article><article class="br-card" id="sous-agent">
+<header><span class="br-pic"><svg class="kd-pic p-agent pic-fill" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M7 1h2v3h4v1h1v1h1v4h-1v1h-1v1H3v-1H2v-1H1V6h1V5h1V4h4zM5 6h2v3H5zM9 6h2v3H9zM7 10h2v1H7zM3 9h1v1H3zM12 9h1v1h-1z"/></svg></span><div><h2>Sous-agent (.claude/agents/)</h2><p>Un second collaborateur, avec sa propre fenêtre de contexte.</p></div>
+<span class="kd-kind kd-kind--mixte">mixte</span></header>
+<dl class="br-facts">
+<div><dt>Pourquoi</dt><dd>Lire trente fichiers remplit la fenêtre de l'agent principal. Un sous-agent le fait à part et ne rend qu'un résumé. Il peut aussi avoir moins d'outils : un relecteur qui ne peut pas écrire relit mieux.</dd></div>
+<div><dt>Quand l'utiliser</dt><dd>Un travail de lecture volumineux, une relecture indépendante, plusieurs tâches en parallèle.</dd></div>
+<div><dt>Quand ce n'est pas le bon outil</dt><dd>Une petite tâche : le brief et le résumé coûtent plus que de la faire dans la session.</dd></div>
+<div><dt>Qui le déclenche</dt><dd>Le modèle, ou une skill qui le lance ; vous, en le demandant (« lance le relecteur »).</dd></div>
+<div><dt>Où il vit</dt><dd><code>.claude/agents/&lt;nom&gt;.md</code> ; <code>~/.claude/agents/</code> pour vous ; ou un plugin.</dd></div>
+<div><dt>Ce qu'il coûte au contexte</dt><dd>Sa propre fenêtre, où il relit les fichiers d'instructions ; seul son résumé revient. La description de chaque sous-agent reste dans la fenêtre principale.</dd></div>
+<div class="br-check"><dt>Vérifier que ça marche</dt><dd>demander « utilise security-reviewer pour relire mon diff » : l'agent lance le sous-agent, qui travaille à part puis rend son résumé.</dd></div>
+</dl>
+
+<div class="br-ex"><div class="br-tabs" role="tablist" aria-label="Fichiers d'exemple"><button type="button" class="br-tab" role="tab" id="sous-agent-t0" aria-controls="sous-agent-f0" aria-selected="true" tabindex="0" data-f="0">.claude/agents/security-reviewer.md</button></div><div class="br-file" role="tabpanel" id="sous-agent-f0" aria-labelledby="sous-agent-t0" data-f="0"><pre class="kd-code"><span class="sx-p">---</span>
+<span class="sx-k">name</span><span class="sx-p">:</span> security-reviewer
+<span class="sx-k">description</span><span class="sx-p">:</span> Relit un diff sous l'angle de la sécurité (entrées non validées, secrets, droits). À utiliser avant une PR qui touche l'authentification, les paiements ou les données personnelles.
+<span class="sx-k">tools</span><span class="sx-p">:</span> Read, Grep, Glob
+<span class="sx-k">model</span><span class="sx-p">:</span> sonnet
+<span class="sx-p">---</span>
+
+Tu relis un changement sans le modifier. Pour chaque constat : le fichier et la
+ligne, ce qui peut arriver, comment le reproduire, la gravité. Si rien ne pose
+problème, dis-le en une phrase : n'invente pas de constat.</pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>tools</code> les seuls outils qu'il aura : ici lire et chercher, pas écrire. C'est l'outil qui l'applique : la partie imposée d'un sous-agent. Le reste du fichier est du texte qu'il suit.</li><li><code>model</code> le modèle qui le fait tourner : <code>sonnet</code>, <code>opus</code>, <code>haiku</code>, ou absent pour garder celui de la session.</li><li><code>le texte sous l&#x27;en-tête</code> ses consignes. Il ne voit rien de votre conversation : seulement la tâche que l'agent principal lui donne. Sans Bash, il ne lance pas <code>git diff</code> : le diff lui est fourni dans la demande (le relecteur de Kwa a Bash, en lecture seule, gardé par un hook).</li></ul></div>
+<p class="br-real">Dans Kwa : <a href="https://github.com/nesyouyou/kwa/blob/main/plugin/agents/reviewer.md">kwa:reviewer, le relecteur en lecture seule</a></p></div>
+</article><article class="br-card" id="hook">
+<header><span class="br-pic"><svg class="kd-pic p-hook" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><path d="M6 14a6 6 0 0 0 12 0"/><circle cx="12" cy="5" r="1.6"/></svg></span><div><h2>Hook</h2><p>Un script que l&#x27;outil exécute à un moment précis, sans demander au modèle.</p></div>
+<span class="kd-kind kd-kind--imposé">imposé</span></header>
+<dl class="br-facts">
+<div><dt>Pourquoi</dt><dd>Une instruction peut être oubliée. Un hook ne dépend pas du modèle : Claude Code l'exécute, toujours, avant ou après un outil, au démarrage, à la fin d'une réponse. Mais il juge un texte : une commande formulée autrement peut lui échapper. C'est un filet contre l'erreur ; une vraie barrière, c'est le bac à sable ou la protection de branche.</dd></div>
+<div><dt>Quand l'utiliser</dt><dd>Refuser une action (commit sur main, lecture d'un secret), formater après une écriture, réinjecter du contexte au démarrage.</dd></div>
+<div><dt>Quand ce n'est pas le bon outil</dt><dd>Une décision qui demande du jugement : un hook lit du texte, il ne comprend pas l'intention.</dd></div>
+<div><dt>Qui le déclenche</dt><dd>Claude Code, à l'événement choisi (<code>PreToolUse</code>, <code>PostToolUse</code>, <code>SessionStart</code>, <code>Stop</code>…).</dd></div>
+<div><dt>Où il vit</dt><dd>Déclaré dans <code>.claude/settings.json</code> ; le script où vous voulez, souvent <code>.claude/hooks/</code>. Python, TypeScript, bash : n'importe quel langage qui lit l'entrée standard.</dd></div>
+<div><dt>Ce qu'il coûte au contexte</dt><dd>Aucun, sauf ce qu'il renvoie à l'agent.</dd></div>
+<div class="br-check"><dt>Vérifier que ça marche</dt><dd><code>/hooks</code>, puis demander un commit sur main : le hook dans la liste ; le commit est refusé avec la raison du script.</dd></div>
+</dl>
+<details class="br-pit"><summary>Les pièges</summary><table class="pc-table"><thead><tr><th>Sortie du script</th><th>Avant l'outil (PreToolUse)</th><th>Après (PostToolUse)</th><th>Fin de réponse (Stop)</th></tr></thead><tbody>
+<tr><td>0 sans rien</td><td>pas d'avis</td><td>rien</td><td>l'agent s'arrête</td></tr>
+<tr><td>0 et un JSON</td><td>la décision du JSON (deny, ask, allow)</td><td>un retour pour l'agent</td><td>peut demander de continuer</td></tr>
+<tr><td>2</td><td>refus, la sortie d'erreur part à l'agent</td><td>trop tard : l'outil a déjà tourné</td><td>l'agent repart travailler</td></tr>
+<tr><td>1 ou autre</td><td colspan="3">erreur sans effet : l'action continue</td></tr></tbody></table>
+<ul class="pc-list">
+<li><strong>Tous les hooks d'un même événement tournent en parallèle</strong>, sans ordre : deux formateurs sur le même fichier se marchent dessus.</li>
+<li><strong>Un hook Stop qui refuse toujours fait boucler l'agent</strong> : testez <code>stop_hook_active</code> ; Claude Code rend la main après 8 relances d'affilée.</li>
+<li><strong>Un hook peut être déclaré ailleurs</strong> : réglages personnels ou locaux, plugin, en-tête d'une skill ou d'un agent. <code>/hooks</code> les montre tous.</li>
+</ul></details>
+<div class="br-ex"><div class="br-tabs" role="tablist" aria-label="Fichiers d'exemple"><button type="button" class="br-tab" role="tab" id="hook-t0" aria-controls="hook-f0" aria-selected="true" tabindex="0" data-f="0">.claude/settings.json</button><button type="button" class="br-tab" role="tab" id="hook-t1" aria-controls="hook-f1" aria-selected="false" tabindex="-1" data-f="1">.claude/hooks/no-commit-on-main.py</button><button type="button" class="br-tab" role="tab" id="hook-t2" aria-controls="hook-f2" aria-selected="false" tabindex="-1" data-f="2">.claude/hooks/format.ts</button></div><div class="br-file" role="tabpanel" id="hook-f0" aria-labelledby="hook-t0" data-f="0"><pre class="kd-code"><span class="sx-p">{</span>
+  <span class="sx-k">"hooks"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+    <span class="sx-k">"PreToolUse"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+      <span class="sx-p">{</span>
+        <span class="sx-k">"matcher"</span><span class="sx-p">:</span> <span class="sx-s">"Bash"</span><span class="sx-p">,</span>
+        <span class="sx-k">"hooks"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+          <span class="sx-p">{</span>
+            <span class="sx-k">"type"</span><span class="sx-p">:</span> <span class="sx-s">"command"</span><span class="sx-p">,</span>
+            <span class="sx-k">"command"</span><span class="sx-p">:</span> <span class="sx-s">"python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/no-commit-on-main.py"</span>
+          <span class="sx-p">}</span>
+        <span class="sx-p">]</span>
+      <span class="sx-p">}</span>
+    <span class="sx-p">]</span><span class="sx-p">,</span>
+    <span class="sx-k">"PostToolUse"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+      <span class="sx-p">{</span>
+        <span class="sx-k">"matcher"</span><span class="sx-p">:</span> <span class="sx-s">"Edit|Write"</span><span class="sx-p">,</span>
+        <span class="sx-k">"hooks"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+          <span class="sx-p">{</span>
+            <span class="sx-k">"type"</span><span class="sx-p">:</span> <span class="sx-s">"command"</span><span class="sx-p">,</span>
+            <span class="sx-k">"command"</span><span class="sx-p">:</span> <span class="sx-s">"npx tsx \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format.ts"</span>
+          <span class="sx-p">}</span>
+        <span class="sx-p">]</span>
+      <span class="sx-p">}</span>
+    <span class="sx-p">]</span>
+  <span class="sx-p">}</span>
+<span class="sx-p">}</span></pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>PreToolUse, PostToolUse</code> l'événement : avant ou après un outil. Il en existe une trentaine (démarrage, fin de réponse…).</li><li><code>matcher</code> le nom de l'outil visé : <code>Bash</code> (le terminal), <code>Edit|Write</code> (l'un ou l'autre).</li><li><code>type: command</code> le hook est un programme à lancer ; <code>command</code> est sa ligne de commande.</li><li><code>$CLAUDE_PROJECT_DIR</code> la racine du projet, remplie par Claude Code : le chemin marche quel que soit le dossier courant.</li></ul></div><div class="br-file" role="tabpanel" id="hook-f1" aria-labelledby="hook-t1" data-f="1" hidden><pre class="kd-code"><span class="sx-c">#!/usr/bin/env python3</span>
+<span class="sx-s">""</span><span class="sx-s">"PreToolUse : refuser git commit sur main. Un filet contre l'erreur, pas une barrière."</span><span class="sx-s">""</span>
+import json
+import re
+import subprocess
+import sys
+
+COMMIT = re.compile(r<span class="sx-s">"\bgit(\s+-[cC]\s+\S+)*\s+commit\b"</span>)  <span class="sx-c"># git commit, git -C dir commit, git -c x=y commit</span>
+
+
+def refuse(reason):
+    print(json.dumps({<span class="sx-s">"hookSpecificOutput"</span>: {
+        <span class="sx-s">"hookEventName"</span>: <span class="sx-s">"PreToolUse"</span>,
+        <span class="sx-s">"permissionDecision"</span>: <span class="sx-s">"deny"</span>,
+        <span class="sx-s">"permissionDecisionReason"</span>: reason,
+    }}))
+    sys.<span class="sx-b">exit</span>(0)
+
+
+try:
+    event = json.load(sys.stdin)  <span class="sx-c"># ce que l'agent s'apprête à faire</span>
+    command = event.get(<span class="sx-s">"tool_input"</span>, {}).get(<span class="sx-s">"command"</span>, <span class="sx-s">""</span>)
+    parts = re.split(r<span class="sx-s">"&amp;&amp;|\|\||;|\|"</span>, command)  <span class="sx-c"># cd app &amp;&amp; git commit : chaque morceau compte</span>
+    <span class="sx-b">if</span> not any(COMMIT.search(p) <span class="sx-b">for</span> p <span class="sx-b">in</span> parts):
+        sys.<span class="sx-b">exit</span>(0)  <span class="sx-c"># sans sortie : la décision suit son cours normal</span>
+    branch = subprocess.run([<span class="sx-s">"git"</span>, <span class="sx-s">"branch"</span>, <span class="sx-s">"--show-current"</span>], cwd=event.get(<span class="sx-s">"cwd"</span>),
+                            capture_output=True, text=True, check=True).stdout.strip()
+except Exception as error:  <span class="sx-c"># un garde qui plante doit refuser, pas laisser passer</span>
+    refuse(f<span class="sx-s">"Garde en erreur ({error}) : vérifier le hook avant de committer."</span>)
+<span class="sx-b">if</span> branch == <span class="sx-s">"main"</span>:
+    refuse(<span class="sx-s">"Pas de commit sur main : créer une branche de travail."</span>)</pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>json.load(sys.stdin)</code> Claude Code envoie sur l'entrée standard ce que l'agent s'apprête à faire : l'outil, sa commande, le dossier.</li><li><code>re.split(…)</code> <code>cd app &amp;&amp; git commit</code> est une seule commande pour l'outil : on la découpe, sinon le commit passe.</li><li><code>sys.exit(0) sans rien afficher</code> « pas d'avis » : l'action suit son cours normal (permissions, demande éventuelle).</li><li><code>permissionDecision: deny</code> le refus. La raison est renvoyée à l'agent, qui la lit et change de cap : ici, il crée une branche.</li><li><code>except Exception</code> un script qui plante sort en code 1, ce qui ne bloque rien : un garde doit attraper ses propres erreurs et refuser.</li><li><code>ou bien exit 2</code> l'autre façon de refuser : écrire la raison sur la sortie d'erreur et sortir avec le code 2. Le JSON permet en plus <code>ask</code> (demander) ou <code>allow</code>.</li></ul></div><div class="br-file" role="tabpanel" id="hook-f2" aria-labelledby="hook-t2" data-f="2" hidden><pre class="kd-code">// PostToolUse : formater le fichier que l'agent vient d'écrire.
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+
+const event = JSON.parse(readFileSync(0, "utf8"));
+const file: string | undefined = event.tool_input?.file_path;
+if (file &amp;&amp; /\.(ts|tsx|css)$/.test(file)) {
+  execFileSync("npx", ["--no-install", "prettier", "--write", file], { stdio: "ignore" });
+}</pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>readFileSync(0)</code> lit l'entrée standard, comme le script Python : n'importe quel langage fait l'affaire.</li><li><code>npx --no-install</code> utilise le prettier du projet sans rien télécharger ; un hook n'apporte pas ses dépendances (ici Node.js, tsx, prettier).</li><li><code>le fichier change sous l&#x27;agent</code> après formatage, la prochaine modification de l'agent peut échouer sur un texte qui n'existe plus : il relit le fichier et recommence.</li></ul></div>
+<p class="br-real">Dans Kwa : <a href="https://github.com/nesyouyou/kwa/blob/main/core/hooks/guard-git.py">guard-git, le garde de git de Kwa</a></p></div>
+</article><article class="br-card" id="mcp">
+<header><span class="br-pic"><svg class="kd-pic p-plug" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v5M15 3v5"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v4"/></svg></span><div><h2>Serveur MCP</h2><p>Des outils et des données branchés sur l&#x27;agent : une doc, un navigateur, une base.</p></div>
+<span class="kd-kind kd-kind--suggéré">suggéré</span></header>
+<dl class="br-facts">
+<div><dt>Pourquoi</dt><dd>L'agent ne voit que son dépôt. Un serveur MCP lui ajoute des outils, que le modèle découvre et décide d'appeler : chercher dans une doc à jour, piloter un navigateur, lire une base.</dd></div>
+<div><dt>Quand l'utiliser</dt><dd>Un accès à un service ou à des données hors du dépôt.</dd></div>
+<div><dt>Quand ce n'est pas le bon outil</dt><dd>Une procédure (une skill) ; un serveur que vous ne connaissez pas : il agit avec vos droits. En session interactive, Claude Code demande avant d'utiliser les serveurs d'un <code>.mcp.json</code> ; en <code>claude -p</code> et dans le SDK, il les charge sans demander.</dd></div>
+<div><dt>Qui le déclenche</dt><dd>Le modèle, qui appelle ses outils (<code>mcp__context7__…</code>).</dd></div>
+<div><dt>Où il vit</dt><dd><code>.mcp.json</code> à la racine du projet (partagé) ; <code>claude mcp add</code> l'ajoute pour ce projet et vous seul, <code>--scope user</code> pour tous vos projets.</dd></div>
+<div><dt>Ce qu'il coûte au contexte</dt><dd>Les noms des outils ; leurs définitions à la demande.</dd></div>
+<div class="br-check"><dt>Vérifier que ça marche</dt><dd><code>/mcp</code> : le serveur connecté et ses outils.</dd></div>
+</dl>
+<details class="br-pit"><summary>Les pièges</summary><ul class="pc-list">
+<li>Un même serveur déclaré à plusieurs endroits : la définition locale gagne, puis celle du projet, puis la vôtre, puis celle d'un plugin.</li>
+<li>Un dépôt cloné peut apporter un <code>.mcp.json</code> : en <code>claude -p</code> ou en CI, il est chargé sans demander. <code>disabledMcpjsonServers</code> en exclut un.</li>
+</ul></details>
+<div class="br-ex"><div class="br-tabs" role="tablist" aria-label="Fichiers d'exemple"><button type="button" class="br-tab" role="tab" id="mcp-t0" aria-controls="mcp-f0" aria-selected="true" tabindex="0" data-f="0">.mcp.json</button></div><div class="br-file" role="tabpanel" id="mcp-f0" aria-labelledby="mcp-t0" data-f="0"><pre class="kd-code"><span class="sx-p">{</span>
+  <span class="sx-k">"mcpServers"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+    <span class="sx-k">"context7"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+      <span class="sx-k">"type"</span><span class="sx-p">:</span> <span class="sx-s">"http"</span><span class="sx-p">,</span>
+      <span class="sx-k">"url"</span><span class="sx-p">:</span> <span class="sx-s">"https://mcp.context7.com/mcp"</span><span class="sx-p">,</span>
+      <span class="sx-k">"headers"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+        <span class="sx-k">"Authorization"</span><span class="sx-p">:</span> <span class="sx-s">"Bearer ${CONTEXT7_API_KEY}"</span>
+      <span class="sx-p">}</span>
+    <span class="sx-p">}</span><span class="sx-p">,</span>
+    <span class="sx-k">"base"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+      <span class="sx-k">"type"</span><span class="sx-p">:</span> <span class="sx-s">"stdio"</span><span class="sx-p">,</span>
+      <span class="sx-k">"command"</span><span class="sx-p">:</span> <span class="sx-s">"npx"</span><span class="sx-p">,</span>
+      <span class="sx-k">"args"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+        <span class="sx-s">"-y"</span><span class="sx-p">,</span>
+        <span class="sx-s">"@bytebase/dbhub"</span>
+      <span class="sx-p">]</span><span class="sx-p">,</span>
+      <span class="sx-k">"env"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+        <span class="sx-k">"DSN"</span><span class="sx-p">:</span> <span class="sx-s">"${DB_URL}"</span>
+      <span class="sx-p">}</span>
+    <span class="sx-p">}</span>
+  <span class="sx-p">}</span>
+<span class="sx-p">}</span></pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>type: http</code> un service distant, joint par une adresse ; <code>headers</code> porte l'authentification.</li><li><code>type: stdio</code> un programme lancé sur votre machine (<code>npx -y</code> le télécharge puis le lance), qui parle par l'entrée et la sortie standard.</li><li><code>${CONTEXT7_API_KEY}</code> une variable d'environnement : la clé n'est jamais écrite dans le fichier, qui peut donc être versionné.</li><li><code>DSN</code> le nom de variable que ce serveur attend pour la base : chaque serveur documente les siens.</li></ul></div>
+<p class="br-real">Pas à pas : <a href="parcours-contexte.html#etape-7">parcours 2, étapes 7 et 8 : MCP, Context7, Playwright, Graphify</a></p></div>
+</article><article class="br-card" id="permission">
+<header><span class="br-pic"><svg class="kd-pic p-shield" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.5 3v5.2c0 4.6-3.1 8.2-7.5 9.8-4.4-1.6-7.5-5.2-7.5-9.8V6z"/><path d="m8.8 12 2.3 2.3 4.2-4.6"/></svg></span><div><h2>Permission</h2><p>Ce que l&#x27;agent a le droit de faire, décidé hors de son texte.</p></div>
+<span class="kd-kind kd-kind--imposé">imposé</span></header>
+<dl class="br-facts">
+<div><dt>Pourquoi</dt><dd>Évite de valider chaque commande à la main, et ferme ce qui ne doit jamais se faire. Claude Code l'applique avant l'outil, quoi qu'en pense le modèle.</dd></div>
+<div><dt>Quand l'utiliser</dt><dd>Autoriser les commandes sûres et fréquentes, demander avant un push, refuser un fichier de secrets.</dd></div>
+<div><dt>Quand ce n'est pas le bon outil</dt><dd>Une règle qui dépend du contexte (la branche, le contenu) : un hook la calcule, une permission ne voit que la commande.</dd></div>
+<div><dt>Qui le déclenche</dt><dd>Claude Code, avant chaque outil : <code>deny</code>, puis <code>ask</code>, puis <code>allow</code>.</dd></div>
+<div><dt>Où il vit</dt><dd><code>.claude/settings.json</code> (partagé), <code>.claude/settings.local.json</code> (vous seul), <code>~/.claude/settings.json</code>.</dd></div>
+<div><dt>Ce qu'il coûte au contexte</dt><dd>Aucun.</dd></div>
+<div class="br-check"><dt>Vérifier que ça marche</dt><dd><code>/permissions</code> : vos règles, rangées par portée (projet, local, personnel).</dd></div>
+</dl>
+<details class="br-pit"><summary>Les pièges</summary><ul class="pc-list">
+<li>Un <code>deny</code> de n'importe quel fichier de réglages l'emporte sur un <code>allow</code> d'un autre.</li>
+<li>Une règle Bash lit la commande écrite : <code>bash -c '…'</code> ou un chemin complet passent à côté. Pour une vraie limite, le bac à sable.</li>
+</ul></details>
+<div class="br-ex"><div class="br-tabs" role="tablist" aria-label="Fichiers d'exemple"><button type="button" class="br-tab" role="tab" id="permission-t0" aria-controls="permission-f0" aria-selected="true" tabindex="0" data-f="0">.claude/settings.json</button></div><div class="br-file" role="tabpanel" id="permission-f0" aria-labelledby="permission-t0" data-f="0"><pre class="kd-code"><span class="sx-p">{</span>
+  <span class="sx-k">"permissions"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+    <span class="sx-k">"allow"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+      <span class="sx-s">"Bash(pnpm test *)"</span><span class="sx-p">,</span>
+      <span class="sx-s">"Bash(git status)"</span>
+    <span class="sx-p">]</span><span class="sx-p">,</span>
+    <span class="sx-k">"ask"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+      <span class="sx-s">"Bash(git push *)"</span>
+    <span class="sx-p">]</span><span class="sx-p">,</span>
+    <span class="sx-k">"deny"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+      <span class="sx-s">"Read(.env)"</span><span class="sx-p">,</span>
+      <span class="sx-s">"Bash(rm -rf *)"</span>
+    <span class="sx-p">]</span>
+  <span class="sx-p">}</span>
+<span class="sx-p">}</span></pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>Bash(pnpm test *)</code> la commande <code>pnpm test</code> suivie de n'importe quoi (l'étoile).</li><li><code>Read(.env)</code> un nom de fichier seul vaut à toute profondeur (comme dans un .gitignore) ; <code>./.env</code> ne viserait que le dossier courant. <code>.env.local</code> demande sa propre ligne.</li><li><code>Bash(rm -rf *)</code> un filet : <code>rm -fr</code> ou <code>/bin/rm</code> passent à côté. Une règle Bash lit le texte de la commande.</li><li><code>deny, ask, allow</code> évaluées dans cet ordre : un refus l'emporte toujours, même sur une autorisation plus précise, et vaut aussi pour chaque morceau d'une commande composée.</li></ul></div>
+<p class="br-real">Pas à pas : <a href="parcours-contexte.html#etape-9">parcours 2, étape 9 : permissions et réglages</a></p></div>
+</article><article class="br-card" id="sandbox">
+<header><span class="br-pic"><svg class="kd-pic p-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span><div><h2>Bac à sable</h2><p>Une limite posée par le système d&#x27;exploitation autour des commandes shell.</p></div>
+<span class="kd-kind kd-kind--barrière">barrière</span></header>
+<dl class="br-facts">
+<div><dt>Pourquoi</dt><dd>Une permission ou un hook lisent le texte d'une commande ; une commande écrite autrement leur échappe. Le bac à sable, lui, contraint le processus lui-même : les fichiers qu'il peut écrire, les sites qu'il peut joindre, quoi que la commande dise.</dd></div>
+<div><dt>Quand l'utiliser</dt><dd>Laisser l'agent lancer des commandes sans confirmation, sur un projet où une fuite ou une suppression coûterait cher.</dd></div>
+<div><dt>Quand ce n'est pas le bon outil</dt><dd>Les outils de fichiers (Read, Edit), les serveurs MCP et les hooks : ils tournent hors du bac à sable et suivent les permissions. Et Windows natif : il faut WSL2.</dd></div>
+<div><dt>Qui le déclenche</dt><dd>Le système d'exploitation, pendant chaque commande shell de l'agent, et pour les processus qu'elle lance.</dd></div>
+<div><dt>Où il vit</dt><dd><code>/sandbox</code> dans une session, ou <code>sandbox.enabled</code> dans settings.json. Désactivé par défaut.</dd></div>
+<div><dt>Ce qu'il coûte au contexte</dt><dd>Aucun.</dd></div>
+<div class="br-check"><dt>Vérifier que ça marche</dt><dd><code>/sandbox</code>, puis demander à l'agent « curl https://example.com » : le bac à sable actif ; la requête est refusée, le domaine n'étant pas autorisé.</dd></div>
+</dl>
+
+<div class="br-ex"><div class="br-tabs" role="tablist" aria-label="Fichiers d'exemple"><button type="button" class="br-tab" role="tab" id="sandbox-t0" aria-controls="sandbox-f0" aria-selected="true" tabindex="0" data-f="0">.claude/settings.json</button></div><div class="br-file" role="tabpanel" id="sandbox-f0" aria-labelledby="sandbox-t0" data-f="0"><pre class="kd-code"><span class="sx-p">{</span>
+  <span class="sx-k">"sandbox"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+    <span class="sx-k">"enabled"</span><span class="sx-p">:</span> <span class="sx-b">true</span><span class="sx-p">,</span>
+    <span class="sx-k">"allowUnsandboxedCommands"</span><span class="sx-p">:</span> <span class="sx-b">false</span><span class="sx-p">,</span>
+    <span class="sx-k">"network"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+      <span class="sx-k">"allowedDomains"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+        <span class="sx-s">"registry.npmjs.org"</span>
+      <span class="sx-p">]</span>
+    <span class="sx-p">}</span><span class="sx-p">,</span>
+    <span class="sx-k">"filesystem"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+      <span class="sx-k">"allowWrite"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+        <span class="sx-s">"/tmp/build"</span>
+      <span class="sx-p">]</span>
+    <span class="sx-p">}</span>
+  <span class="sx-p">}</span>
+<span class="sx-p">}</span></pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>allowUnsandboxedCommands: false</code> sans cela, Claude peut demander à relancer une commande hors du bac à sable quand elle échoue.</li><li><code>network.allowedDomains</code> les seuls sites joignables par le shell ; la liste part vide.</li><li><code>filesystem.allowWrite</code> les dossiers où écrire, en plus du projet.</li></ul></div>
+<p class="br-real">Pas à pas : <a href="impose.html">Imposé ou suggéré : où le bac à sable se place</a></p></div>
+</article><article class="br-card" id="plugin">
+<header><span class="br-pic"><svg class="kd-pic p-box" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg></span><div><h2>Plugin</h2><p>Un paquet de skills, d&#x27;agents, de hooks et de serveurs, installé une fois par machine.</p></div>
+<span class="kd-kind kd-kind--selon">selon le contenu</span></header>
+<dl class="br-facts">
+<div><dt>Pourquoi</dt><dd>Copier les mêmes fichiers dans dix dépôts, c'est dix copies qui divergent. Un plugin les regroupe, se met à jour d'un coup, et le projet ne garde que sa configuration.</dd></div>
+<div><dt>Quand l'utiliser</dt><dd>Partager une méthode entre plusieurs projets ou plusieurs personnes.</dd></div>
+<div><dt>Quand ce n'est pas le bon outil</dt><dd>Un réglage propre à un seul projet : il reste dans le dépôt. À savoir : ses skills prennent son préfixe (<code>/mon-plugin:release-notes</code>) ; ses hooks désignent leurs scripts par <code>${CLAUDE_PLUGIN_ROOT}</code>, pas <code>$CLAUDE_PROJECT_DIR</code> ; un <code>CLAUDE.md</code> placé dans un plugin n'est pas lu. <code>claude plugin validate</code> vérifie le tout.</dd></div>
+<div><dt>Qui le déclenche</dt><dd>Vous : <code>/plugin install</code> ; le projet peut le proposer à l'équipe dans <code>settings.json</code>.</dd></div>
+<div><dt>Où il vit</dt><dd><span class="br-flow"><span>un dépôt Git, la marketplace</span><span><code>/plugin install</code> sur votre machine</span><span>activé dans le projet par <code>settings.json</code></span></span></dd></div>
+<div><dt>Ce qu'il coûte au contexte</dt><dd>Celui de ce qu'il contient.</dd></div>
+<div class="br-check"><dt>Vérifier que ça marche</dt><dd><code>/plugin</code> : le plugin installé et activé ; ses skills dans <code>/skills</code>.</dd></div>
+</dl>
+
+<div class="br-ex"><div class="br-tabs" role="tablist" aria-label="Fichiers d'exemple"><button type="button" class="br-tab" role="tab" id="plugin-t0" aria-controls="plugin-f0" aria-selected="true" tabindex="0" data-f="0">mon-plugin/</button><button type="button" class="br-tab" role="tab" id="plugin-t1" aria-controls="plugin-f1" aria-selected="false" tabindex="-1" data-f="1">.claude-plugin/plugin.json</button></div><div class="br-file" role="tabpanel" id="plugin-f0" aria-labelledby="plugin-t0" data-f="0"><pre class="kd-code">mon-plugin/
+├── .claude-plugin/
+│   └── plugin.json          le manifeste : nom, version, où sont les hooks
+├── skills/
+│   └── release-notes/SKILL.md
+├── agents/
+│   └── security-reviewer.md
+├── hooks/hooks.json         les hooks, au format du bloc hooks de settings.json
+└── .mcp.json                facultatif : les serveurs MCP</pre></div><div class="br-file" role="tabpanel" id="plugin-f1" aria-labelledby="plugin-t1" data-f="1" hidden><pre class="kd-code"><span class="sx-p">{</span>
+  <span class="sx-k">"name"</span><span class="sx-p">:</span> <span class="sx-s">"mon-plugin"</span><span class="sx-p">,</span>
+  <span class="sx-k">"version"</span><span class="sx-p">:</span> <span class="sx-s">"0.1.0"</span><span class="sx-p">,</span>
+  <span class="sx-k">"description"</span><span class="sx-p">:</span> <span class="sx-s">"Les skills, agents et garde-fous de l'équipe."</span>
+<span class="sx-p">}</span></pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>name</code> le préfixe de ses skills et de ses agents : <code>/mon-plugin:release-notes</code>.</li><li><code>pas de chemin de hooks</code> <code>hooks/hooks.json</code> est l'emplacement par défaut ; un champ <code>hooks</code> en ajoute un autre (Kwa s'en sert).</li></ul></div>
+<p class="br-real">Dans Kwa : <a href="https://github.com/nesyouyou/kwa/blob/main/plugin/.claude-plugin/plugin.json">le manifeste du plugin Kwa</a></p></div>
+</article><article class="br-card" id="politique">
+<header><span class="br-pic"><svg class="kd-pic p-settings" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span><div><h2>Politique Kwa</h2><p>Ce qui change d&#x27;un projet à l&#x27;autre, lu par les gardes et les skills de Kwa.</p></div>
+<span class="kd-kind kd-kind--imposé">imposé (par les gardes)</span></header>
+<dl class="br-facts">
+<div><dt>Pourquoi</dt><dd>Les gardes sont les mêmes partout ; les commandes interdites, les vérifications et les environnements, non. La politique les décrit, sans toucher aux scripts.</dd></div>
+<div><dt>Quand l'utiliser</dt><dd>Interdire une commande propre au projet, déclarer les vérifications, choisir les modules.</dd></div>
+<div><dt>Quand ce n'est pas le bon outil</dt><dd>Une règle valable pour tous les projets : elle va dans Kwa lui-même.</dd></div>
+<div><dt>Qui le déclenche</dt><dd>Les gardes de Kwa, à chaque outil surveillé ; les skills, quand elles en ont besoin.</dd></div>
+<div><dt>Où il vit</dt><dd><code>.claude/kwa.policy.json</code>, créé par <code>kwa init</code>, puis propriété du projet.</dd></div>
+<div><dt>Ce qu'il coûte au contexte</dt><dd>Aucun.</dd></div>
+<div class="br-check"><dt>Vérifier que ça marche</dt><dd><code>kwa doctor .</code> dans le terminal : « cible conforme », ou la liste de ce qui manque.</dd></div>
+</dl>
+
+<div class="br-ex"><div class="br-tabs" role="tablist" aria-label="Fichiers d'exemple"><button type="button" class="br-tab" role="tab" id="politique-t0" aria-controls="politique-f0" aria-selected="true" tabindex="0" data-f="0">.claude/kwa.policy.json</button></div><div class="br-file" role="tabpanel" id="politique-f0" aria-labelledby="politique-t0" data-f="0"><pre class="kd-code"><span class="sx-p">{</span>
+  <span class="sx-k">"kwa"</span><span class="sx-p">:</span> <span class="sx-n">1</span><span class="sx-p">,</span>
+  <span class="sx-k">"modules"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+    <span class="sx-s">"core"</span><span class="sx-p">,</span>
+    <span class="sx-s">"craft"</span><span class="sx-p">,</span>
+    <span class="sx-s">"issue-flow"</span>
+  <span class="sx-p">]</span><span class="sx-p">,</span>
+  <span class="sx-k">"bash"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+    <span class="sx-k">"deny"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+      <span class="sx-p">{</span>
+        <span class="sx-k">"id"</span><span class="sx-p">:</span> <span class="sx-s">"deploy-prod"</span><span class="sx-p">,</span>
+        <span class="sx-k">"reason"</span><span class="sx-p">:</span> <span class="sx-s">"La production part par la PR, pas par ce script."</span><span class="sx-p">,</span>
+        <span class="sx-k">"all"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+          <span class="sx-s">"npm run deploy:prod"</span>
+        <span class="sx-p">]</span>
+      <span class="sx-p">}</span>
+    <span class="sx-p">]</span>
+  <span class="sx-p">}</span><span class="sx-p">,</span>
+  <span class="sx-k">"verify"</span><span class="sx-p">:</span> <span class="sx-p">{</span>
+    <span class="sx-k">"commands"</span><span class="sx-p">:</span> <span class="sx-p">[</span>
+      <span class="sx-s">"pnpm typecheck"</span><span class="sx-p">,</span>
+      <span class="sx-s">"pnpm test"</span>
+    <span class="sx-p">]</span>
+  <span class="sx-p">}</span>
+<span class="sx-p">}</span></pre><ul class="br-notes" aria-label="À lire dans ce fichier"><li><code>bash.deny</code> une commande que les gardes de Kwa refusent, avec la raison donnée à l'agent. Le même refus vaut sous Codex.</li><li><code>verify.commands</code> les vérifications que les skills de Kwa lancent avant de dire « fait ».</li></ul></div>
+<p class="br-real">Dans Kwa : <a href="https://github.com/nesyouyou/kwa/blob/main/examples/expo-monorepo.policy.json">une politique complète d&#x27;exemple</a></p></div>
+</article>
+
+<div class="pc-check"><h2>Sources</h2><ul>
+<li><a href="https://code.claude.com/docs/en/memory">Fichiers d'instructions et règles</a></li><li><a href="https://code.claude.com/docs/en/skills">Skills</a></li>
+<li><a href="https://code.claude.com/docs/en/sub-agents">Sous-agents</a></li><li><a href="https://code.claude.com/docs/en/hooks">Hooks</a></li><li><a href="https://code.claude.com/docs/en/mcp">MCP</a></li>
+<li><a href="https://code.claude.com/docs/en/permissions">Permissions</a></li><li><a href="https://code.claude.com/docs/en/plugins">Plugins</a></li></ul></div>
+<script type="application/json" id="br-names">{"instructions": "Instructions (AGENTS.md)", "regle": "Règle (.claude/rules/)", "skill": "Skill (SKILL.md)", "sous-agent": "Sous-agent (.claude/agents/)", "hook": "Hook", "mcp": "Serveur MCP", "permission": "Permission", "sandbox": "Bac à sable", "plugin": "Plugin", "politique": "Politique Kwa"}</script>
+</main>
+</div></div>
+<footer class="kw-footer"><div class="kw-container kw-footer-grid">
+  <div><b class="kd-word kd-word--big">kwa</b></div>
+  <div><h3>Kwa</h3><p>v<span id="ver2"></span></p></div>
+  <div><h3>Documentation</h3><p>Régénérée par <code>docs/site/build.py</code> ; exemples calculés en exécutant les gardes.</p></div>
+  <div><h3>Style</h3><p>Feuille de style écrite pour ce site ; polices Geist, licence SIL OFL.</p></div>
+</div></footer>
+<script src="data.js"></script><script src="src/player.js"></script><script src="src/parcours.js"></script><script src="src/bricks.js"></script><script src="src/glossary-data.js"></script><script src="src/shell.js"></script>
+<script>
+const DATA = window.KWA;
+const $ = (s, r=document) => r.querySelector(s);
+/* thème : clair par défaut, seul un choix explicite est enregistré */
+const root = document.documentElement, tbtn = $('#theme');
+function syncTheme(){ const dark = root.dataset.theme==='dark'; tbtn.setAttribute('aria-label', dark ? 'Passer en thème clair' : 'Passer en thème sombre'); }
+tbtn.onclick = () => {
+  const next = root.dataset.theme==='dark' ? 'light' : 'dark';
+  const write = () => { root.dataset.theme = next; try{ localStorage.setItem('kwa-docs-theme', next); }catch(e){} syncTheme(); };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return write();
+  if (document.startViewTransition) return document.startViewTransition(write);
+  root.classList.add('kd-theming'); write(); setTimeout(() => root.classList.remove('kd-theming'), 420);
+};
+syncTheme();
+document.addEventListener('click', e => { const b = e.target.closest('[data-copy]'); if(!b) return; navigator.clipboard?.writeText(b.dataset.copy); const o=b.textContent; b.textContent='Copié'; setTimeout(()=>b.textContent=o,1200); });
+
+/* fin du bloc thème */
+
+$('#ver2').textContent = DATA.version;
+
+</script></body></html>

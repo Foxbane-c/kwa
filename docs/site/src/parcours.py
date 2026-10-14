@@ -227,25 +227,19 @@ def render(c: dict) -> str:
 <p class="kd-note">Dans une session Claude Code, le plugin met <code>kwa</code> dans le PATH. Dans un terminal ordinaire, appelez-le depuis le dossier du plugin, noté <code>$KWA</code> dans ce parcours : <code>~/.claude/plugins/cache/kwa/kwa/&lt;version&gt;</code>, ou un clone du dépôt Kwa (<code>"$KWA"/bin/kwa init …</code>).</p>
 <p><code>CLAUDE.md</code> contient une ligne, un pointeur vers le fichier commun :</p>{code(c["claude_md"])}
 <p>Début du bloc géré de <code>AGENTS.md</code> :</p>{code(c["block"])}
-{reveal("Réponse", "<p>Aucune ligne ne l'empêche. Un fichier d'instructions est du <strong>contexte</strong> : l'agent le lit et peut s'en écarter. Ce qui contraint, c'est un hook qui s'exécute avant l'outil. Voici le même commit, tenté sur <code>main</code>, quand le garde est appelé :</p>" + code(c["by_hand"]))}""",
-         "Dire pourquoi une règle écrite ne suffit pas, et nommer ce qui la fait respecter.",
-         "Un script de garde ne fait rien tout seul : un hook n'existe que s'il est déclaré et activé (étape 3)."),
+{reveal("Réponse", "<p>Aucune ligne ne l'empêche. Un fichier d'instructions est du <strong>contexte</strong> : l'agent le lit et peut s'en écarter. Ce qui contraint, c'est un hook qui s'exécute avant l'outil. Voici le même commit, tenté sur <code>main</code>, quand le garde est appelé :</p>" + code(c["by_hand"]))}"""),
         ("2", "Un garde, de la commande au verdict", "Un hook reçoit du JSON et répond refuse, demande ou laisse passer.",
          f"""<p>Un garde est un petit programme. C'est Claude Code qui le lance, pas le modèle : il lui envoie ce que l'agent s'apprête à faire, et le garde répond sur la sortie standard. Appelez-le à la main :</p>
 {echo_cmd}
 <p>Pas de sortie veut dire « laisse passer ». Avant de regarder les réponses, <strong>faites votre pronostic</strong> pour chaque commande, puis ouvrez :</p>
 <table class="pc-table"><thead><tr><th>Commande</th><th>Verdict réel</th></tr></thead><tbody>{quiz_rows}</tbody></table>
-<p class="kd-note">Verdicts calculés en exécutant les gardes à chaque génération de la page.</p>""",
-         "Prédire le verdict d'une commande avant de l'exécuter, et lire la raison donnée.",
-         "<code>.env.example</code> reste lisible : un garde trop large se fait contourner par agacement."),
+<p class="kd-note">Verdicts calculés en exécutant les gardes à chaque génération de la page.</p>"""),
         ("3", "Le branchement", "Un hook relie un événement à un script. Le plugin le déclare, le projet active le plugin.",
          f"""<p>Le plugin déclare ses hooks dans un fichier <code>hooks.json</code>. Voici l'entrée qui relie le garde git à l'événement <code>PreToolUse</code> pour l'outil <code>Bash</code> ; <code>run.py</code> vérifie d'abord que le projet a une politique Kwa et le module concerné :</p>{code(c["entry"])}
 <p>Le projet, lui, active le plugin dans <code>.claude/settings.json</code> :</p>{code(c["enabled"])}
 <p>Vérifiez l'état de l'installation (ici sur une machine où le plugin n'est pas encore installé) :</p>{cmd("kwa doctor ./mon-projet")}{code(c["doctor_ok"])}
 <p><strong>Cassez-le</strong> : retirez <code>enabledPlugins</code> de <code>settings.json</code> sans toucher au script, puis relancez le diagnostic.</p>{code(c["doctor_broken"])}
-{reveal("Que fait le script maintenant ?", "<p>Il refuse toujours quand on l'appelle à la main, mais plus personne ne l'appelle dans ce projet. Un garde qui existe sans être branché ne protège de rien.</p>" + code(c["by_hand_after"]))}""",
-         "Suivre la chaîne événement, filtre d'outil, commande, et repérer un garde non branché.",
-         "Dans un plugin, les chemins passent par <code>${{CLAUDE_PLUGIN_ROOT}}</code> ; dans un hook écrit pour le projet, par <code>$CLAUDE_PROJECT_DIR</code>. Ne pas recopier l'un à la place de l'autre."),
+{reveal("Que fait le script maintenant ?", "<p>Il refuse toujours quand on l'appelle à la main, mais plus personne ne l'appelle dans ce projet. Un garde qui existe sans être branché ne protège de rien.</p>" + code(c["by_hand_after"]))}"""),
         ("4", "Les autres événements de hooks", "Le garde ne sert qu'un événement sur plus de trente. Le choix de l'événement fait la différence.",
          """<p>Jusqu'ici, un seul événement : <code>PreToolUse</code>, avant un outil. Il en existe plus de trente. Cinq suffisent pour commencer :</p>
 <table class="pc-table"><thead><tr><th>Événement</th><th>Quand</th><th>Usage typique</th><th>Dans Kwa</th></tr></thead><tbody>
@@ -261,54 +255,40 @@ def render(c: dict) -> str:
 <table class="pc-table"><thead><tr><th>Besoin</th><th>Événement</th></tr></thead><tbody>
 <tr><td>Formater chaque fichier modifié</td><td>""" + reveal("Mon pronostic", "<p><code>PostToolUse</code> sur <code>Edit|Write</code> : le fichier existe déjà, on le nettoie.</p>") + """</td></tr>
 <tr><td>Rappeler au démarrage où en était la session précédente</td><td>""" + reveal("Mon pronostic", "<p><code>SessionStart</code> : sa sortie est ajoutée au contexte.</p>") + """</td></tr>
-<tr><td>Empêcher de terminer avec des tests rouges</td><td>""" + reveal("Mon pronostic", "<p><code>Stop</code>, avec un test de <code>stop_hook_active</code> pour ne pas boucler.</p>") + """</td></tr></tbody></table>""",
-         "Choisir l'événement adapté à un besoin, et écrire un garde de quinze lignes sans Kwa.",
-         "Un hook Stop qui bloque sans condition de sortie boucle : Claude Code le désactive après huit blocages consécutifs. Testez <code>stop_hook_active</code>."),
+<tr><td>Empêcher de terminer avec des tests rouges</td><td>""" + reveal("Mon pronostic", "<p><code>Stop</code>, avec un test de <code>stop_hook_active</code> pour ne pas boucler.</p>") + """</td></tr></tbody></table>"""),
         ("5", "La politique du projet", "Ce qui change d'un projet à l'autre tient dans un fichier, pas dans un script.",
          f"""<p>Les gardes sont communs, la politique est locale (<code>.claude/kwa.policy.json</code>). Dans le dépôt jetable, la commande <code>npm run deploy:prod</code> n'est pas gardée : {pill(c["before"][0])}</p>
 <p>Ajoutez cette règle dans <code>bash.deny</code> :</p>{code(c["rule"])}
-<p>Même commande, même garde, nouveau verdict : {pill(c["after"][0])}</p>{code(c["after"][1])}""",
-         "Ajouter une règle de projet et prouver qu'elle change un verdict.",
-         "Le refus l'emporte toujours sur la demande. Une politique trop stricte se contourne, une règle utile est précise."),
+<p>Même commande, même garde, nouveau verdict : {pill(c["after"][0])}</p>{code(c["after"][1])}"""),
         ("6", "Une skill, et comment la casser", "Une procédure que l'agent déclenche ou que vous tapez.",
          f"""<p>Une skill est un fichier <code>SKILL.md</code> : un en-tête qui dit quand l'appeler, un corps qui dit comment. Celui de <code>/kwa:rephrase</code> :</p>{skill_block}
 <p>Dans un clone du dépôt Kwa, créez une skill dont la description contient « : » (un piège YAML qui tronque l'en-tête sans bruit), puis lancez la suite de contrôle des skills. Elle échoue deux fois : le premier échec est le piège YAML, le second rappelle qu'une skill doit être déclarée dans <code>manifest.json</code>.</p>{cmd("python3 -m unittest tests.test_skills.Lint")}{code(c["lint"])}
-{reveal("Pourquoi ce test existe", "<p>Une description mal formée ne plante rien : la skill devient simplement introuvable. Un test qui échoue vaut mieux qu'une skill invisible.</p>")}""",
-         "Écrire l'en-tête d'une skill et lire l'échec qui signale une erreur.",
-         "Une description dit quand invoquer la skill, pas son déroulé : un agent qui lit les étapes saute le corps (voir <code>/kwa:agent-docs</code>)."),
+{reveal("Pourquoi ce test existe", "<p>Une description mal formée ne plante rien : la skill devient simplement introuvable. Un test qui échoue vaut mieux qu'une skill invisible.</p>")}"""),
         ("7", "La mémoire qui s'enrichit", "Noter pendant, trier à la fin, valider soi-même.",
          f"""<p>Capturez un piège rencontré pendant le travail, sans rien écrire dans la documentation :</p>
 {mem_cmd}
 {cmd("kwa memory pending")}{code(c["pending"])}
-<p>En fin de session, <code>/kwa:learn</code> propose où chaque note devrait vivre (documentation, politique, mémoire de l'agent). <strong>Rien n'est appliqué sans votre accord.</strong></p>""",
-         "Capturer une note et dire qui décide de son destin.",
-         "Les notes locales ne sont pas versionnées : elles sont exclues via <code>.git/info/exclude</code>."),
+<p>En fin de session, <code>/kwa:learn</code> propose où chaque note devrait vivre (documentation, politique, mémoire de l'agent). <strong>Rien n'est appliqué sans votre accord.</strong></p>"""),
         ("8", "Le workflow complet", "Une demande, une branche, une preuve, une PR.",
          f"""<p>Démarrez un changement : une branche dans son propre worktree, à côté du dépôt, jamais sur <code>main</code>.</p>
 {start_cmd}{code(c["started"])}{code(c["trees"])}
-<p>La suite se joue avec les skills : <code>/kwa:brainstorm</code>, <code>/kwa:plan</code>, <code>/kwa:tdd</code>, <code>/kwa:verify</code>, <code>/kwa:review</code>, <code>/kwa:ship</code>. La page <a href="board.html">Les workflows</a> déroule ce workflow sur une demande réelle, et le <a href="terminal.html">Terminal</a> montre les commandes.</p>""",
-         "Conduire un petit changement jusqu'à une PR, avec une preuve que quelqu'un d'autre peut rejouer.",
-         "Versionner n'est pas publier, et un commit n'est pas un déploiement. Chaque étape reste une décision."),
+<p>La suite se joue avec les skills : <code>/kwa:brainstorm</code>, <code>/kwa:plan</code>, <code>/kwa:tdd</code>, <code>/kwa:verify</code>, <code>/kwa:review</code>, <code>/kwa:ship</code>. La page <a href="board.html">Les workflows</a> déroule ce workflow sur une demande réelle, et le <a href="terminal.html">Terminal</a> montre les commandes.</p>"""),
         ("9", "Le flux d'un développeur aujourd'hui", "Tout mis ensemble : une journée où presque tout est automatisé, sauf les décisions.",
          """<p>Les étapes précédentes sont des pièces. Voici l'assemblage tel qu'une équipe qui l'a bien outillé le vit : l'agent code, mais <strong>chaque affirmation est adossée à une preuve</strong>, et les humains gardent les deux décisions qui engagent (valider ce qu'on construit, accepter ce qui est livré).</p>
 """ + FLOW + """
 <p>Le travail d'un développeur se déplace : moins de frappe, plus de <strong>cadrage</strong> (critères de réussite précis), de <strong>mise en place</strong> (hooks, MCP, règles) et de <strong>relecture de preuves</strong>. Context7 évite l'API périmée, Playwright évite le « ça marche chez moi » sans l'avoir vu, et un agent vérificateur en contexte neuf évite le biais de celui qui relit ce qu'il vient d'écrire.</p>
 <p>Deux promesses à ne pas faire : que la vérification attrape tout (un vérificateur invité à trouver des écarts en trouve toujours, d'où la consigne de ne retenir que ceux qui touchent aux exigences), et que le garde-fou remplace la relecture humaine.</p>""" +
-         reveal("À vous", "<p>Prenez une tâche récente de votre équipe. Pour chacune des huit étapes, écrivez : ce qui était fait à la main, ce qui peut être automatisé, et le contrôle qui prouverait que c'est bon. Marquez les deux décisions que vous refusez de déléguer.</p>"),
-         "Décrire le flux complet d'une évolution et dire où se trouvent les deux points de décision humains.",
-         "Automatiser la preuve sans automatiser la décision : un agent qui valide son propre travail, sans contrôle extérieur, ne prouve rien."),
+         reveal("À vous", "<p>Prenez une tâche récente de votre équipe. Pour chacune des huit étapes, écrivez : ce qui était fait à la main, ce qui peut être automatisé, et le contrôle qui prouverait que c'est bon. Marquez les deux décisions que vous refusez de déléguer.</p>")),
         ("10", "Les limites, sans maquillage", "Un garde est un filet contre la bévue, pas une frontière de sécurité.",
          f"""<p>Essayez de contourner le garde des secrets. Ces trois commandes lisent le même fichier d'environnement ; seule la forme change :</p>
 <table class="pc-table"><thead><tr><th>Commande</th><th>Verdict réel</th></tr></thead><tbody>{holes}</tbody></table>
 <p>Le garde lit le <strong>texte</strong> de la commande, il ne l'exécute pas : un nom calculé, un glob ou un interpréteur lui échappent.</p>
-{reveal("Alors, à quoi ça sert, et que mettre en plus ?", "<p>À arrêter l'erreur honnête. Les règles <code>permissions.deny</code> de Claude Code, seules, ne font pas mieux : <code>Read(./.env)</code> bloque l'outil de lecture, pas <code>python3 -c</code>. Contre une attaque, il faut une barrière que le système d'exploitation ou GitHub fait respecter : le bac à sable de Claude Code (<code>/sandbox</code>, désactivé par défaut), qui applique aussi ces règles aux commandes shell ; un conteneur ou une machine isolée ; des identifiants séparés ; et la protection de branche avec la CI obligatoire. Voir <a href='impose.html'>Ce qui est imposé, ce qui est suggéré</a>.</p>")}""",
-         "Trouver un contournement, et dire quelle barrière complète le garde.",
-         "Ne jamais présenter un hook comme une garantie. Un contournement trouvé en séance est un bon résultat."),
+{reveal("Alors, à quoi ça sert, et que mettre en plus ?", "<p>À arrêter l'erreur honnête. Les règles <code>permissions.deny</code> de Claude Code, seules, ne font pas mieux : <code>Read(./.env)</code> bloque l'outil de lecture, pas <code>python3 -c</code>. Contre une attaque, il faut une barrière que le système d'exploitation ou GitHub fait respecter : le bac à sable de Claude Code (<code>/sandbox</code>, désactivé par défaut), qui applique aussi ces règles aux commandes shell ; un conteneur ou une machine isolée ; des identifiants séparés ; et la protection de branche avec la CI obligatoire. Voir <a href='impose.html'>Ce qui est imposé, ce qui est suggéré</a>.</p>")}"""),
     ]
     return "\n".join(stage(*st) for st in stages)
 
 
-def stage(n: str, title: str, tag: str, body: str, proof: str, pitfall: str) -> str:
+def stage(n: str, title: str, tag: str, body: str) -> str:
     return (f'<section class="pc-stage" id="etape-{n}"><div class="pc-main"><p class="pc-kicker">Étape {n}</p>'
             f'<h2 class="pc-h">{esc(title)}</h2><p class="pc-tag">{esc(tag)}</p>{body}'
-            f'<div class="pc-proof"><div><b>Preuve attendue</b><p>{proof}</p></div><div><b>Piège</b><p>{pitfall}</p></div></div></div></section>')
+            '</div></section>')
