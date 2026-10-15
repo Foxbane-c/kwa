@@ -1,0 +1,26 @@
+/* Page « Le panneau » (src/panel.py) : la capture à gauche, l'explication à droite ; empilées sous 900 px */
+.pn-grid { display: grid; grid-template-columns: minmax(0, 348px) minmax(0, 1fr); gap: 40px; align-items: start; margin-top: 28px; }
+.pn-shot { position: sticky; top: calc(var(--kd-top-h, 56px) + 20px); margin: 0; }
+.pn-shot img { display: block; width: 100%; height: auto; border-radius: 18px; border: 1px solid var(--kw-rule); background: #111113;
+  box-shadow: 0 24px 48px -28px rgba(0, 0, 0, .45); }
+.pn-shot figcaption { margin-top: 10px; font-size: 13px; line-height: 1.45; color: var(--kw-mut); }
+.pn-text > .kw-section-title:first-child { margin-top: 0; }
+.pn-list { padding-left: 1.1em; display: grid; gap: 10px; }
+.pn-states { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.pn-states li { display: grid; grid-template-columns: 22px 92px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.pn-states span:last-child { color: var(--kw-body); font-size: 14.5px; line-height: 1.45; }
+.pn-dot { width: 16px; height: 16px; border-radius: 50%; transform: translateY(3px); box-sizing: border-box; }
+.pn-done { background: var(--kd-green); }
+.pn-run { background: var(--kd-violet); box-shadow: 0 0 0 4px color-mix(in srgb, var(--kd-violet) 25%, transparent); }
+.pn-spin { border: 3px solid color-mix(in srgb, var(--kd-violet) 25%, transparent); border-top-color: var(--kd-violet); animation: pn-turn .9s linear infinite; }
+.pn-deny { background: var(--kd-red); }
+.pn-pass { width: 10px; height: 10px; margin: 3px; background: color-mix(in srgb, var(--kd-blue) 45%, transparent); }
+.pn-next { border: 2px solid color-mix(in srgb, var(--kd-blue) 55%, transparent); }
+@keyframes pn-turn { to { transform: translateY(3px) rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .pn-spin { animation: none; } }
+@media (max-width: 900px) {
+  .pn-grid { grid-template-columns: 1fr; gap: 24px; }
+  .pn-shot { position: static; max-width: 348px; margin: 0 auto; }
+  .pn-states li { grid-template-columns: 22px minmax(0, 1fr); }
+  .pn-states span:last-child { grid-column: 2; }
+}
