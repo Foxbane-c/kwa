@@ -361,7 +361,7 @@ class Beginners(unittest.TestCase):
 
 
 class Panel(unittest.TestCase):
-    """Le mod kwa-activity dessine les mêmes workflows que le site, et la page « Le panneau » cite ses vrais libellés."""
+    """Le mod kwa-activity dessine les mêmes workflows que le site, et la page « Le Mod » cite ses vrais libellés."""
     MOD = os.path.join(PACK, "mods", "kwa-activity", "hooks", "workflow.ts")
 
     def setUp(self):

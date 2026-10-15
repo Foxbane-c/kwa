@@ -82,7 +82,7 @@ du plan, le contexte des tâches précédentes et les commandes de vérification
 sécurité du diff, l'autre les tests, le troisième cherche les appelants de <code>parse()</code>. Chacun me rend cinq
 lignes. » L'agent principal écrit alors trois prompts et lance trois agents. Une skill ne fait que rendre ce texte
 <strong>répétable</strong> : mêmes rubriques, mêmes interdits, même format de retour à chaque fois. Pendant qu'ils
-tournent, <a href="panneau.html">le panneau</a> les montre avec un moulinet.</p>
+tournent, <a href="mod.html">le Mod</a> les montre avec un moulinet.</p>
 <h2 class="kw-section-title dg-h">Ce que contient un prompt délégué</h2>
 <div class="kd-grid kd-g2 dg-grid">
 <div class="kd-card"><h3>Ce qu'il doit savoir</h3><p>La demande d'origine et ses <strong>critères de réussite</strong>, cités et non résumés ; les <strong>fichiers</strong> à lire ; les erreurs exactes collées ; ce qui est volontairement hors sujet.</p></div>

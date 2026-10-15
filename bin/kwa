@@ -846,7 +846,7 @@ def marketplace_text() -> str:
                                     "description": "Garde-fous, skills de méthode, mémoire de session et workflow issue → PR."},
                                    # mod séparé : il observe la session et dessine son avancement, sans toucher au plugin
                                    {"name": "kwa-activity", "source": "./mods/kwa-activity", "category": "development",
-                                    "description": "Panneau de suivi : le workflow Kwa en cours dessiné brique par brique, les sous-agents qui tournent, le coût et le contexte de la session."}]},
+                                    "description": "Mod de suivi : le workflow Kwa en cours dessiné brique par brique, les sous-agents qui tournent, le coût et le contexte de la session."}]},
                       indent=2, ensure_ascii=False) + "\n"
 
 

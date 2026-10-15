@@ -1,1 +1,1 @@
-{ "name": "kwa-activity", "version": "0.4.0", "description": "Panneau Kwa à droite : le workflow détecté dessiné en vertical (briques, sous-étapes, gardes), le coût et le contexte de la session.", "types": "./types/index.d.ts" }
+{ "name": "kwa-activity", "version": "0.4.0", "description": "Mod Kwa, à droite de la conversation : le workflow détecté dessiné en vertical (briques, sous-étapes, gardes), le coût et le contexte de la session.", "types": "./types/index.d.ts" }

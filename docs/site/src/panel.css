@@ -1,4 +1,4 @@
-/* Page « Le panneau » (src/panel.py) : la capture à gauche, l'explication à droite ; empilées sous 900 px */
+/* Page « Le Mod » (src/panel.py) : la capture à gauche, l'explication à droite ; empilées sous 900 px */
 .pn-grid { display: grid; grid-template-columns: minmax(0, 348px) minmax(0, 1fr); gap: 40px; align-items: start; margin-top: 28px; }
 .pn-shot { position: sticky; top: calc(var(--kd-top-h, 56px) + 20px); margin: 0; }
 .pn-shot img { display: block; width: 100%; height: auto; border-radius: 18px; border: 1px solid var(--kw-rule); background: #111113;

@@ -71,7 +71,7 @@ const isPlaced = async ($: EngineInterface) => (await $.ui.panes()).some(p => p.
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'kwa-activity', description: 'Afficher le panneau Kwa (workflow et coût), ou le masquer' })
+    await $.command.register({ name: 'kwa-activity', description: 'Afficher le Mod Kwa (workflow et coût), ou le masquer' })
     if (!(await read($, isHidden))) await $.ui.open({ id: PANE, title: 'Kwa · workflow' })
     await refresh($)
     poll ??= $.clock.every(4000, () => refresh($))
@@ -85,11 +85,11 @@ export const register: Register = on => {
       await $.ui.close({ id: PANE })
       unfold.clear()  // à la réouverture, l'anneau se remplit de nouveau et rien ne se déplie pour une brique quittée entre-temps
       await update($, isHidden, () => true)
-      return { text: 'Panneau Kwa fermé. /kwa-activity pour le rouvrir.' }
+      return { text: 'Mod Kwa fermé. /kwa-activity pour le rouvrir.' }
     }
     await update($, isHidden, () => false)
     const r = await $.ui.open({ id: PANE, title: 'Kwa · workflow' })
-    return { text: r.isPlaced ? 'Panneau Kwa ouvert.' : 'Panneau Kwa ouvert, en attente de place : le bandeau le remplace.' }
+    return { text: r.isPlaced ? 'Mod Kwa ouvert.' : 'Mod Kwa ouvert, en attente de place : le bandeau le remplace.' }
   })
 
   on('skill.prompt', async ($, e, next) => {
