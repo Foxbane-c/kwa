@@ -761,6 +761,7 @@ def plugin_text(text: str, skills) -> str:
     text = text.replace("(`kwa install`)", "(`kwa init`)")
     text = text.replace("`.claude/rules/kwa-*.md`", "les règles communes de Kwa (rappelées au démarrage de session)")
     text = re.sub(r"`\.claude/rules/kwa-([a-z-]+)\.md`", r"la règle Kwa « \1 » (rappelée au démarrage de session)", text)
+    text = re.sub(r"\bde `\.claude/kwa/hooks/?`", "du plugin Kwa", text)  # « hooks de … » : pas de « de du »
     text = re.sub(r"`\.claude/kwa/hooks/?`", "du plugin Kwa", text)
     text = text.replace("kwa-reviewer", "kwa:reviewer")
     names = "|".join(sorted(skills, key=len, reverse=True))
