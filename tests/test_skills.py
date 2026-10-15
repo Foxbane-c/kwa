@@ -360,6 +360,32 @@ class Beginners(unittest.TestCase):
             self.assertRegex(self.read(name), rf'<noscript>.*href="{re.escape(href)}".*</noscript>', name)
 
 
+class Panel(unittest.TestCase):
+    """Le mod kwa-activity dessine les mêmes workflows que le site, et la page « Le panneau » cite ses vrais libellés."""
+    MOD = os.path.join(PACK, "mods", "kwa-activity", "hooks", "workflow.ts")
+
+    def setUp(self):
+        sys.path.insert(0, os.path.join(PACK, "docs", "site", "src"))
+        import flows, panel
+        self.flows, self.panel = flows, panel
+        self.ts = open(self.MOD, encoding="utf-8").read()
+
+    def test_the_mod_draws_the_site_workflows_step_by_step(self):
+        body = self.ts[self.ts.index("const FLOWS"):self.ts.index("const FLOW_OF")]
+        for key, flow in self.flows.FLOWS.items():
+            with self.subTest(flow=key):
+                block = re.search(key + r": \{ title: '([^']+)', steps: \[(.*?)\] \}", body, re.S)
+                self.assertIsNotNone(block, key)
+                self.assertEqual(block.group(1), flow["title"])
+                mine = re.findall(r"\['(\w+)', '\w+', '([^']+)'\]", block.group(2))
+                self.assertEqual(mine, [(b, n) for b, _k, n, _w in flow["steps"]])
+
+    def test_the_page_quotes_labels_the_mod_draws(self):
+        for label in self.panel.LABELS:
+            with self.subTest(label=label):
+                self.assertIn(label, self.ts)
+
+
 class Flows(unittest.TestCase):
     """Workflows animés : chaque pièce nommée existe, chaque événement vise une étape, le scénario est complet."""
 
@@ -413,7 +439,7 @@ class Shell(unittest.TestCase):
     def test_site_speaks_only_of_the_plugin_install(self):
         """L'installation par copie est l'ancienne méthode : le site ne la montre plus (#43). kwa-hygiene reste copié
         dans le projet, pour la CI."""
-        legacy = re.compile(r"kwa install|\.claude/kwa/(?:hooks|bin/(?!kwa-hygiene))|\.claude/rules/kwa-|(?<![\w./-])/kwa-(?!demo)[a-z]")
+        legacy = re.compile(r"kwa install|\.claude/kwa/(?:hooks|bin/(?!kwa-hygiene))|\.claude/rules/kwa-|(?<![\w./-])/kwa-(?!demo|activity)[a-z]")  # /kwa-activity : commande du mod
         for name in self.pages():
             text = re.sub(r"<[^>]+>", "", self.read(name))
             self.assertEqual([m.group(0) for m in legacy.finditer(text)], [], name)

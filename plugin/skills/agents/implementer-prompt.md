@@ -34,7 +34,7 @@ Avant de conclure, lance et cite la sortie de :
 ## Interdits
 - Aucun `git commit`, `git push`, `git stash`, `git reset`, `git checkout` sur des fichiers, ni création de branche.
   Laisse tes changements en modifications locales.
-- Ne contourne jamais un garde-fou (hooks de du plugin Kwa, refus de permission). Un refus te dit de
+- Ne contourne jamais un garde-fou (hooks du plugin Kwa, refus de permission). Un refus te dit de
   t'arrêter : conclus avec le statut BLOCKED en citant le message exact.
 - Ne lance pas d'autre agent. Ne modifie pas le plan, `.claude/`, la politique ni les fichiers hors tâche.
 - N'écris aucun secret, mot de passe ni identifiant réel dans le code, les tests ou les messages.

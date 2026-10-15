@@ -761,6 +761,7 @@ def plugin_text(text: str, skills) -> str:
     text = text.replace("(`kwa install`)", "(`kwa init`)")
     text = text.replace("`.claude/rules/kwa-*.md`", "les règles communes de Kwa (rappelées au démarrage de session)")
     text = re.sub(r"`\.claude/rules/kwa-([a-z-]+)\.md`", r"la règle Kwa « \1 » (rappelée au démarrage de session)", text)
+    text = re.sub(r"\bde `\.claude/kwa/hooks/?`", "du plugin Kwa", text)  # « hooks de … » : pas de « de du »
     text = re.sub(r"`\.claude/kwa/hooks/?`", "du plugin Kwa", text)
     text = text.replace("kwa-reviewer", "kwa:reviewer")
     names = "|".join(sorted(skills, key=len, reverse=True))
@@ -842,7 +843,10 @@ def marketplace_text() -> str:
     return json.dumps({"name": MARKETPLACE["name"], "owner": {"name": "nesyouyou", "url": "https://github.com/nesyouyou"},
                        "description": "Kwa, kit de workflows agentiques pour le développement.",
                        "plugins": [{"name": "kwa", "source": f"./{PLUGIN_DIR}", "category": "development",
-                                    "description": "Garde-fous, skills de méthode, mémoire de session et workflow issue → PR."}]},
+                                    "description": "Garde-fous, skills de méthode, mémoire de session et workflow issue → PR."},
+                                   # mod séparé : il observe la session et dessine son avancement, sans toucher au plugin
+                                   {"name": "kwa-activity", "source": "./mods/kwa-activity", "category": "development",
+                                    "description": "Panneau de suivi : le workflow Kwa en cours dessiné brique par brique, les sous-agents qui tournent, le coût et le contexte de la session."}]},
                       indent=2, ensure_ascii=False) + "\n"
 
 

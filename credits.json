@@ -9,6 +9,8 @@
       "license_file": "licenses/superpowers-MIT.txt",
       "ref": "v6.4.1",
       "credit_line": "Inspiré de superpowers (Jesse Vincent, MIT, v6.4.1) ; réécrit pour Kwa.",
+      "project": "Une méthode de développement complète pour agents de code, faite de skills qui se déclenchent d'elles-mêmes : l'agent fait d'abord préciser la demande, montre le design par morceaux à valider, écrit un plan, puis le fait exécuter par des sous-agents qui implémentent et se relisent.",
+      "why": "C'est la référence de la **discipline par skills** : des règles fermes plutôt que des conseils, et des skills qui s'imposent au bon moment sans qu'on les appelle. L'idée de confier chaque tâche d'un plan à un **agent neuf**, puis de le relire en deux temps, est au cœur de `/kwa:agents`.",
       "took": "La **discipline des skills** : **lois de fer**, **signaux d'alerte**, tableaux d'excuses, **revues en deux temps**, porte d'approbation, routeur de session.",
       "skills": [
         "brainstorm",
@@ -32,6 +34,8 @@
       "license_file": "licenses/mattpocock-skills-MIT.txt",
       "ref": "f3fc563, 49dd158",
       "credit_line": "Inspiré des skills de Matt Pocock (mattpocock/skills, MIT, commit f3fc563) ; réécrit pour Kwa.",
+      "project": "Les skills qu'un développeur expérimenté utilise chaque jour : petites, faciles à adapter, combinables, et qui ne prennent pas le contrôle du processus à votre place.",
+      "why": "L'inverse des cadres qui imposent tout le déroulé : des **outils courts qu'on compose**. Kwa en garde la philosophie et plusieurs gestes précis : se faire interroger sur un plan, passer le relais à une autre session, trancher une question par un prototype jetable.",
       "took": "L'**interrogatoire sans relâche** d'un plan, la **reprise de session**, le questionnaire pour un tiers, le **prototype jetable**, l'approfondissement des modules, les **tickets en balles traçantes**, la preuve par mutation, la rétrospective, la **résolution de conflits par l'intention** de chaque côté, la **recherche limitée aux sources primaires**, le **glossaire du domaine** et ses ADR, l'**espace d'apprentissage** sur plusieurs sessions.",
       "skills": [
         "interview",
@@ -65,6 +69,8 @@
       "license_file": "licenses/ponytail-MIT.txt",
       "ref": "552acd5",
       "credit_line": "Inspiré de ponytail (DietrichGebert, MIT, commit 552acd5) ; réécrit pour Kwa.",
+      "project": "Une skill qui fait penser l'agent comme le développeur senior le plus économe de l'équipe : écrire seulement ce que la tâche demande et réutiliser ce qui existe, sans jamais couper la validation, la gestion d'erreur ni la sécurité. Le projet publie ses mesures, avec et sans la skill.",
+      "why": "Les agents écrivent trop : une bibliothèque ou un composant entier là où dix lignes suffisent. Ponytail fait de la **sobriété une règle vérifiable**, avec la nuance qui compte : le code est court parce qu'il est nécessaire, pas parce qu'on l'a compressé.",
       "took": "L'**échelle de simplicité** (le meilleur code est celui qu'on n'écrit pas), l'**audit de sur-ingénierie** et de dette, l'axe de revue anti-sur-ingénierie.",
       "skills": [
         "simple",
@@ -81,6 +87,8 @@
       "license_file": "licenses/super-board-MIT.txt",
       "ref": "120bc1d",
       "credit_line": "Inspiré de super-board (Eric Tech, MIT, commit 120bc1d) ; réécrit pour Kwa.",
+      "project": "Une boucle autonome pour Claude Code autour d'un tableau GitHub Project : les cartes prêtes passent par la construction, le contrôle qualité et la relecture, puis sont fusionnées quand tout est vert.",
+      "why": "Un exemple concret d'outillage **installé dans un projet existant sans l'écraser** : une section gérée dans `AGENTS.md`, des réglages fusionnés sans doublon, des règles d'écriture vérifiées par des tests. C'est le modèle de `kwa init`.",
       "took": "Le **bloc géré** dans AGENTS.md entre marqueurs versionnés, la **fusion idempotente** de settings.json, le **standard d'écriture** vérifié par des tests, l'idée d'un workflow documenté en briques, le découpage commit / publication de git-sync.",
       "skills": [
         "commit",
@@ -96,6 +104,8 @@
       "license_file": "licenses/humanizer-MIT.txt",
       "ref": "225a6f3",
       "credit_line": "Inspiré de humanizer (Siqi Chen, MIT, commit 225a6f3) ; réécrit pour Kwa.",
+      "project": "Une skill qui réécrit un texte produit par une IA pour qu'il se lise comme écrit par une personne, sans en changer le fond, à partir du guide des rédacteurs de Wikipédia sur les signes d'écriture par IA.",
+      "why": "Un **catalogue de tics précis**, chacun avec un exemple et sa correction, plutôt qu'un vague « écris naturellement ». Kwa l'adapte au français et l'applique aux docs, aux PR et aux messages.",
       "took": "Le **catalogue des tics d'écriture automatique** (mise en scène, rythme imposé, gonflement, mise en forme, résidus de chat, mauvais lecteur), la **méthode en quatre temps** et la règle de **ne rien inventer** en réécrivant.",
       "skills": [
         "humanize"
@@ -110,6 +120,8 @@
       "license_file": "licenses/claude-reflect-MIT.txt",
       "ref": "b6c4232",
       "credit_line": "Inspiré de claude-reflect (Bayram Annakov, MIT, commit b6c4232) ; réécrit pour Kwa.",
+      "project": "Un système qui capte les corrections que l'on fait à Claude Code (« non, utilise plutôt… ») et les range, après revue, dans `CLAUDE.md` ou `AGENTS.md` ; il repère aussi les demandes répétées qui mériteraient leur propre commande.",
+      "why": "La correction donnée en passant est le savoir le plus précieux d'une session, et le plus vite perdu. La capter **sans appeler de modèle** et ne l'écrire **qu'après revue** : c'est la base de la mémoire de Kwa.",
       "took": "L'idée d'un **hook sur chaque message** qui range les corrections et les « retiens : » dans une file **sans appeler de modèle**, la **sauvegarde avant la compaction**, le tri final avec accord de l'utilisateur.",
       "skills": [
         "learn"
@@ -125,6 +137,8 @@
       "license_file": "licenses/claudeception-MIT.txt",
       "ref": "62dbb91",
       "credit_line": "Inspiré de Claudeception (Siqi Chen, MIT, commit 62dbb91) ; réécrit pour Kwa.",
+      "project": "Une skill d'apprentissage continu : quand l'agent découvre quelque chose de non évident, une technique de débogage ou un contournement, il l'enregistre comme une nouvelle skill qui se chargera la prochaine fois.",
+      "why": "Elle pose la bonne question : **qu'est-ce qui vaut d'être gardé ?** Ses critères et sa règle de mettre à jour plutôt que d'empiler sont le filtre de `/kwa:learn`.",
       "took": "Les **critères de qualité d'un apprentissage** (réutilisable, non trivial, précis, vérifié), la **mise à jour plutôt que la création**, le cycle de vie d'une connaissance.",
       "skills": [
         "learn"
