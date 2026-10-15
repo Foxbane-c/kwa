@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { model, svg } from '../hooks/workflow'
+import { isOver, model, svg } from '../hooks/workflow'
 
 const step = (id: string, kind: 'skill' | 'agent' | 'garde', name: string, brick: 'cadrer' | 'faire' | 'prouver' | 'relire' | 'livrer' | 'capitaliser', endedAt: number | null) =>
   ({ id, kind, name, task: '', brick, startedAt: 0, endedAt, isAborted: false })
@@ -112,4 +112,23 @@ test('une skill relancée qui tourne reste en cours, et les refus regroupés se 
   expect(svg(g, null, 0).source).toContain('2 refus')
   const killed = model([step('1', 'skill', '/kwa:review', 'relire', null), { ...step('a', 'agent', 'kwa:reviewer', 'relire', 3), isAborted: true }], 5)
   expect(killed.rows.find(r => r.kind === 'agent')!.status).toBe('aborted')
+})
+
+test('une boîte d’agents reste faite quand un seul est interrompu, et le dit', async () => {
+  const a = (id: string, aborted: boolean) => ({ ...step(id, 'agent', 'kwa:reviewer', 'relire', 3), isAborted: aborted })
+  const m = model([step('1', 'skill', '/kwa:review', 'relire', null), a('a1', false), a('a2', false), a('a3', true)], 5)
+  expect(m.rows.find(r => r.kind === 'agent')!.status).toBe('done')
+  expect(svg(m, null, 0).source).toContain('1 interrompu ·')
+  const all = model([step('1', 'skill', '/kwa:review', 'relire', null), a('a1', true), a('a2', true)], 5)
+  expect(all.rows.find(r => r.kind === 'agent')!.status).toBe('aborted')
+})
+
+test('un agent en cours est fini selon la liste du moteur, ou au bout de deux heures pour un agent de workflow', async () => {
+  const agent = { ...step('a', 'agent', 'kwa:reviewer', 'relire', null), startedAt: 0 }
+  const wf = { ...agent, viaWorkflow: true }
+  expect(isOver(agent, 'running', 10)).toBe(false)
+  expect(isOver(agent, 'killed', 10)).toBe(true)
+  expect(isOver(agent, undefined, 10)).toBe(true)                 // sorti de la liste
+  expect(isOver(wf, undefined, 60 * 60 * 1000)).toBe(false)       // agent de workflow : jamais listé
+  expect(isOver(wf, undefined, 2 * 60 * 60 * 1000)).toBe(true)    // sans nouvelles depuis deux heures
 })

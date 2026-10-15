@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, Timer } from 'claude-code'
 
 import type { Brick, Step, Usage } from '../types'
-import { BRICKS, duration, kilo, model, money, openBrick, svg } from './workflow'
+import { BRICKS, duration, isOver, kilo, model, money, openBrick, svg } from './workflow'
 
 // Rien de ce mod n'entre dans le contexte du modèle : il lit les événements et dessine, sans réécrire ni le prompt,
 // ni le texte des skills, ni celui des sous-agents.
@@ -25,8 +25,6 @@ const BRICK_OF: Record<string, Brick> = {
   learn: 'capitaliser', handoff: 'capitaliser', 'agent-docs': 'capitaliser', teach: 'capitaliser',
 }
 const SPIN = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
-// Un agent dans l'un de ces états a fini, même si sa fin n'est pas arrivée par turn.complete.
-const OVER = new Set(['completed', 'failed', 'killed', 'idle'])
 
 let tick: Timer | null = null
 let poll: Timer | null = null
@@ -62,8 +60,9 @@ async function refresh($: EngineInterface) {
   await update($, steps, l => l.map(s => {
     if (s.kind !== 'agent' || s.endedAt !== null) return s
     const st = live.get(s.id)
-    if (st === undefined ? s.viaWorkflow : !OVER.has(st)) return s
-    return { ...s, endedAt: now, isAborted: st === 'killed' || st === 'failed' }
+    if (!isOver(s, st, now)) return s
+    // un agent de workflow clos faute de nouvelles a un sort inconnu : il n'est pas montré comme réussi
+    return { ...s, endedAt: now, isAborted: st === 'killed' || st === 'failed' || (st === undefined && !!s.viaWorkflow) }
   }))
 }
 
@@ -83,13 +82,24 @@ export const register: Register = on => {
     // un panneau en attente de place (terminal étroit) n'est pas visible : la commande l'affiche au lieu de le fermer
     if (await isPlaced($)) {
       await $.ui.close({ id: PANE })
-      unfold.clear()  // à la réouverture, l'anneau se remplit de nouveau et rien ne se déplie pour une brique quittée entre-temps
+      unfold.clear()  // le hook ui.close ne voit pas forcément la fermeture faite par ce mod lui-même
       await update($, isHidden, () => true)
       return { text: 'Mod Kwa fermé. /kwa-activity pour le rouvrir.' }
     }
     await update($, isHidden, () => false)
     const r = await $.ui.open({ id: PANE, title: 'Kwa · workflow' })
     return { text: r.isPlaced ? 'Mod Kwa ouvert.' : 'Mod Kwa ouvert, en attente de place : le bandeau le remplace.' }
+  })
+
+  // Quelle que soit la façon de fermer le Mod (commande, marque, touche) : à la réouverture, l'anneau se remplit de
+  // nouveau et rien ne se déplie pour une brique quittée entre-temps. Fermé à la main, il le reste
+  // jusqu'à /kwa-activity ou la prochaine session (isHidden est un état de session).
+  on('ui.close', async ($, e, next) => {
+    if (e.id === PANE) {
+      unfold.clear()
+      if (e.origin.kind === 'person') await update($, isHidden, () => true)
+    }
+    return next(e)
   })
 
   on('skill.prompt', async ($, e, next) => {
