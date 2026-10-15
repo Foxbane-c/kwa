@@ -245,7 +245,7 @@ def main():
     import bricks  # noqa: E402
     pages["briques.html"] = ("Les briques", "Instructions, règles, skills, agents, hooks, MCP, permissions, plugins", "parcours+bricks", bricks.page(), "")
     pages["premier-pas.html"] = ("Premier pas en 30 minutes", "Kwa sur un projet d'exercice", "parcours", firststeps.page(), "")
-    pages["panneau.html"] = ("Le panneau", "Le workflow en cours, les sous-agents et le coût, à droite de la conversation", "parcours+panel", panel.page(), "")
+    pages["mod.html"] = ("Le Mod", "Le workflow en cours, les sous-agents et le coût, à droite de la conversation", "parcours+panel", panel.page(), "")
     pages["delegation.html"] = ("Skills qui délèguent", "Des agents neufs, un prompt rempli", "delegation", delegation.page(), "")
     pages["parcours.html"] = ("Parcours d'apprentissage", "Trois parcours, du modèle au harness", "parcours", parcours_pages.hub(), "")
     pages["parcours-culture.html"] = ("Parcours 1 : Culture IA générative", "Comprendre le modèle", "parcours", parcours_pages.culture(), "")
@@ -287,7 +287,7 @@ $('#ver2').textContent = DATA.version;
     # contrôle de syntaxe des scripts inline des pages générées (une apostrophe oubliée casse toute la page)
     import shutil, tempfile
     if shutil.which("node"):
-        for page in ["index.html", "skill-map.html", "board.html", "terminal.html", "parcours.html", "parcours-culture.html", "parcours-contexte.html", "parcours-harness.html", "delegation.html", "glossaire.html", "avant-de-commencer.html", "premier-pas.html", "briques.html", "panneau.html"] + list(SPLIT):
+        for page in ["index.html", "skill-map.html", "board.html", "terminal.html", "parcours.html", "parcours-culture.html", "parcours-contexte.html", "parcours-harness.html", "delegation.html", "glossaire.html", "avant-de-commencer.html", "premier-pas.html", "briques.html", "mod.html"] + list(SPLIT):
             for i, code in enumerate(re.findall(r"<script>(.*?)</script>", open(os.path.join(HERE, page), encoding="utf-8").read(), re.S)):
                 with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
                     f.write(code)

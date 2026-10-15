@@ -1,4 +1,4 @@
-"""Page « Le panneau » : le mod kwa-activity (mods/kwa-activity), qui dessine le workflow en cours et le coût de la session.
+"""Page « Le Mod » : le mod kwa-activity (mods/kwa-activity), qui dessine le workflow en cours et le coût de la session.
 
 Les couleurs et les états décrits ici sont ceux de mods/kwa-activity/hooks/workflow.ts ; un test vérifie que les
 libellés cités y figurent toujours.
@@ -25,14 +25,14 @@ STATES = [  # (pastille, nom, ce que ça veut dire)
 def page() -> str:
     states = "".join(f'<li><span class="pn-dot {cls}" aria-hidden="true"></span><b>{name}</b><span>{what}</span></li>'
                      for cls, name, what in STATES)
-    return f"""<p class="kw-lead">Un panneau à droite de la conversation qui montre où en est la session : le workflow Kwa
+    return f"""<p class="kw-lead">Le Mod affiche, à droite de la conversation, où en est la session : le workflow Kwa
 en cours, brique par brique, les sous-agents qui tournent, et en bas le coût de la session et le remplissage de la
-fenêtre de contexte. C'est un <i>mod</i> de Claude Code, séparé du plugin : il lit les événements de la session et
+fenêtre de contexte. C'est un mod de Claude Code, séparé du plugin : il lit les événements de la session et
 dessine, sans rien écrire dans le contexte du modèle ni bloquer quoi que ce soit.</p>
 
 <div class="pn-grid">
 <figure class="pn-shot"><img src="assets/panneau.webp" width="348" height="726" loading="lazy"
-  alt="Le panneau pendant une relecture : briques Cadrer, Faire et Prouver fermées, brique Relire ouverte avec un relecteur en cours, carte « 1 sous-agent tourne », puis la carte du coût et du contexte à 21 %.">
+  alt="Le Mod pendant une relecture : briques Cadrer, Faire et Prouver fermées, brique Relire ouverte avec un relecteur en cours, carte « 1 sous-agent tourne », puis la carte du coût et du contexte à 21 %.">
 <figcaption>Une relecture en cours dans Claude Desktop : la brique Relire est ouverte, le relecteur mouline.</figcaption></figure>
 
 <div class="pn-text">
@@ -61,14 +61,14 @@ vert sous 50 %, orange jusqu'à 80 %, rouge au-delà, le moment de penser à <co
 <p>Le mod est dans la même marketplace que Kwa. Dans Claude Code, une fois la marketplace <code>kwa</code> ajoutée
 (<a href="avant-de-commencer.html">Avant de commencer</a>) :</p>
 {code(INSTALL)}
-<p>Le panneau s'ouvre au démarrage de chaque session. La commande suivante le ferme ou le rouvre :</p>
+<p>Le Mod s'ouvre au démarrage de chaque session. La commande suivante le ferme ou le rouvre :</p>
 {code(TOGGLE)}
 
 <h2 class="kw-section-title">Selon l'endroit</h2>
 <ul class="pn-list">
 <li><b>Claude Desktop et l'application mobile</b> : le dessin animé ci-dessus, en thème clair ou sombre.</li>
 <li><b>Terminal</b> : la même information en texte, briques numérotées et étapes en dessous, avec un indicateur qui
-tourne. Quand le terminal est trop étroit pour un panneau, une ligne au-dessus du prompt la remplace : la brique,
+tourne. Quand le terminal est trop étroit pour l'afficher à droite, une ligne au-dessus du prompt la remplace : la brique,
 l'étape, les sous-agents en cours et le coût.</li>
 </ul>
 
