@@ -5,7 +5,7 @@ export type Kind = 'skill' | 'garde' | 'hook' | 'agent' | 'vous' | 'doc'
 // aborted : interrompue par l'utilisateur ; passed : ni vue ni faite, mais une étape plus loin a été atteinte
 export type Status = 'done' | 'run' | 'passed' | 'next' | 'denied' | 'aborted'
 // count / live : pour la boîte des sous-agents d'une brique, combien ont été lancés et combien tournent encore
-export type Row = { brick: Brick; kind: Kind; name: string; status: Status; ms: number | null; extra: boolean; count?: number; live?: number; aborted?: boolean }
+export type Row = { brick: Brick; kind: Kind; name: string; status: Status; ms: number | null; extra: boolean; count?: number; live?: number; aborted?: number }
 export type Agent = { name: string; task: string; ms: number }
 // running : les sous-agents qui tournent ; done : ceux qui ont fini ; peak : le plus grand nombre en même temps
 export type Swarm = { running: Agent[]; done: number; peak: number }
@@ -87,8 +87,9 @@ export function model(steps: Step[], now: number, first: string | null = steps.f
     else if (row.name !== s.name) row.name = 'sous-agents'
     row.count = (row.count ?? 0) + 1
     row.live = (row.live ?? 0) + (s.endedAt === null ? 1 : 0)
-    if (s.endedAt !== null && s.isAborted) row.aborted = true
-    row.status = row.live ? 'run' : row.aborted ? 'aborted' : 'done'
+    if (s.endedAt !== null && s.isAborted) row.aborted = (row.aborted ?? 0) + 1
+    // la boîte n'est « interrompue » que si tous ses agents le sont ; sinon elle est faite et compte les interrompus
+    row.status = row.live ? 'run' : row.aborted === row.count ? 'aborted' : 'done'
     row.ms = Math.max(row.ms ?? 0, (s.endedAt ?? now) - s.startedAt)
     used.add(s)
   }
@@ -141,6 +142,15 @@ const esc = (t: string) => t.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g
 export const duration = (ms: number) => (ms < 60000 ? `${Math.max(0, Math.round(ms / 1000))} s` : `${Math.round(ms / 60000)} min`)
 export const kilo = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)} k` : `${n}`)
 export const money = (usd: number) => `${usd.toFixed(2).replace('.', ',')} $`
+
+// Un agent en cours est-il fini ? `status` est son état dans $.agent.list(), absent s'il n'y figure pas. Un agent de
+// workflow n'y figure jamais : seule sa fin de tour le clôt, sauf `staleMs` après son lancement (lancé à distance, il
+// n'en aura pas ; un agent de workflow légitime plus long que ce délai sera clos lui aussi).
+const OVER = new Set(['completed', 'failed', 'killed', 'idle'])
+export function isOver(s: Step, status: string | undefined, now: number, staleMs = 2 * 60 * 60 * 1000): boolean {
+  if (status !== undefined) return OVER.has(status)
+  return !s.viaWorkflow || now - s.startedAt >= staleMs
+}
 
 // La brique ouverte : celle de l'étape en cours, sinon celle de la dernière étape atteinte. Une seule à la fois,
 // comme sur la page d'accueil du site de Kwa.
@@ -256,7 +266,8 @@ export function svg(m: Model, u: Usage | null, sessionMs: number, { unfoldAgo = 
         const cls = r.status === 'next' ? 'sn dim' : r.status === 'run' ? 'sn now' : r.status === 'passed' ? 'sn soft' : 'sn'
         const meta = r.status === 'denied' ? 'refusé' : r.status === 'aborted' ? 'interrompue' : r.status === 'run' ? `en cours · ${duration(r.ms ?? 0)}` : r.ms !== null ? duration(r.ms) : r.status === 'passed' ? 'passée' : KIND_LABEL[r.kind]
         const label = r.count && r.count > 1 ? `${r.name} ×${r.count}` : r.name
-        const metaRow = r.kind === 'agent' && r.live && r.count && r.count > 1 ? `${r.live} en parallèle · ${duration(r.ms ?? 0)}` : meta
+        const metaRow = r.kind === 'agent' && r.live && r.count && r.count > 1 ? `${r.live} en parallèle · ${duration(r.ms ?? 0)}`
+          : r.kind === 'agent' && r.status === 'done' && r.aborted ? `${r.aborted} interrompu${r.aborted > 1 ? 's' : ''} · ${meta}` : meta
         row += `<text x="${ix + 18}" y="${cy + 5}" class="${cls}">${esc(label)}</text>` +
           `<text x="${bx + bw - 12}" y="${cy + 4}" class="meta${r.status === 'run' ? ` live t-${b}` : ''}" text-anchor="end">${metaRow}</text>`
         out += `<g>${grows ? cascade(0.3 + 0.12 * i) : ''}${row}</g>`

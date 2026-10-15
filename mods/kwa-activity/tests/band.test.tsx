@@ -127,3 +127,20 @@ test('le dépliage se joue par surface, à l\u2019entrée dans une nouvelle briq
   expect(await src('desktop')).toContain('attributeName=\\"height\\"')       // entrée dans Prouver
   expect(await src('mobile')).not.toContain('attributeName=\\"height\\"')    // l'autre surface a son propre suivi
 })
+
+test('fermé par la commande, le Mod repart de zéro : l\u2019anneau se remplit de nouveau au rendu suivant', async ($, on) => {
+  engine(on, true, { panes: [{ id: 'kwa-progress', title: 'Kwa · workflow', isPlaced: true }] })
+  await $.session.start({ source: 'startup', cwd: '/tmp', surface: 'desktop', isInteractive: true } as Parameters<typeof $.session.start>[0])
+  await $.skill.prompt({ skill: 'kwa:debug', text: 'x' })
+  const src = async () => {
+    const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+    const s = JSON.stringify(await ui.find({ type: 'Svg' }))
+    await ui.unmount()
+    return s
+  }
+  const ring = 'attributeName=\\"stroke-dasharray\\"'
+  await src()
+  expect(await src()).not.toContain(ring)                         // l'anneau ne se remplit qu'au premier rendu
+  await $.command.run({ command: 'kwa-activity', args: '' } as Parameters<typeof $.command.run>[0])
+  expect(await src()).toContain(ring)                             // rouvert : il se remplit de nouveau
+})
