@@ -129,6 +129,7 @@ code{font:.9em 'Geist Mono',monospace;background:var(--kw-tint);border:1px solid
 .kd-src h3{font:500 15px Geist,sans-serif;margin:0}
 .kd-src .sub{margin-top:4px;font-size:12px;color:var(--kw-mut)}
 .kd-src a{color:var(--kw-body);text-decoration:underline;text-underline-offset:2px}
+.kd-src .kd-src-k{margin:10px 0 2px;font:600 11px/1.3 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--kw-mut)}.kd-src .kd-src-k:first-child{margin-top:0}
 .kd-tag{display:inline-block;margin:6px 6px 0 0;padding:2px 7px;border:1px solid var(--kw-rule);border-radius:6px;font:12px 'Geist Mono',monospace;color:var(--kw-body)}
 .kd-loop{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:34px}
 .kd-node{position:relative;padding:20px;border:1px solid var(--kw-rule);border-radius:20px}
@@ -349,7 +350,7 @@ const DATA = window.KWA;
 document.documentElement.classList.add('js');
 const $ = (s, r=document) => r.querySelector(s);
 const PICTO = /*PICTOS*/{};
-const rich = t => esc(t).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+const rich = t => esc(t).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code>$1</code>');
 const el = (t, a={}, h='') => { const e=document.createElement(t); for(const k in a){ if(k==='class') e.className=a[k]; else e.setAttribute(k,a[k]); } e.innerHTML=h; return e; };
 const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
@@ -447,7 +448,7 @@ $('#detect').textContent = DATA.detect.trim();
 
 /* crédits */
 if ($('#src')) {
-$('#src').innerHTML = DATA.credits.sources.map(s=>`<div class="kd-card"><div><div class="who"><img class="kd-av" src="${esc((DATA.map.origins[s.id]||{}).avatar)}" alt="" width="24" height="24"><h3>${esc(s.author)}</h3></div><p class="sub"><a href="${esc(s.url)}">${esc(s.name)}</a> · ${esc(s.license)}</p></div><div><p>${rich(s.took)}</p><div>${s.skills.map(k=>`<span class="kd-tag">/kwa:${k}</span>`).join('')}</div></div></div>`).join('') + '<p class="kd-note">Kwa ne copie aucun fichier de ces projets : les textes sont réécrits, les mécanismes réimplémentés et testés. La ligne d\'origine figure à la fin de chaque skill concernée.</p>';
+$('#src').innerHTML = DATA.credits.sources.map(s=>`<div class="kd-card"><div><div class="who"><img class="kd-av" src="${esc((DATA.map.origins[s.id]||{}).avatar)}" alt="" width="24" height="24"><h3>${esc(s.author)}</h3></div><p class="sub"><a href="${esc(s.url)}">${esc(s.name)}</a> · ${esc(s.license)}</p></div><div><p class="kd-src-k">Le projet</p><p>${rich(s.project)}</p><p class="kd-src-k">Pourquoi il nous a intéressés</p><p>${rich(s.why)}</p><p class="kd-src-k">Ce que Kwa en a repris</p><p>${rich(s.took)}</p><div>${s.skills.map(k=>`<span class="kd-tag">/kwa:${k}</span>`).join('')}</div></div></div>`).join('') + '<p class="kd-note">Kwa ne copie aucun fichier de ces projets : les textes sont réécrits, les mécanismes réimplémentés et testés. La ligne d\'origine figure à la fin de chaque skill concernée.</p>';
 }
 </script>
 <script src="src/glossary-data.js"></script><script src="src/shell.js"></script>

@@ -10,6 +10,14 @@ SKILLS = os.path.join(PACK, "core", "skills")
 
 
 class Credits(unittest.TestCase):
+    def test_every_source_says_what_it_is_and_why_it_was_taken(self):
+        """La page Crédits dit, pour chaque dépôt, ce qu'est le projet, pourquoi il nous a intéressés et ce que Kwa
+        en a repris."""
+        for src in CREDITS["sources"]:
+            for key in ("project", "why", "took"):
+                with self.subTest(source=src["id"], field=key):
+                    self.assertGreater(len(src.get(key, "")), 60)
+
     def test_every_credited_skill_carries_its_line(self):
         for src in CREDITS["sources"]:
             for sk in src["skills"]:

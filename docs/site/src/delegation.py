@@ -3,9 +3,25 @@ neufs, à partir d'un modèle de prompt rempli. Le schéma est animé par src/de
 from __future__ import annotations
 
 import html
+import os
+import re
 
 import pictos
 import shell
+from parcours import code, reveal
+
+# Les textes du plugin publié, lus tels quels : la page ne peut pas dériver de ce que l'agent reçoit vraiment.
+AGENTS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "plugin", "skills", "agents")
+
+
+def implementer_parts() -> tuple[str, str]:
+    """L'étape « Implémenter » de /kwa:agents, et le modèle de prompt qu'elle fait remplir puis envoyer."""
+    skill = open(os.path.join(AGENTS_DIR, "SKILL.md"), encoding="utf-8").read()
+    step = re.search(r"^2\. \*\*Implémenter\.\*\*.*?(?=^3\. )", skill, re.M | re.S)
+    prompt = re.search(r"^````\n(.*?)^````", open(os.path.join(AGENTS_DIR, "implementer-prompt.md"), encoding="utf-8").read(), re.M | re.S)
+    if not step or not prompt:
+        raise SystemExit("delegation.py : l'étape Implémenter ou le modèle de prompt de /kwa:agents a changé de forme")
+    return step.group(0).strip(), prompt.group(1).strip()
 
 STATIONS = [  # (clé, pictogramme, titre, sous-titre)
     ("skill", "sword", "La skill", "dans la session principale"),
@@ -43,6 +59,7 @@ ROWS = [
 
 
 def page() -> str:
+    step, prompt = implementer_parts()
     rows = "".join(f"<tr><td><code>{html.escape(a)}</code></td><td>{html.escape(b)}</td><td>{html.escape(c)}</td>"
                    f"<td>{html.escape(d)}</td><td>{html.escape(e)}</td></tr>" for a, b, c, d, e in ROWS)
     return f"""<p class="kw-lead dg-lead">Trois skills ne font pas tout le travail elles-mêmes : elles le confient à des
@@ -53,6 +70,19 @@ dépend donc de ce prompt, et la skill garde toujours la vérification finale.</
 <h2 class="kw-section-title dg-h">Qui délègue quoi</h2>
 <div class="kd-wrap"><table class="dg-table"><thead><tr><th>Skill</th><th>Quand</th><th>Modèle de prompt</th><th>Agent</th><th>Rythme</th></tr></thead>
 <tbody>{rows}</tbody></table></div>
+<h2 class="kw-section-title dg-h">Lancer des agents, c'est écrire du texte</h2>
+<p>Il n'y a ni programme ni orchestrateur caché derrière <code>/kwa:agents</code> : la skill est un fichier Markdown que
+l'agent principal lit et suit. Quand elle lui dit de déléguer, il appelle l'outil <code>Agent</code> une fois par tâche, avec
+pour seul bagage un prompt qu'il a rempli. Voici l'étape, telle que la skill l'écrit :</p>
+<div class="dg-quote">{code(step)}</div>
+<p>Et voici le modèle qu'elle fait remplir pour chaque implémenteur. Les <code>{{{{…}}}}</code> sont remplacés par la tâche
+du plan, le contexte des tâches précédentes et les commandes de vérification du projet ; le reste part tel quel.</p>
+<div class="dg-quote">{reveal("Le prompt d'un implémenteur, en entier", code(prompt))}</div>
+<p>Vous pouvez faire la même chose sans skill, dans un message : « Lance trois agents en parallèle : l'un relit la
+sécurité du diff, l'autre les tests, le troisième cherche les appelants de <code>parse()</code>. Chacun me rend cinq
+lignes. » L'agent principal écrit alors trois prompts et lance trois agents. Une skill ne fait que rendre ce texte
+<strong>répétable</strong> : mêmes rubriques, mêmes interdits, même format de retour à chaque fois. Pendant qu'ils
+tournent, <a href="panneau.html">le panneau</a> les montre avec un moulinet.</p>
 <h2 class="kw-section-title dg-h">Ce que contient un prompt délégué</h2>
 <div class="kd-grid kd-g2 dg-grid">
 <div class="kd-card"><h3>Ce qu'il doit savoir</h3><p>La demande d'origine et ses <strong>critères de réussite</strong>, cités et non résumés ; les <strong>fichiers</strong> à lire ; les erreurs exactes collées ; ce qui est volontairement hors sujet.</p></div>

@@ -52,3 +52,5 @@
 .kd-main .dg-h { margin: 72px 0 18px; }
 .dg-bar .kp { margin-left: auto; }
 .dg-cards .kd-card h3, .kd-main .dg-h + .kd-grid .kd-card h3 { margin-bottom: 8px; }
+/* textes cités d'une skill : ils reviennent à la ligne plutôt que de défiler (mobile) */
+.dg-quote .kd-code { white-space: pre-wrap; overflow-wrap: anywhere; }
