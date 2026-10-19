@@ -22,7 +22,7 @@ def refusal(env: dict) -> tuple[str, int, str]:
     """Le refus tel qu'un garde l'émet : sortie standard, code de sortie, sortie d'erreur."""
     script = f"import sys; sys.path.insert(0, {HOOKS!r}); import _kwa; _kwa.decide('deny', {REASON!r})"
     clean = {k: v for k, v in os.environ.items() if k not in ("KWA_AGENT", "COPILOT_PLUGIN_DATA", "KWA_RUNTIME")}
-    p = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, cwd=tempfile.mkdtemp(),
+    p = subprocess.run([sys.executable, "-c", script], capture_output=True, encoding="utf-8", cwd=tempfile.mkdtemp(),
                        env={**clean, **env})
     return json.dumps(json.loads(p.stdout), indent=2, ensure_ascii=False), p.returncode, p.stderr.strip()
 
