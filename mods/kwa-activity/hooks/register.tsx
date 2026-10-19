@@ -48,7 +48,18 @@ async function animate($: EngineInterface) {
   })
 }
 
+// Sans surface attachée (session lancée avant Desktop ou le terminal), l'ouverture peut échouer : le mod continue,
+// et le relevé périodique la retente tant que le panneau n'existe pas et que la personne ne l'a pas fermé.
+async function openPane($: EngineInterface): Promise<{ isPlaced: boolean }> {
+  try {
+    return await $.ui.open({ id: PANE, title: 'Kwa · workflow' })
+  } catch {
+    return { isPlaced: false }
+  }
+}
+
 async function refresh($: EngineInterface) {
+  if (!(await read($, isHidden)) && !(await $.ui.panes()).some(p => p.id === PANE)) await openPane($)
   const u = await $.session.usage()
   const next: Usage = { usd: u.cost?.usd ?? null, tokens: u.context.tokens ?? null, window: u.context.window, percent: u.context.percent ?? null }
   await update($, usage, prev => (prev && prev.usd === next.usd && prev.tokens === next.tokens ? prev : next))
@@ -71,7 +82,6 @@ const isPlaced = async ($: EngineInterface) => (await $.ui.panes()).some(p => p.
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'kwa-activity', description: 'Afficher le Mod Kwa (workflow et coût), ou le masquer' })
-    if (!(await read($, isHidden))) await $.ui.open({ id: PANE, title: 'Kwa · workflow' })
     await refresh($)
     poll ??= $.clock.every(4000, () => refresh($))
     if ((await read($, steps)).some(s => s.endedAt === null)) await animate($)
@@ -87,7 +97,7 @@ export const register: Register = on => {
       return { text: 'Mod Kwa fermé. /kwa-activity pour le rouvrir.' }
     }
     await update($, isHidden, () => false)
-    const r = await $.ui.open({ id: PANE, title: 'Kwa · workflow' })
+    const r = await openPane($)
     return { text: r.isPlaced ? 'Mod Kwa ouvert.' : 'Mod Kwa ouvert, en attente de place : le bandeau le remplace.' }
   })
 
