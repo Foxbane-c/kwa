@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, Timer } from 'claude-code'
 
 import type { Brick, Step, Usage } from '../types'
-import { BRICKS, contextPercent, duration, isOver, kilo, model, money, openBrick, ring, svg } from './workflow'
+import { BRICKS, duration, isOver, kilo, model, money, openBrick, svg } from './workflow'
 
 // Rien de ce mod n'entre dans le contexte du modèle : il lit les événements et dessine, sans réécrire ni le prompt,
 // ni le texte des skills, ni celui des sous-agents.
@@ -191,13 +191,12 @@ export const register: Register = on => {
       await read($, beat)  // redessin chaque seconde tant qu'une étape tourne : seuls les textes natifs changent
       // Le schéma ne dépend que des étapes (ni chronomètre, ni coût) : son SVG reste identique d'un rendu à l'autre et
       // son cadre ne se recharge pas. Ce qui bouge tout le temps est dessiné en éléments natifs, mis à jour en place.
-      const d = svg(m, u, now - started, { unfoldAgo: seen && open ? now - unfold.get(e.surface)!.at : null, intro: !seen, live: false, card: false })
-      const r = ring(u, !seen)
+      const d = svg(m, u, now - started, { unfoldAgo: seen && open ? now - unfold.get(e.surface)!.at : null, intro: !seen, live: false, card: 'context' })
       const running = list.filter(x => x.endedAt === null)
       const { Text } = $.ui.resolve(e)
       // collé en haut du panneau : sans cela, un dessin plus court que le panneau y est centré verticalement
       return (
-        <Box flexDirection="column" flexGrow={1} justifyContent="flex-start" alignItems="center" alignSelf="flex-start" width="100%">
+        <Box flexDirection="column" flexGrow={1} justifyContent="flex-start" alignItems="center" alignSelf="flex-start" width="100%" height="100%">
           <Svg key="flow" source={d.source} width={d.width} height={d.height} isInteractive
             alt={`${m.title} : ${m.rows.filter(x => x.status === 'done').length} étapes faites sur ${m.rows.length}`} />
           {running.length > 0 && (
@@ -211,14 +210,9 @@ export const register: Register = on => {
               ))}
             </Box>
           )}
-          <Box key="card" flexDirection="row" alignItems="center" gap="md" width={d.width}>
-            <Svg key="ring" source={r.source} width={r.width} height={r.height} isInteractive
-              alt={`contexte ${contextPercent(u) == null ? 'inconnu' : `${Math.round(contextPercent(u)!)} %`}`} />
-            <Box flexDirection="column">
-              <Text bold>{u?.usd != null ? money(u.usd) : '—'}</Text>
-              <Text dimColor>coût de la session · {duration(now - started)}</Text>
-              <Text dimColor>contexte {u?.tokens != null ? `${kilo(u.tokens)} / ${kilo(u.window)} jetons` : 'inconnu'}</Text>
-            </Box>
+          <Box key="cost" flexDirection="column" width={d.width}>
+            <Text bold>{u?.usd != null ? money(u.usd) : '—'} <Text dimColor>coût de la session · {duration(now - started)}</Text></Text>
+            <Text dimColor>contexte {u?.tokens != null ? `${kilo(u.tokens)} / ${kilo(u.window)} jetons` : 'inconnu'}</Text>
           </Box>
           {list.length > 0 && <Button key="reset" label="Recommencer le suivi" onPress={reset} />}
         </Box>

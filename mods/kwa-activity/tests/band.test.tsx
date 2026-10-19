@@ -137,7 +137,7 @@ test('fermé par la commande, le Mod repart de zéro : l\u2019anneau se remplit 
   await $.skill.prompt({ skill: 'kwa:debug', text: 'x' })
   const src = async () => {
     const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-    const s = JSON.stringify((await ui.findAll({ type: 'Svg' }))[1])   // le second SVG : l'anneau du contexte
+    const s = JSON.stringify(await ui.find({ type: 'Svg' }))   // la carte du contexte est dans le schéma
     await ui.unmount()
     return s
   }
@@ -168,7 +168,7 @@ test('le schéma ne change pas pendant qu\u2019une étape tourne : seuls les tex
   await $.skill.prompt({ skill: 'kwa:tdd', text: 'x' })
   const snap = async () => {
     const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-    const flow = JSON.stringify(await ui.find({ type: 'Svg', key: 'flow' }))
+    const flow = JSON.stringify(await ui.find({ type: 'Svg' }))
     const live = await ui.find({ type: 'Text', text: /en cours depuis/ })
     await ui.unmount()
     return { flow, live: JSON.stringify(live) }
@@ -178,7 +178,9 @@ test('le schéma ne change pas pendant qu\u2019une étape tourne : seuls les tex
   const a = await snap()
   await clock.advance(5000)
   const b = await snap()
+  expect(a.flow).toContain('Développer')      // le dessin est bien trouvé : sinon la comparaison ne prouverait rien
   expect(b.flow).toBe(a.flow)              // même SVG : son cadre ne se recharge pas, rien ne clignote
   expect(a.live).not.toBe(b.live)          // le chronomètre natif, lui, a avancé
   expect(a.flow).not.toContain('0,42 $')   // le coût n'est plus dans le schéma
+  expect(a.flow).toContain('Fenêtre de contexte')   // la carte du contexte, elle, y reste
 })

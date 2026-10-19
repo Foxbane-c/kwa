@@ -177,7 +177,7 @@ export type Drawing = { source: string; width: number; height: number }
 // live : les chronomètres des étapes en cours ; card : la carte du coût et du contexte. Le Mod les retire tous deux
 // du schéma et les affiche en éléments natifs, pour que le SVG ne change qu'avec les étapes : un nouveau SVG recharge
 // le cadre qui le montre, et c'est ce rechargement qui clignote.
-export type DrawOptions = { unfoldAgo?: number | null; intro?: boolean; live?: boolean; card?: boolean }
+export type DrawOptions = { unfoldAgo?: number | null; intro?: boolean; live?: boolean; card?: boolean | 'context' }
 const WIDTH = 360
 const UNFOLD_MS = 1500
 const EASE = 'calcMode="spline" keyTimes="0;1" keySplines=".65 0 .25 1"'
@@ -186,7 +186,7 @@ const spinner = (x: number, y: number, r: number, color: string, w = 2.5, dur = 
   `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${color}" stroke-opacity=".2" stroke-width="${w}"/>` +
   `<path d="M${x} ${y - r} A${r} ${r} 0 0 1 ${x + r} ${y}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round">` +
   `<animateTransform attributeName="transform" type="rotate" from="0 ${x} ${y}" to="360 ${x} ${y}" dur="${dur}s" repeatCount="indefinite"/></path>`
-export const contextPercent = (u: Usage | null) => u?.percent ?? (u?.tokens != null && u.window ? (100 * u.tokens) / u.window : null)
+const contextPercent = (u: Usage | null) => u?.percent ?? (u?.tokens != null && u.window ? (100 * u.tokens) / u.window : null)
 // L'anneau du remplissage du contexte : vert sous 50 %, orange jusqu'à 80 %, rouge au-delà.
 function ringMarkup(pct: number | null, intro: boolean, cx: number, cy: number): string {
   const tint = pct == null ? '#94a3b8' : pct < 50 ? '#10b981' : pct < 80 ? '#f59e0b' : '#ef4444'
@@ -196,14 +196,6 @@ function ringMarkup(pct: number | null, intro: boolean, cx: number, cy: number):
     `<circle r="${R}" fill="none" stroke="${tint}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${dash} ${C}">` +
     (intro ? `<animate attributeName="stroke-dasharray" from="0 ${C}" to="${dash} ${C}" dur="1s"/>` : '') + `</circle></g>` +
     `<text x="${cx}" y="${cy + 5}" class="pct" text-anchor="middle">${pct == null ? '—' : Math.round(pct) + ' %'}</text>`
-}
-// L'anneau seul, pour le Mod : son dessin ne dépend que du pourcentage entier, il ne change donc que rarement.
-export function ring(u: Usage | null, intro = false): Drawing {
-  const pct = contextPercent(u)
-  const style = `<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#18181b}.pct{font-size:15px;font-weight:700}` +
-    `.track{fill:none;stroke:#e4e4e7;stroke-width:10}@media (prefers-color-scheme: dark){text{fill:#fafafa}.track{stroke:#3f3f46}}</style>`
-  return { width: 84, height: 84, source: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84 84" width="84" height="84">${style}` +
-    `${ringMarkup(pct == null ? null : Math.round(pct), intro, 42, 42)}</svg>` }
 }
 const cut = (t: string, n: number) => { const c = [...t]; return c.length > n ? c.slice(0, n - 1).join('') + '…' : t }
 export function svg(m: Model, u: Usage | null, sessionMs: number, { unfoldAgo = null, intro = false, live = true, card = true }: DrawOptions = {}): Drawing {
@@ -350,12 +342,22 @@ export function svg(m: Model, u: Usage | null, sessionMs: number, { unfoldAgo = 
 
   // la carte du coût et du contexte
   const cardY = y - 4
-  if (card) {
+  if (card === true) {
     after += `<g transform="translate(10 ${cardY})"><rect width="${W - 20}" height="112" rx="18" class="card"/>` +
       ringMarkup(contextPercent(u), intro, 58, 56) +
       `<text x="112" y="40" class="cost">${u?.usd != null ? money(u.usd) : '—'}</text>` +
       `<text x="112" y="62" class="meta">coût de la session · ${duration(sessionMs)}</text>` +
       `<text x="112" y="82" class="meta">contexte ${u?.tokens != null ? `${kilo(u.tokens)} / ${kilo(u.window)} jetons` : 'inconnu'}</text></g>`
+  } else if (card === 'context') {
+    // la carte du contexte seule : elle ne dépend que du pourcentage entier, le schéma reste donc stable
+    const pct = contextPercent(u)
+    const p = pct == null ? null : Math.round(pct)
+    const say = p == null ? 'inconnu' : p < 50 ? 'de la place' : p < 80 ? 'penser à /compact bientôt' : 'à compacter ou passer le relais'
+    after += `<g transform="translate(10 ${cardY})"><rect width="${W - 20}" height="112" rx="18" class="card"/>` +
+      ringMarkup(p, intro, 58, 56) +
+      `<text x="112" y="44" class="sw">Fenêtre de contexte</text>` +
+      `<text x="112" y="66" class="meta">${p == null ? 'remplissage inconnu' : `${p} % utilisés`}</text>` +
+      `<text x="112" y="86" class="meta">${say}</text></g>`
   }
   // pendant le dépliage, ce qui suit la brique ouverte part de sa place d'avant et descend avec elle
   const slide = grow ? `<animateTransform attributeName="transform" type="translate" from="0 ${-grow}" to="0 0" dur="${MORPH}s"${begin} ${EASE} fill="freeze"/>` : ''
