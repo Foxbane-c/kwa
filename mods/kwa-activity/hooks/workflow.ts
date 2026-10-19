@@ -9,7 +9,8 @@ export type Row = { brick: Brick; kind: Kind; name: string; status: Status; ms: 
 export type Agent = { name: string; task: string; ms: number }
 // running : les sous-agents qui tournent ; done : ceux qui ont fini ; peak : le plus grand nombre en même temps
 export type Swarm = { running: Agent[]; done: number; peak: number }
-export type Model = { key: string; title: string; why: string; rows: Row[]; swarm: Swarm }
+// detected : une skill Kwa a désigné le workflow ; sinon `key` n'est que le parcours montré par défaut
+export type Model = { key: string; title: string; why: string; detected: boolean; rows: Row[]; swarm: Swarm }
 
 export const BRICKS: [Brick, string][] = [
   ['cadrer', 'Cadrer'], ['faire', 'Faire'], ['prouver', 'Prouver'],
@@ -116,7 +117,7 @@ export function model(steps: Step[], now: number, first: string | null = steps.f
   let last = -1
   rows.forEach((r, i) => { if (!r.extra && r.status !== 'next') last = i })
   rows.forEach((r, i) => { if (r.status === 'next' && !r.extra && i < last) r.status = 'passed' })
-  return { key, title: flow.title, why, rows, swarm: swarm(steps, now) }
+  return { key, title: flow.title, why, detected: first !== null, rows, swarm: swarm(steps, now) }
 }
 
 function swarm(steps: Step[], now: number): Swarm {
@@ -128,6 +129,12 @@ function swarm(steps: Step[], now: number): Swarm {
   const running = agents.filter(a => a.endedAt === null).map(a => ({ name: a.name, task: a.task, ms: now - a.startedAt }))
   return { running, done: agents.length - running.length, peak }
 }
+
+// Les cinq workflows, dans l'ordre des ronds du haut : celui détecté s'allume.
+export const WORKFLOWS: [string, string, string][] = [
+  ['feature', 'Feature', '#0ea5e9'], ['bug', 'Bug', '#ef4444'], ['review', 'Relire', '#a855f7'],
+  ['ship', 'Livrer', '#f97316'], ['learn', 'Capitaliser', '#eab308'],
+]
 
 const BRICK_COLOR: Record<Brick, string> = {
   cadrer: '#6366f1', faire: '#0ea5e9', prouver: '#10b981', relire: '#a855f7', livrer: '#f97316', capitaliser: '#eab308',
@@ -196,11 +203,22 @@ export function svg(m: Model, u: Usage | null, sessionMs: number, { unfoldAgo = 
       `<animateTransform attributeName="transform" type="translate" values="0 8;0 8;0 0" keyTimes="0;${k};1" dur="${dur}s"${begin} fill="freeze"/>`
   }
 
-  const head = `<text x="16" y="30" class="title">${esc(m.title)}</text><text x="16" y="50" class="meta">workflow détecté ${esc(m.why)}</text>`
   let before = ''   // ce qui est au-dessus de la brique ouverte et ne bouge pas
   let after = ''    // ce qui est en dessous et glisse pendant le dépliage
   let grow = 0
-  let y = 64
+  // les cinq ronds des workflows, celui détecté allumé
+  const col = (W - 20) / WORKFLOWS.length
+  const dots = WORKFLOWS.map(([flow, label, c], i) => {
+    const on = m.detected && flow === m.key
+    const x = 10 + col * i + col / 2, cy = 82
+    return `<g class="wf${on ? ' on' : ''}" data-flow="${flow}">` + (on
+      ? `<circle cx="${x}" cy="${cy}" r="17" fill="none" stroke="${c}" stroke-width="2"><animate attributeName="opacity" values=".7;.1;.7" dur="2s" repeatCount="indefinite"/></circle>` +
+        `<circle cx="${x}" cy="${cy}" r="13" fill="${c}"/><circle cx="${x}" cy="${cy}" r="4.5" fill="#fff"/>`
+      : `<circle cx="${x}" cy="${cy}" r="11" class="hollow" style="stroke:${c}" stroke-opacity=".45"/>`) +
+      `<text x="${x}" y="${cy + 30}" text-anchor="middle" class="wl${on ? ' on' : ''}"${on ? ` style="fill:${c}"` : ''}>${label}</text></g>`
+  }).join('')
+  const head = `<text x="16" y="30" class="title">${esc(m.title)}</text><text x="16" y="50" class="meta">workflow détecté ${esc(m.why)}</text>${dots}`
+  let y = 132
   let prevBottom = 0
   let prevReached = false
   let n = 0
@@ -327,23 +345,23 @@ export function svg(m: Model, u: Usage | null, sessionMs: number, { unfoldAgo = 
   const style = `<style>
 text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#18181b}
 .title{font-size:18px;font-weight:700}.bh{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
-.num{font-size:12px;font-weight:700}.num.on{fill:#fff}
-.bg{fill:#ffffff}.sn{font-size:14px;font-weight:500}.now{font-weight:700}.dim{opacity:.5}.soft{opacity:.7}
+.num{font-size:12px;font-weight:700}.num.on{fill:#fff}.wl{font-size:11px;font-weight:600;fill:#71717a}.wl.on{font-weight:800}
+.sn{font-size:14px;font-weight:500}.now{font-weight:700}.dim{opacity:.5}.soft{opacity:.7}
 .meta{font-size:12px;fill:#71717a}.live{font-weight:600}
 .cost{font-size:26px;font-weight:750}.pct{font-size:15px;font-weight:700}
 .frame{fill:none;stroke-width:1.5}.frame.open{stroke-width:2}.box{fill:#ffffff;stroke:#d4d4d8;stroke-width:1.5}.box.off{stroke-dasharray:4 4;stroke:#d4d4d8}
 .ar{stroke-width:2}.ar.on{stroke:#10b981}.ar.off{stroke:#d4d4d8;stroke-dasharray:3 4}.ar.run{stroke-dasharray:6 6}
 .tip{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.tip.on{stroke:#10b981}.tip.off{stroke:#d4d4d8}
-.hollow{fill:#fff;stroke-width:2}.tick{fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.hollow{fill:none;stroke-width:2}.tick{fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .card{fill:#f4f4f5;stroke:#e4e4e7}
 .t-cadrer{fill:#4338ca}.t-faire{fill:#0369a1}.t-prouver{fill:#047857}.t-relire{fill:#7e22ce}.t-livrer{fill:#c2410c}.t-capitaliser{fill:#a16207}.swarm{fill:#8b5cf6;fill-opacity:.08;stroke:#8b5cf6;stroke-opacity:.45;stroke-width:1.5}
 .sw{font-size:15px;font-weight:700}.an{font-size:13.5px;font-weight:600}.track{fill:none;stroke:#e4e4e7;stroke-width:10}
-@media (prefers-color-scheme: dark){.bg{fill:#111113}text{fill:#fafafa}.meta{fill:#a1a1aa}.box{fill:#18181b;stroke:#3f3f46}
-.box.off{stroke:#3f3f46}.ar.off{stroke:#3f3f46}.tip.off{stroke:#3f3f46}.hollow{fill:#18181b}.card{fill:#18181b;stroke:#3f3f46}.track{stroke:#3f3f46}
+@media (prefers-color-scheme: dark){text{fill:#fafafa}.meta{fill:#a1a1aa}.wl{fill:#a1a1aa}.box{fill:#18181b;stroke:#3f3f46}
+.box.off{stroke:#3f3f46}.ar.off{stroke:#3f3f46}.tip.off{stroke:#3f3f46}.card{fill:#18181b;stroke:#3f3f46}.track{stroke:#3f3f46}
 .t-cadrer{fill:#818cf8}.t-faire{fill:#38bdf8}.t-prouver{fill:#34d399}.t-relire{fill:#c084fc}.t-livrer{fill:#fb923c}.t-capitaliser{fill:#facc15}}
 </style>`
   return {
     width: W, height: H,
-    source: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${style}<rect width="${W}" height="${H}" rx="18" class="bg"/>${head}${before}<g>${slide}${after}</g></svg>`,
+    source: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${style}${head}${before}<g>${slide}${after}</g></svg>`,
   }
 }

@@ -132,3 +132,13 @@ test('un agent en cours est fini selon la liste du moteur, ou au bout de deux he
   expect(isOver(wf, undefined, 60 * 60 * 1000)).toBe(false)       // agent de workflow : jamais listé
   expect(isOver(wf, undefined, 2 * 60 * 60 * 1000)).toBe(true)    // sans nouvelles depuis deux heures
 })
+
+test('en haut, cinq ronds de workflow : seul celui détecté s’allume, aucun sans skill Kwa', async () => {
+  const lit = (out: string) => [...out.matchAll(/class="wf on" data-flow="(\w+)"/g)].map(x => x[1])
+  const bug = svg(model([step('1', 'skill', '/kwa:debug', 'cadrer', null)], 5), null, 0).source
+  expect([...bug.matchAll(/class="wf( on)?" data-flow=/g)].length).toBe(5)
+  expect(lit(bug)).toEqual(['bug'])
+  expect(lit(svg(model([step('1', 'skill', '/kwa:review', 'relire', null)], 5), null, 0).source)).toEqual(['review'])
+  expect(lit(svg(model([], 5), null, 0).source)).toEqual([])
+  expect(bug).not.toContain('class="bg"')   // fond transparent : le Mod prend la couleur de l'application
+})
