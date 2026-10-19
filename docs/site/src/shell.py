@@ -10,7 +10,7 @@ SIDE = [  # (groupe, couleur du repère, [(libellé, cible)])
                             ("Gardes en action", "gardes.html"), ("Le Mod", "mod.html"), ("Mémoire", "memoire.html"), ("Terminal", "terminal.html")]),
     ("Apprendre", "green", [("Avant de commencer", "avant-de-commencer.html"), ("Les briques", "briques.html"), ("Premier pas en 30 min", "premier-pas.html"), ("Les trois parcours", "parcours.html"), ("1 · Culture IA générative", "parcours-culture.html"),
                             ("2 · Context engineering", "parcours-contexte.html"), ("3 · Harness", "parcours-harness.html")]),
-    ("Référence", "amber", [("Glossaire", "glossaire.html"), ("Imposé ou suggéré", "impose.html"), ("Quand alléger", "alleger.html"), ("Méthode", "methode.html"), ("Remplacer l'existant", "migrer.html"), ("Limites et suite", "limites.html"),
+    ("Référence", "amber", [("Glossaire", "glossaire.html"), ("Selon l'agent", "agents.html"), ("Imposé ou suggéré", "impose.html"), ("Quand alléger", "alleger.html"), ("Méthode", "methode.html"), ("Remplacer l'existant", "migrer.html"), ("Limites et suite", "limites.html"),
                             ("Crédits", "credits.html")]),
 ]
 ICONS = {  # tracés Lucide-like, 24x24, trait seul

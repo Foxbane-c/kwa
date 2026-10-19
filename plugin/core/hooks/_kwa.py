@@ -102,6 +102,21 @@ def is_codex() -> bool:
     return os.environ.get("KWA_AGENT") == "codex"
 
 
+def is_copilot() -> bool:
+    """GitHub Copilot CLI lance les hooks d'un plugin avec COPILOT_PLUGIN_DATA ; KWA_AGENT=copilot pour un fichier de
+    hooks écrit pour Copilot (.github/hooks)."""
+    return os.environ.get("KWA_AGENT") == "copilot" or "COPILOT_PLUGIN_DATA" in os.environ
+
+
+def add_context(event: str, text: str) -> None:
+    """Contexte ajouté à la session. Copilot lit `additionalContext` au premier niveau, Claude Code et Codex dans
+    `hookSpecificOutput` : sous Copilot, on écrit les deux."""
+    out: dict = {"hookSpecificOutput": {"hookEventName": event, "additionalContext": text}}
+    if is_copilot():
+        out["additionalContext"] = text
+    print(json.dumps(out, ensure_ascii=False))
+
+
 def decide(decision: str, reason: str) -> None:
     """decision: deny | ask. Sort avec le code 0 après avoir imprimé la décision.
     Les hooks de Codex ne savent pas demander une confirmation : « ask » y passerait. Si une règle de commandes de Codex
@@ -114,11 +129,21 @@ def decide(decision: str, reason: str) -> None:
                   "si c'est voulu, l'utilisateur la lance lui-même)")
     if decision == "deny":
         _log_refusal(reason)
-    print(json.dumps({"hookSpecificOutput": {
+    out: dict = {"hookSpecificOutput": {
         "hookEventName": "PreToolUse",
         "permissionDecision": decision,
         "permissionDecisionReason": f"Kwa — {reason}",
-    }}, ensure_ascii=False))
+    }}
+    if is_copilot():
+        # Copilot lit la décision au premier niveau ; le code 2 vaut refus quel que soit le JSON, et sa sortie
+        # d'erreur est le motif montré au modèle
+        out.update(permissionDecision=decision, permissionDecisionReason=f"Kwa — {reason}")
+        print(json.dumps(out, ensure_ascii=False))
+        if decision == "deny":
+            print(f"Kwa — {reason}", file=sys.stderr)
+            sys.exit(2)
+        sys.exit(0)
+    print(json.dumps(out, ensure_ascii=False))
     sys.exit(0)
 
 

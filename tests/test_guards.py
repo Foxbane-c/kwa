@@ -174,3 +174,46 @@ class FailClosed(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Copilot(unittest.TestCase):
+    """GitHub Copilot CLI : il lance les hooks d'un plugin au format Claude, sans CLAUDE_PROJECT_DIR, avec
+    COPILOT_PLUGIN_DATA. Il lit la décision au premier niveau et tient le code 2 pour un refus."""
+
+    def setUp(self):
+        self.repo = tempfile.mkdtemp()
+        subprocess.run(["git", "init", "-q", "-b", "main", self.repo], check=True)
+        os.makedirs(os.path.join(self.repo, "sub"))
+
+    def hook(self, hook, cmd, cwd):
+        payload = {"hook_event_name": "PreToolUse", "tool_name": "Bash", "tool_input": {"command": cmd}, "cwd": cwd,
+                   "session_id": "s", "timestamp": "2026-10-19T10:00:00Z"}
+        e = {k: v for k, v in os.environ.items() if k not in ("CLAUDE_PROJECT_DIR", "KWA_PROJECT_DIR", "KWA_AGENT")}
+        e["COPILOT_PLUGIN_DATA"] = tempfile.mkdtemp()
+        return subprocess.run([sys.executable, os.path.join(HOOKS, hook)], input=json.dumps(payload),
+                              capture_output=True, text=True, env=e)
+
+    def test_a_refusal_is_readable_by_copilot(self):
+        p = self.hook("guard-git.py", "git commit -m x", os.path.join(self.repo, "sub"))
+        self.assertEqual(p.returncode, 2, p.stderr)
+        out = json.loads(p.stdout)
+        self.assertEqual(out["permissionDecision"], "deny")
+        self.assertTrue(out["permissionDecisionReason"].startswith("Kwa — "))
+        self.assertEqual(out["hookSpecificOutput"]["permissionDecision"], "deny")   # le format Claude reste là
+        self.assertIn("Kwa — ", p.stderr)
+
+    def test_an_allowed_command_passes_silently(self):
+        subprocess.run(["git", "-C", self.repo, "checkout", "-q", "-B", "feat/x"], check=True)
+        p = self.hook("guard-git.py", "git commit -m x", self.repo)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(p.stdout.strip(), "")
+
+    def test_context_is_also_written_at_the_top_level(self):
+        code = "import sys; sys.path.insert(0, sys.argv[1]); import _kwa; _kwa.add_context('SessionStart', 'bonjour')"
+        for env, top in (({"COPILOT_PLUGIN_DATA": "x"}, True), ({}, False)):
+            e = {k: v for k, v in os.environ.items() if k not in ("COPILOT_PLUGIN_DATA", "KWA_AGENT")}
+            out = json.loads(subprocess.run([sys.executable, "-c", code, HOOKS], capture_output=True, text=True,
+                                            env={**e, **env}).stdout)
+            with self.subTest(copilot=top):
+                self.assertEqual(out["hookSpecificOutput"]["additionalContext"], "bonjour")
+                self.assertEqual("additionalContext" in out, top)

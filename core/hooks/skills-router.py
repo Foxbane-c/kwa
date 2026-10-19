@@ -14,7 +14,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _kwa import is_codex, load_payload, load_policy, project_dir, skill  # noqa: E402
+from _kwa import add_context, is_codex, load_payload, load_policy, project_dir, skill  # noqa: E402
 
 PACK = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -52,8 +52,7 @@ def main() -> int:
     payload = load_payload()
     root = project_dir(payload)
     if os.environ.get("KWA_RUNTIME") == "plugin":
-        print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": plugin_context(payload)}},
-                         ensure_ascii=False))
+        add_context("SessionStart", plugin_context(payload))
         return 0
     try:
         text = open(os.path.join(root, ".claude", "kwa", "router.md"), encoding="utf-8").read()
@@ -69,8 +68,7 @@ def main() -> int:
         return 0
     if is_codex():  # sous Codex, une skill se mentionne avec $ et il n'y a pas d'outil « Skill »
         kept = [x.replace("/kwa-", "$kwa-") for x in kept]
-    print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "\n".join(kept)}},
-                     ensure_ascii=False))
+    add_context("SessionStart", "\n".join(kept))
     return 0
 
 
