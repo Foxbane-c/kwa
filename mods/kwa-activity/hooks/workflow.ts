@@ -174,7 +174,10 @@ export function openBrick(m: Model): Brick | null {
 // pas fini (le cadre grandit, ce qui suit glisse, les étapes arrivent en cascade), il est dessiné reparti de là où
 // il en est, pour qu'un nouveau rendu en plein milieu ne le coupe pas. `intro` remplit l'anneau du contexte.
 export type Drawing = { source: string; width: number; height: number }
-export type DrawOptions = { unfoldAgo?: number | null; intro?: boolean }
+// live : les chronomètres des étapes en cours ; card : la carte du coût et du contexte. Le Mod les retire tous deux
+// du schéma et les affiche en éléments natifs, pour que le SVG ne change qu'avec les étapes : un nouveau SVG recharge
+// le cadre qui le montre, et c'est ce rechargement qui clignote.
+export type DrawOptions = { unfoldAgo?: number | null; intro?: boolean; live?: boolean; card?: boolean | 'context' }
 const WIDTH = 360
 const UNFOLD_MS = 1500
 const EASE = 'calcMode="spline" keyTimes="0;1" keySplines=".65 0 .25 1"'
@@ -183,8 +186,20 @@ const spinner = (x: number, y: number, r: number, color: string, w = 2.5, dur = 
   `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${color}" stroke-opacity=".2" stroke-width="${w}"/>` +
   `<path d="M${x} ${y - r} A${r} ${r} 0 0 1 ${x + r} ${y}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round">` +
   `<animateTransform attributeName="transform" type="rotate" from="0 ${x} ${y}" to="360 ${x} ${y}" dur="${dur}s" repeatCount="indefinite"/></path>`
+const contextPercent = (u: Usage | null) => u?.percent ?? (u?.tokens != null && u.window ? (100 * u.tokens) / u.window : null)
+// L'anneau du remplissage du contexte : vert sous 50 %, orange jusqu'à 80 %, rouge au-delà.
+function ringMarkup(pct: number | null, intro: boolean, cx: number, cy: number): string {
+  const tint = pct == null ? '#94a3b8' : pct < 50 ? '#10b981' : pct < 80 ? '#f59e0b' : '#ef4444'
+  const R = 32, C = 2 * Math.PI * R
+  const dash = pct == null ? 0 : (C * Math.min(pct, 100)) / 100
+  return `<g transform="translate(${cx} ${cy}) rotate(-90)"><circle r="${R}" class="track"/>` +
+    `<circle r="${R}" fill="none" stroke="${tint}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${dash} ${C}">` +
+    (intro ? `<animate attributeName="stroke-dasharray" from="0 ${C}" to="${dash} ${C}" dur="1s"/>` : '') + `</circle></g>` +
+    `<text x="${cx}" y="${cy + 5}" class="pct" text-anchor="middle">${pct == null ? '—' : Math.round(pct) + ' %'}</text>`
+}
 const cut = (t: string, n: number) => { const c = [...t]; return c.length > n ? c.slice(0, n - 1).join('') + '…' : t }
-export function svg(m: Model, u: Usage | null, sessionMs: number, { unfoldAgo = null, intro = false }: DrawOptions = {}): Drawing {
+export function svg(m: Model, u: Usage | null, sessionMs: number, { unfoldAgo = null, intro = false, live = true, card = true }: DrawOptions = {}): Drawing {
+  const since = (ms: number | null) => (live ? ` · ${duration(ms ?? 0)}` : '')
   const animate = unfoldAgo !== null && unfoldAgo < UNFOLD_MS
   const begin = animate ? ` begin="${(-unfoldAgo / 1000).toFixed(2)}s"` : ''
   const W = WIDTH, CX = W / 2, BOX = 38, GAP = 18, HEAD = 44, MORPH = 0.65
@@ -282,9 +297,9 @@ export function svg(m: Model, u: Usage | null, sessionMs: number, { unfoldAgo = 
         else if (r.status === 'passed') row += `<circle cx="${ix}" cy="${cy}" r="5" fill="${c}" opacity=".5"/>`
         else row += `<circle cx="${ix}" cy="${cy}" r="7" class="hollow" style="stroke:${c}" stroke-opacity=".5"/>`
         const cls = r.status === 'next' ? 'sn dim' : r.status === 'run' ? 'sn now' : r.status === 'passed' ? 'sn soft' : 'sn'
-        const meta = r.status === 'denied' ? 'refusé' : r.status === 'aborted' ? 'interrompue' : r.status === 'run' ? `en cours · ${duration(r.ms ?? 0)}` : r.ms !== null ? duration(r.ms) : r.status === 'passed' ? 'passée' : KIND_LABEL[r.kind]
+        const meta = r.status === 'denied' ? 'refusé' : r.status === 'aborted' ? 'interrompue' : r.status === 'run' ? `en cours${since(r.ms)}` : r.ms !== null ? duration(r.ms) : r.status === 'passed' ? 'passée' : KIND_LABEL[r.kind]
         const label = r.count && r.count > 1 ? `${r.name} ×${r.count}` : r.name
-        const metaRow = r.kind === 'agent' && r.live && r.count && r.count > 1 ? `${r.live} en parallèle · ${duration(r.ms ?? 0)}`
+        const metaRow = r.kind === 'agent' && r.live && r.count && r.count > 1 ? `${r.live} en parallèle${since(r.ms)}`
           : r.kind === 'agent' && r.status === 'done' && r.aborted ? `${r.aborted} interrompu${r.aborted > 1 ? 's' : ''} · ${meta}` : meta
         row += `<text x="${ix + 18}" y="${cy + 5}" class="${cls}">${esc(label)}</text>` +
           `<text x="${bx + bw - 12}" y="${cy + 4}" class="meta${r.status === 'run' ? ` live t-${b}` : ''}" text-anchor="end">${metaRow}</text>`
@@ -314,7 +329,7 @@ export function svg(m: Model, u: Usage | null, sessionMs: number, { unfoldAgo = 
       const ay = 62 + i * 30
       card += spinner(32, ay, 6, '#8b5cf6', 2, 0.8 + 0.15 * i) +
         `<text x="48" y="${ay + 4}" class="an">${esc(cut(a.name.replace(/^kwa:/, ''), 18))}</text>` +
-        `<text x="${W - 34}" y="${ay + 4}" class="meta" text-anchor="end">${esc(cut(a.task, 22))}${a.task ? ' · ' : ''}${duration(a.ms)}</text>`
+        `<text x="${W - 34}" y="${ay + 4}" class="meta" text-anchor="end">${esc(cut(a.task, live ? 22 : 30))}${live ? `${a.task ? ' · ' : ''}${duration(a.ms)}` : ''}</text>`
     })
     if (sw.running.length > shown.length) card += `<text x="48" y="${62 + shown.length * 30}" class="meta">et ${sw.running.length - shown.length} de plus</text>`
     after += card + `</g>`
@@ -326,22 +341,28 @@ export function svg(m: Model, u: Usage | null, sessionMs: number, { unfoldAgo = 
   }
 
   // la carte du coût et du contexte
-  const pct = u?.percent ?? (u?.tokens != null && u.window ? (100 * u.tokens) / u.window : null)
-  const ring = pct == null ? '#94a3b8' : pct < 50 ? '#10b981' : pct < 80 ? '#f59e0b' : '#ef4444'
-  const R = 32, C = 2 * Math.PI * R, cardY = y - 4
-  const dash = pct == null ? 0 : (C * Math.min(pct, 100)) / 100
-  after += `<g transform="translate(10 ${cardY})"><rect width="${W - 20}" height="112" rx="18" class="card"/>` +
-    `<g transform="translate(58 56) rotate(-90)"><circle r="${R}" class="track"/>` +
-    `<circle r="${R}" fill="none" stroke="${ring}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${dash} ${C}">` +
-    (intro ? `<animate attributeName="stroke-dasharray" from="0 ${C}" to="${dash} ${C}" dur="1s"/>` : '') + `</circle></g>` +
-    `<text x="58" y="61" class="pct" text-anchor="middle">${pct == null ? '—' : Math.round(pct) + ' %'}</text>` +
-    `<text x="112" y="40" class="cost">${u?.usd != null ? money(u.usd) : '—'}</text>` +
-    `<text x="112" y="62" class="meta">coût de la session · ${duration(sessionMs)}</text>` +
-    `<text x="112" y="82" class="meta">contexte ${u?.tokens != null ? `${kilo(u.tokens)} / ${kilo(u.window)} jetons` : 'inconnu'}</text></g>`
+  const cardY = y - 4
+  if (card === true) {
+    after += `<g transform="translate(10 ${cardY})"><rect width="${W - 20}" height="112" rx="18" class="card"/>` +
+      ringMarkup(contextPercent(u), intro, 58, 56) +
+      `<text x="112" y="40" class="cost">${u?.usd != null ? money(u.usd) : '—'}</text>` +
+      `<text x="112" y="62" class="meta">coût de la session · ${duration(sessionMs)}</text>` +
+      `<text x="112" y="82" class="meta">contexte ${u?.tokens != null ? `${kilo(u.tokens)} / ${kilo(u.window)} jetons` : 'inconnu'}</text></g>`
+  } else if (card === 'context') {
+    // la carte du contexte seule : elle ne dépend que du pourcentage entier, le schéma reste donc stable
+    const pct = contextPercent(u)
+    const p = pct == null ? null : Math.round(pct)
+    const say = p == null ? 'inconnu' : p < 50 ? 'de la place' : p < 80 ? 'penser à /compact bientôt' : 'à compacter ou passer le relais'
+    after += `<g transform="translate(10 ${cardY})"><rect width="${W - 20}" height="112" rx="18" class="card"/>` +
+      ringMarkup(p, intro, 58, 56) +
+      `<text x="112" y="44" class="sw">Fenêtre de contexte</text>` +
+      `<text x="112" y="66" class="meta">${p == null ? 'remplissage inconnu' : `${p} % utilisés`}</text>` +
+      `<text x="112" y="86" class="meta">${say}</text></g>`
+  }
   // pendant le dépliage, ce qui suit la brique ouverte part de sa place d'avant et descend avec elle
   const slide = grow ? `<animateTransform attributeName="transform" type="translate" from="0 ${-grow}" to="0 0" dur="${MORPH}s"${begin} ${EASE} fill="freeze"/>` : ''
 
-  const H = cardY + 124
+  const H = card ? cardY + 124 : y
   const style = `<style>
 text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#18181b}
 .title{font-size:18px;font-weight:700}.bh{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
