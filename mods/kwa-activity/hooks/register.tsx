@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, Timer } from 'claude-code'
 
 import type { Brick, Step, Usage } from '../types'
-import { BRICKS, duration, isOver, kilo, model, money, openBrick, svg } from './workflow'
+import { BRICKS, contextPercent, duration, isOver, kilo, model, money, openBrick, ring, svg } from './workflow'
 
 // Rien de ce mod n'entre dans le contexte du modèle : il lit les événements et dessine, sans réécrire ni le prompt,
 // ni le texte des skills, ni celui des sous-agents.
@@ -10,6 +10,8 @@ const steps = atom({ plugin: 'kwa-activity', key: 'steps' } as const, [])
 const first = atom({ plugin: 'kwa-activity', key: 'first' } as const, null)
 const usage = atom({ plugin: 'kwa-activity', key: 'usage' } as const, null)
 const frame = atom({ plugin: 'kwa-activity', key: 'frame' } as const, 0)
+// une fois par seconde tant qu'une étape tourne : les chronomètres natifs du Mod (frame, 8 fois par seconde, sert au terminal)
+const beat = atom({ plugin: 'kwa-activity', key: 'beat' } as const, 0)
 const isHidden = atom({ plugin: 'kwa-activity', key: 'isHidden' } as const, false)
 
 const PANE = 'kwa-progress'
@@ -39,12 +41,14 @@ const id = (prefix: string, now: number) => `${prefix}${now}-${++seq}`
 // Tant qu'une étape tourne, l'indicateur du terminal tourne ; il s'arrête dès que tout est revenu.
 async function animate($: EngineInterface) {
   if (tick) return
+  let ticks = 0
   tick = $.clock.every(120, async () => {
     if (!(await read($, steps)).some(s => s.endedAt === null)) {
       tick?.cancel()
       tick = null
     }
     await update($, frame, n => (n + 1) % 1000)
+    if (++ticks % 8 === 0 || !tick) await update($, beat, n => (n + 1) % 100000)
   })
 }
 
@@ -184,11 +188,38 @@ export const register: Register = on => {
       const open = openBrick(m)
       const seen = unfold.get(e.surface)
       if (!seen || seen.brick !== open) unfold.set(e.surface, { brick: open, at: now })
-      const d = svg(m, u, now - started, { unfoldAgo: seen && open ? now - unfold.get(e.surface)!.at : null, intro: !seen })
+      await read($, beat)  // redessin chaque seconde tant qu'une étape tourne : seuls les textes natifs changent
+      // Le schéma ne dépend que des étapes (ni chronomètre, ni coût) : son SVG reste identique d'un rendu à l'autre et
+      // son cadre ne se recharge pas. Ce qui bouge tout le temps est dessiné en éléments natifs, mis à jour en place.
+      const d = svg(m, u, now - started, { unfoldAgo: seen && open ? now - unfold.get(e.surface)!.at : null, intro: !seen, live: false, card: false })
+      const r = ring(u, !seen)
+      const running = list.filter(x => x.endedAt === null)
+      const { Text } = $.ui.resolve(e)
+      // collé en haut du panneau : sans cela, un dessin plus court que le panneau y est centré verticalement
       return (
-        <Box flexDirection="column">
+        <Box flexDirection="column" flexGrow={1} justifyContent="flex-start" alignItems="center" alignSelf="flex-start" width="100%">
           <Svg key="flow" source={d.source} width={d.width} height={d.height} isInteractive
-            alt={`${m.title} : ${m.rows.filter(r => r.status === 'done').length} étapes faites sur ${m.rows.length}${m.swarm.running.length ? `, ${m.swarm.running.length} sous-agents en cours` : ''}${u?.usd != null ? `, coût ${money(u.usd)}` : ''}`} />
+            alt={`${m.title} : ${m.rows.filter(x => x.status === 'done').length} étapes faites sur ${m.rows.length}`} />
+          {running.length > 0 && (
+            <Box key="live" flexDirection="column" width={d.width}>
+              {running.slice(0, 6).map(x => (
+                <Text key={x.id} wrap="truncate">
+                  <Text color="claude">● </Text>
+                  <Text bold>{x.kind === 'agent' ? x.name.replace(/^kwa:/, '') : x.name}</Text>
+                  <Text dimColor>{x.task ? ` · ${x.task}` : ''} · en cours depuis {duration(now - x.startedAt)}</Text>
+                </Text>
+              ))}
+            </Box>
+          )}
+          <Box key="card" flexDirection="row" alignItems="center" gap="md" width={d.width}>
+            <Svg key="ring" source={r.source} width={r.width} height={r.height} isInteractive
+              alt={`contexte ${contextPercent(u) == null ? 'inconnu' : `${Math.round(contextPercent(u)!)} %`}`} />
+            <Box flexDirection="column">
+              <Text bold>{u?.usd != null ? money(u.usd) : '—'}</Text>
+              <Text dimColor>coût de la session · {duration(now - started)}</Text>
+              <Text dimColor>contexte {u?.tokens != null ? `${kilo(u.tokens)} / ${kilo(u.window)} jetons` : 'inconnu'}</Text>
+            </Box>
+          </Box>
           {list.length > 0 && <Button key="reset" label="Recommencer le suivi" onPress={reset} />}
         </Box>
       )

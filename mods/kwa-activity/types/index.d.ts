@@ -16,6 +16,6 @@ export type Usage = { usd: number | null; tokens: number | null; window: number;
 declare module 'claude-code' {
   interface PluginState {
     // first : la première skill Kwa de la session, qui dit le workflow ; elle survit à la troncature de steps
-    'kwa-activity': { steps: Step[]; first: string | null; usage: Usage | null; frame: number; isHidden: boolean }
+    'kwa-activity': { steps: Step[]; first: string | null; usage: Usage | null; frame: number; beat: number; isHidden: boolean }
   }
 }

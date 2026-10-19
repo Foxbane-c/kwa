@@ -137,7 +137,7 @@ test('fermé par la commande, le Mod repart de zéro : l\u2019anneau se remplit 
   await $.skill.prompt({ skill: 'kwa:debug', text: 'x' })
   const src = async () => {
     const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-    const s = JSON.stringify(await ui.find({ type: 'Svg' }))
+    const s = JSON.stringify((await ui.findAll({ type: 'Svg' }))[1])   // le second SVG : l'anneau du contexte
     await ui.unmount()
     return s
   }
@@ -160,4 +160,25 @@ test('sans surface au démarrage, le mod démarre quand même et rouvre son pann
   bare = false
   await clock.advance(4000)
   expect(opens).toBeGreaterThanOrEqual(3)   // l'ouverture du démarrage, celle de la commande, puis celle du relevé
+})
+
+test('le schéma ne change pas pendant qu\u2019une étape tourne : seuls les textes natifs avancent', async ($, on) => {
+  const clock = engine(on)
+  await $.session.start({ source: 'startup', cwd: '/tmp', surface: 'desktop', isInteractive: true } as Parameters<typeof $.session.start>[0])
+  await $.skill.prompt({ skill: 'kwa:tdd', text: 'x' })
+  const snap = async () => {
+    const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+    const flow = JSON.stringify(await ui.find({ type: 'Svg', key: 'flow' }))
+    const live = await ui.find({ type: 'Text', text: /en cours depuis/ })
+    await ui.unmount()
+    return { flow, live: JSON.stringify(live) }
+  }
+  await snap()
+  await clock.advance(2000)   // au-delà du dépliage : le schéma est stable
+  const a = await snap()
+  await clock.advance(5000)
+  const b = await snap()
+  expect(b.flow).toBe(a.flow)              // même SVG : son cadre ne se recharge pas, rien ne clignote
+  expect(a.live).not.toBe(b.live)          // le chronomètre natif, lui, a avancé
+  expect(a.flow).not.toContain('0,42 $')   // le coût n'est plus dans le schéma
 })
