@@ -1,7 +1,7 @@
 /* Page « Le Mod » (src/panel.py) : la capture à gauche, l'explication à droite ; empilées sous 900 px */
 .pn-grid { display: grid; grid-template-columns: minmax(0, 348px) minmax(0, 1fr); gap: 40px; align-items: start; margin-top: 28px; }
 .pn-shot { position: sticky; top: calc(var(--kd-top-h, 56px) + 20px); margin: 0; }
-.pn-shot img { display: block; width: 100%; height: auto; border-radius: 18px; border: 1px solid var(--kw-rule); background: #111113;
+.pn-shot img { display: block; width: 100%; height: auto; border-radius: 18px; border: 1px solid var(--kw-rule); background: transparent;
   box-shadow: 0 24px 48px -28px rgba(0, 0, 0, .45); }
 .pn-shot figcaption { margin-top: 10px; font-size: 13px; line-height: 1.45; color: var(--kw-mut); }
 .pn-text > .kw-section-title:first-child { margin-top: 0; }
@@ -24,3 +24,7 @@
   .pn-states li { grid-template-columns: 22px minmax(0, 1fr); }
   .pn-states span:last-child { grid-column: 2; }
 }
+/* l'aperçu suit le thème du site : la version sombre par défaut, la claire en thème clair */
+.pn-light { display: none !important; }
+[data-theme="light"] .pn-light { display: block !important; }
+[data-theme="light"] .pn-dark { display: none !important; }
