@@ -103,7 +103,7 @@ class Build(unittest.TestCase):
     @unittest.skipUnless(shutil.which("claude"), "Claude Code absent")
     def test_claude_validates_plugin_and_marketplace(self):
         for target in (PLUGIN, PACK):
-            r = subprocess.run(["claude", "plugin", "validate", target], capture_output=True, encoding="utf-8", timeout=120)
+            r = subprocess.run([shutil.which("claude"), "plugin", "validate", target], capture_output=True, encoding="utf-8", timeout=120)
             self.assertIn("Validation passed", r.stdout + r.stderr, target)
 
 

@@ -2,11 +2,10 @@
 rejoués contre Kwa. Un push direct sur main est refusé (un outillage maison se contentait de demander)."""
 import json
 import os
-import stat
 import tempfile
 import unittest
 
-from helpers import call, chain, make_repo
+from helpers import call, chain, fake_command, make_repo
 
 POLICY = os.path.join(os.path.dirname(__file__), "..", "examples", "expo-monorepo.policy.json")
 
@@ -59,23 +58,22 @@ class GitHubCircuit(unittest.TestCase):
     def setUpClass(cls):
         cls.repo = make_repo(POLICY, branch="feat/12-x")
         cls.tmp = tempfile.mkdtemp()
-        stub = os.path.join(cls.tmp, "gh")
-        open(stub, "w", encoding="utf-8").write('#!/bin/sh\ncase "$1 $2" in\n  "pr view") printf \'%s\' "$FAKE_PR" ;;\n  "issue view") printf \'%s\' "$FAKE_ISSUE" ;;\nesac\n')
-        os.chmod(stub, os.stat(stub).st_mode | stat.S_IEXEC)
+        cls.gh = fake_command(cls.tmp, "gh", '#!/bin/sh\ncase "$1 $2" in\n  "pr view") printf \'%s\' "$FAKE_PR" ;;\n  "issue view") printf \'%s\' "$FAKE_ISSUE" ;;\nesac\n')
         open(os.path.join(cls.tmp, "avec.md"), "w", encoding="utf-8").write("Closes #12\n\ncorps\n")
         open(os.path.join(cls.tmp, "sans.md"), "w", encoding="utf-8").write("corps sans lien\n")
 
     def g(self, cmd, expected, pr="", issue=""):
-        env = {"GH": os.path.join(self.tmp, "gh"), "FAKE_PR": pr, "FAKE_ISSUE": issue}
+        env = {"GH": self.gh, "FAKE_PR": pr, "FAKE_ISSUE": issue}
         self.assertEqual(chain(cmd, self.repo, env, ["guard-github.py"]), expected, cmd)
 
     def test_pr_create(self):
         self.g("gh pr create --title t --body 'rien'", "deny")
         self.g("gh pr create --title t --body 'Closes #12'", "allow")
         self.g("gh pr create --title t --body 'fixes #3 et le reste'", "allow")
-        self.g(f"gh pr create --title t --body-file {self.tmp}/avec.md", "allow")
-        self.g(f"gh pr create --title t --body-file {self.tmp}/sans.md", "deny")
-        self.g(f"gh pr create -t t -F {self.tmp}/avec.md", "allow")
+        tmp = self.tmp.replace(os.sep, "/")  # un chemin tel qu'un shell l'écrit
+        self.g(f"gh pr create --title t --body-file {tmp}/avec.md", "allow")
+        self.g(f"gh pr create --title t --body-file {tmp}/sans.md", "deny")
+        self.g(f"gh pr create -t t -F {tmp}/avec.md", "allow")
         self.g("gh pr view 12", "allow")
 
     def test_pr_merge(self):

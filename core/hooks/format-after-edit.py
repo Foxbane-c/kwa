@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 
@@ -20,7 +21,9 @@ DEFAULT_EXT = [".ts", ".tsx", ".js", ".jsx", ".json", ".md"]
 
 
 def run(cmd: str, path: str, cwd: str) -> subprocess.CompletedProcess:
-    return subprocess.run(shlex.split(cmd.replace("{file}", shlex.quote(path))), cwd=cwd, capture_output=True, encoding="utf-8", errors="replace", timeout=60)
+    argv = shlex.split(cmd.replace("{file}", shlex.quote(path)))
+    argv[0] = shutil.which(argv[0]) or argv[0]  # Windows : npx et consorts sont des .cmd, que which sait trouver
+    return subprocess.run(argv, cwd=cwd, capture_output=True, encoding="utf-8", errors="replace", timeout=60)
 
 
 def format_one(path: str, d: dict, policy: dict) -> int:

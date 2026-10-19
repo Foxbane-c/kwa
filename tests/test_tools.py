@@ -1,13 +1,12 @@
 """kwa-start, kwa-hygiene, mémoire, modules et détection de l'installeur."""
 import json
 import os
-import stat
 import subprocess
 import sys
 import tempfile
 import unittest
 
-from helpers import HOOKS, SYMLINKS, needs_symlinks
+from helpers import HOOKS, SYMLINKS, fake_command, needs_symlinks
 
 PACK = os.path.join(os.path.dirname(__file__), "..")
 KWA = os.path.join(PACK, "bin", "kwa")
@@ -40,14 +39,13 @@ class Start(unittest.TestCase):
         for k, v in (("user.email", "t@example.test"), ("user.name", "t")):
             sh("git", "-C", self.repo, "config", k, v)
         os.makedirs(os.path.join(self.repo, ".claude"))
-        json.dump({"start": {"install": ["touch installed.flag"]}}, open(os.path.join(self.repo, ".claude", "kwa.policy.json"), "w", encoding="utf-8"))
+        touch = f'"{sys.executable}" -c "open(\'installed.flag\', \'w\').close()"'  # un « touch » qui existe aussi sous Windows
+        json.dump({"start": {"install": [touch]}}, open(os.path.join(self.repo, ".claude", "kwa.policy.json"), "w", encoding="utf-8"))
         open(os.path.join(self.repo, "a.txt"), "w", encoding="utf-8").write("a")
         sh("git", "-C", self.repo, "add", "-A")
         sh("git", "-C", self.repo, "commit", "-q", "-m", "init")
         sh("git", "-C", self.repo, "push", "-q", "origin", "main")
-        stub = os.path.join(base, "gh")
-        open(stub, "w", encoding="utf-8").write('#!/bin/sh\ncase "$1 $2" in\n  "issue create") echo called >> "$(dirname "$0")/gh-issue-create.log"; echo "https://github.com/o/r/issues/7" ;;\n  "issue view") echo "{}" ;;\nesac\n')
-        os.chmod(stub, os.stat(stub).st_mode | stat.S_IEXEC)
+        fake_command(base, "gh", '#!/bin/sh\ncase "$1 $2" in\n  "issue create") echo called >> "$(dirname "$0")/gh-issue-create.log"; echo "https://github.com/o/r/issues/7" ;;\n  "issue view") echo "{}" ;;\nesac\n')
         self.env = {"PATH": base + os.pathsep + os.environ["PATH"]}
         self.base = base
 
@@ -145,9 +143,8 @@ class FormatBoundary(unittest.TestCase):
         self.log = os.path.join(self.base, "npx.log")
         stub = os.path.join(self.base, "bin")
         os.makedirs(stub)
-        open(os.path.join(stub, "npx"), "w", encoding="utf-8").write(
-            '#!/bin/sh\ncase "$*" in\n  *--version*) exit 0 ;;\n  *--write*) echo "$*" >> "%s" ;;\nesac\n' % self.log)
-        os.chmod(os.path.join(stub, "npx"), 0o755)
+        fake_command(stub, "npx", '#!/bin/sh\ncase "$*" in\n  *--version*) exit 0 ;;\n  *--write*) echo "$*" >> "%s" ;;\nesac\n'
+                     % self.log.replace(os.sep, "/"))
         self.env = {"PATH": stub + os.pathsep + os.environ["PATH"]}
         self.project = os.path.join(self.base, "project")
         self.other = os.path.join(self.base, "autre-depot")

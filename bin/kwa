@@ -1131,6 +1131,8 @@ def run_tool(argv: list[str]) -> int:
     else:
         script = [str(PACK / "core" / "bin" / TOOLS[argv[0]])] + argv[1:]
     os.environ.setdefault("KWA_RUNTIME", "plugin")
+    if os.name == "nt":  # execv ne remplace pas le processus sous Windows : le code de sortie du hook serait perdu
+        return subprocess.run([sys.executable] + script).returncode
     os.execv(sys.executable, [sys.executable] + script)
     return 0
 

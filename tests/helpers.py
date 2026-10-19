@@ -25,6 +25,24 @@ def _symlinks_available() -> bool:
 
 
 SYMLINKS = _symlinks_available()
+
+
+def fake_command(folder: str, name: str, script: str) -> str:
+    """Un faux exécutable pour les tests (script sh). Sous Windows, un fichier sans extension ne se lance pas : un
+    .cmd à côté le confie au sh de Git. Renvoie le chemin à appeler (le dossier mis dans PATH suffit aussi)."""
+    path = os.path.join(folder, name)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(script)
+    os.chmod(path, 0o755)
+    if os.name != "nt":
+        return path
+    git = shutil.which("git")
+    sh = shutil.which("sh") or (git and os.path.join(os.path.dirname(os.path.dirname(git)), "bin", "sh.exe"))
+    if not sh or not os.path.isfile(sh):
+        raise unittest.SkipTest("sh de Git introuvable : pas de faux exécutable possible")
+    with open(path + ".cmd", "w", encoding="utf-8") as f:
+        f.write(f'@"{sh}" "{path.replace(os.sep, "/")}" %*\n')
+    return path + ".cmd"
 needs_symlinks = unittest.skipUnless(SYMLINKS, "liens symboliques indisponibles (Windows sans mode développeur)")
 BASH_GUARDS = ["guard-secrets.py", "guard-git.py", "guard-delete.py", "guard-policy.py", "guard-github.py"]
 RANK = {"allow": 0, "ask": 1, "deny": 2}
