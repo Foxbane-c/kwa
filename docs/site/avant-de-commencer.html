@@ -202,6 +202,23 @@ il ne demande aucune installation.</p>
 <p>La skill montre ce que Kwa détecte, simule, puis prépare le dépôt après votre accord. Elle n'écrit que de la configuration (politique, bloc d'AGENTS.md, plugin proposé à l'équipe) : aucun script, aucun commit. Committez ces fichiers sur une branche et livrez-les par une PR : avec le module issue-flow, la PR doit porter « Closes #N », où N est le numéro d'une issue, à ouvrir d'abord (« Installer Kwa »).</p>
 <p class="kd-note">Sous Codex en ligne de commande, les hooks passent par la commande <code>kwa</code>, qui doit alors être dans le PATH : <code>git clone https://github.com/nesyouyou/kwa ~/kwa</code>, puis ajouter <code>export PATH="$HOME/kwa/bin:$PATH"</code> à <code>~/.zshrc</code>. Validez ensuite les hooks du projet avec <code>/hooks</code>.</p></li>
 
+<li><h2 class="kw-section-title">Plusieurs dépôts, plusieurs solutions</h2>
+<p>Le plugin s'installe <strong>une fois par poste</strong>, pas par projet. La préparation, elle, se fait <strong>dans
+chaque dépôt git</strong> : chacun a sa politique, ses vérifications et son <code>AGENTS.md</code>.</p>
+<ul>
+<li><b>Plusieurs dépôts</b> (une solution .NET par dépôt, par exemple) : lancez <code>/kwa:init</code> dans chacun, et ouvrez
+la session dans le dépôt où vous travaillez. Ne mettez pas Kwa dans un dossier parent qui regroupe vos dépôts :
+selon l'agent, un fichier d'instructions placé au-dessus du dépôt n'est pas lu, et les garde-fous comme la politique
+vivent dans le dépôt. Vos règles personnelles, communes à tous vos projets, vont dans les instructions de votre
+compte (<code>~/.claude/CLAUDE.md</code>, <code>~/.codex/AGENTS.md</code>).</li>
+<li><b>Plusieurs solutions dans un même dépôt</b> : un seul <code>/kwa:init</code> à la racine. Kwa liste les solutions
+qu'il trouve et vous demande laquelle vérifier, ou un filtre de solution (<code>.slnf</code>). Gardez à la racine un
+<code>AGENTS.md</code> pour le commun, et ajoutez-en un court dans le dossier de chaque solution pour ses commandes et
+son architecture : l'agent lit celui du dossier où il travaille.</li>
+<li><b>Une seule solution</b> : Kwa propose de lui-même <code>dotnet build</code> et <code>dotnet test</code> comme
+vérifications, et <code>dotnet restore</code> à l'installation d'un worktree.</li>
+</ul></li>
+
 <li><h2 class="kw-section-title">Et ensuite</h2>
 <p>Si vous débutez : le <a href="parcours-culture.html">parcours 1</a> pour comprendre le modèle, la page <a href="briques.html">Les briques</a> pour voir à quoi ressemble chaque mécanisme, le <a href="parcours-contexte.html">parcours 2</a> pour le contexte, le <a href="premier-pas.html">premier pas en 30 minutes</a> sur un projet d'exercice, puis le <a href="parcours-harness.html">parcours 3</a> pour l'encadrer avec Kwa. Si vous travaillez déjà avec un agent : le premier pas, le parcours 3, puis <a href="impose.html">Imposé ou suggéré</a> et <a href="alleger.html">Quand alléger</a>. Un mot vous échappe ? Le <a href="glossaire.html">glossaire</a> traduit chaque terme anglais.</p></li>
 </ol>

@@ -299,6 +299,34 @@ class Modules(unittest.TestCase):
         self.kwa("install", sans)
         self.assertNotIn("link", json.load(open(os.path.join(sans, ".claude/kwa.policy.json")))["start"])
 
+    def test_a_dotnet_solution_is_detected_with_its_checks(self):
+        """Une solution .NET : build et test de la solution, restore à l'installation, ses projets protégés sur main."""
+        d = git_repo({"Shop.sln": "x", "src/Shop.Api/Shop.Api.csproj": "<Project/>",
+                      "tests/Shop.Tests/Shop.Tests.csproj": "<Project/>", "src/Shop.Api/bin/Debug/x.csproj": "<Project/>"})
+        out = self.kwa("detect", d).stdout
+        self.assertIn("dotnet", out)
+        self.assertNotIn("multi-solution", out)
+        self.kwa("install", d)
+        pol = json.load(open(os.path.join(d, ".claude/kwa.policy.json")))
+        self.assertEqual(pol["verify"]["commands"], ["dotnet build Shop.sln", "dotnet test Shop.sln --no-build"])
+        self.assertEqual(pol["start"]["install"], ["dotnet restore Shop.sln"])
+        self.assertEqual(pol["write"]["no_code_on_main"], ["src/", "tests/"])
+        self.assertEqual(self.kwa("doctor", d).returncode, 0, self.kwa("doctor", d).stdout)
+
+    def test_several_dotnet_solutions_are_listed_not_chosen(self):
+        """Plusieurs solutions : Kwa les liste et ne choisit pas la vérification à la place de la personne."""
+        d = git_repo({"Billing/Billing.sln": "x", "Billing/Billing.Core/Billing.Core.csproj": "<Project/>",
+                      "Portal/Portal.slnx": "x", "Portal/Portal.Web/Portal.Web.csproj": "<Project/>"})
+        out = self.kwa("detect", d).stdout
+        self.assertIn("multi-solution", out)
+        self.assertIn("Billing/Billing.sln", out)
+        self.assertIn("Portal/Portal.slnx", out)
+        self.kwa("install", d)
+        pol = json.load(open(os.path.join(d, ".claude/kwa.policy.json")))
+        self.assertNotIn("commands", pol.get("verify", {}))
+        self.assertEqual(pol["write"]["no_code_on_main"], ["Billing/", "Portal/"])
+        self.assertEqual(self.kwa("doctor", d).returncode, 0, self.kwa("doctor", d).stdout)
+
     def test_policy_and_seeds_belong_to_project(self):
         d = self.project()
         self.kwa("install", d)

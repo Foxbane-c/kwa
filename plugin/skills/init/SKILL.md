@@ -19,6 +19,11 @@ son PATH. Rien n'est commité ni poussé par ces commandes.
 5. **Compléter la politique** `.claude/kwa.policy.json` avec lui : la commande de test du projet dans `verify.commands`
    (déduite de `package.json`, `pyproject.toml`, `Makefile`… ; la proposer, ne pas l'inventer), et l'installation
    des dépendances dans `start.install` si le projet en a besoin.
+   - **.NET** : une seule solution, Kwa propose déjà `dotnet build` et `dotnet test --no-build` sur elle. Plusieurs
+     solutions (`multi-solution`) : `kwa detect` les liste sans en choisir ; demander laquelle viser, ou proposer un
+     filtre de solution (`.slnf`) si tout compiler est trop long. Proposer aussi un `AGENTS.md` court dans le dossier
+     de chaque solution, pour ses commandes et son architecture ; celui de la racine garde le commun.
+   - **Plusieurs dépôts** : `kwa init` se lance dans chaque dépôt, jamais dans un dossier parent qui les regroupe.
 6. **Vérifier** : `kwa doctor .`, puis cite le résultat.
 7. **Proposer de committer** la configuration (`.claude/kwa.policy.json`, `.claude/settings.json`, `AGENTS.md`,
    `CLAUDE.md`, `.codex/`, gabarits `.github/`) sur une branche, avec `/kwa:commit` puis `/kwa:ship`. Jamais sur
