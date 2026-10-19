@@ -2,13 +2,16 @@ import { expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
 // Ce qui tient lieu du moteur sous le mod : horloge, texte des skills, dessin par défaut, panneau, usage de la session.
-function engine(on: On, placed = true, extra: { panes?: unknown[]; agents?: unknown[] } = {}) {
+function engine(on: On, placed = true, extra: { panes?: unknown[]; agents?: unknown[]; noSurface?: () => boolean } = {}) {
   const clock = mock.clock(on)
   on('skill.prompt', ($, e) => ({ text: e.text }))
   on('ui.render', ($, e) => { const { Box } = $.ui.resolve(e); return <Box key="engine" /> })
   on('command.register', ($, e) => ({ value: { command: e.name } }))
   on('turn.complete', ($, e) => ({ text: e.answer }))
-  on('ui.open', () => ({ value: placed ? { isPlaced: true } : { isPlaced: false, reason: 'narrow' } }) as never)
+  on('ui.open', () => {
+    if (extra.noSurface?.()) throw new Error('no-surface: no surface is attached ($.session.surfaces() is empty)')
+    return { value: placed ? { isPlaced: true } : { isPlaced: false, reason: 'narrow' } } as never
+  })
   on('ui.panes', () => ({ value: extra.panes ?? [] }) as never)
   on('agent.list', () => ({ value: extra.agents ?? [] }) as never)
   on('session.start', ($, e) => ({ cwd: e.cwd }))
@@ -143,4 +146,18 @@ test('fermé par la commande, le Mod repart de zéro : l\u2019anneau se remplit 
   expect(await src()).not.toContain(ring)                         // l'anneau ne se remplit qu'au premier rendu
   await $.command.run({ command: 'kwa-activity', args: '' } as Parameters<typeof $.command.run>[0])
   expect(await src()).toContain(ring)                             // rouvert : il se remplit de nouveau
+})
+
+test('sans surface au démarrage, le mod démarre quand même et rouvre son panneau au relevé suivant', async ($, on) => {
+  let bare = true
+  let opens = 0
+  const clock = engine(on, true, { noSurface: () => { opens++; return bare } })
+  await $.session.start({ source: 'startup', cwd: '/tmp', surface: 'terminal', isInteractive: true } as Parameters<typeof $.session.start>[0])
+  expect(opens).toBe(1)
+  // la commande est bien enregistrée malgré l'échec de l'ouverture
+  const r = await $.command.run({ command: 'kwa-activity', args: '' } as Parameters<typeof $.command.run>[0])
+  expect(JSON.stringify(r)).toContain('Mod Kwa')
+  bare = false
+  await clock.advance(4000)
+  expect(opens).toBeGreaterThanOrEqual(3)   // l'ouverture du démarrage, celle de la commande, puis celle du relevé
 })
