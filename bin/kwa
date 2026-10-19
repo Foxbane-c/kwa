@@ -504,19 +504,43 @@ def strip_kwa_hooks(settings: dict) -> None:
             del settings["hooks"][event]
 
 
+def make_link(link: Path, to: str) -> bool:
+    """Lien symbolique relatif ; faux si l'OS le refuse (Windows hors mode développeur : WinError 1314)."""
+    link.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        link.symlink_to(to, target_is_directory=True)
+        return True
+    except OSError:
+        return False
+
+
+def remove_link(link: Path) -> None:
+    """Retire un lien posé par Kwa, ou la copie qui l'a remplacé là où les liens sont impossibles."""
+    if link.is_symlink():
+        link.unlink()
+    elif link.is_dir():
+        shutil.rmtree(link)
+
+
 def apply_codex(target: Path, modules: list[str], dry: bool) -> list[str]:
-    """Parité Codex : mêmes skills (liens relatifs dans .agents/skills) et mêmes hooks (.codex/hooks.json)."""
+    """Parité Codex : mêmes skills (liens relatifs dans .agents/skills, copies rafraîchies à chaque installation
+    quand l'OS refuse les liens) et mêmes hooks (.codex/hooks.json)."""
     notes = []
     skills = sorted({Path(spec["dest"]).parts[2] for m in modules for _, spec in module_files(manifest()[m])
                      if spec["dest"].startswith(".claude/skills/")})
     for name in skills:
         link = target / ".agents" / "skills" / name
-        if link.is_symlink() or link.exists():
+        if link.is_symlink():
             continue
-        notes.append(f"lien .agents/skills/{name}")
+        if not link.exists():
+            notes.append(f"lien .agents/skills/{name}")
+            if dry or make_link(link, f"../../.claude/skills/{name}"):
+                continue
+            notes[-1] = f"copie .agents/skills/{name} (lien symbolique impossible : Windows sans mode développeur)"
+        elif link.is_dir():
+            notes.append(f"copie .agents/skills/{name} rafraîchie")
         if not dry:
-            link.parent.mkdir(parents=True, exist_ok=True)
-            link.symlink_to(f"../../.claude/skills/{name}")
+            shutil.copytree(target / ".claude" / "skills" / name, link, dirs_exist_ok=True)
     path = target / ".codex" / "hooks.json"
     settings = read_json(path, {})
     before = json.dumps(settings, sort_keys=True)
@@ -690,10 +714,10 @@ def migrate_legacy(target: Path, dry: bool) -> list[str]:
     agents_skills = target / ".agents" / "skills"
     if agents_skills.is_dir():
         for link in sorted(agents_skills.glob("kata-*")):
-            if link.is_symlink():
+            if link.is_symlink() or link.is_dir():
                 notes.append(f"ancien lien retiré : .agents/skills/{link.name}")
                 if not dry:
-                    link.unlink()
+                    remove_link(link)
     return notes
 
 
@@ -919,8 +943,8 @@ def migrate_copy(target: Path, dry: bool, legacy: bool = False) -> list[str]:
         elif not dry:
             f.unlink()
     for link in sorted((target / ".agents" / "skills").glob("kwa-*")) if (target / ".agents" / "skills").is_dir() else []:
-        if link.is_symlink() and not dry:
-            link.unlink()
+        if not dry:
+            remove_link(link)
     if not dry:
         (legacy_state_path(target) if legacy else state_path(target)).unlink()
         for cache in [p for base in (".claude/kwa", ".claude/kata") for p in (target / base).rglob("__pycache__")

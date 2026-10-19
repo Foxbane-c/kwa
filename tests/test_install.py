@@ -6,6 +6,8 @@ import sys
 import tempfile
 import unittest
 
+from helpers import needs_symlinks
+
 KWA = os.path.join(os.path.dirname(__file__), "..", "bin", "kwa")
 
 
@@ -69,6 +71,7 @@ class Install(unittest.TestCase):
         self.assertIn("À FUSIONNER", r.stdout)
         self.assertEqual(kwa("doctor", self.t).returncode, 1)
 
+    @needs_symlinks
     def test_claude_md_symlink_kept(self):
         open(self.p("AGENTS.md"), "w", encoding="utf-8").write("# x\n")
         os.symlink("AGENTS.md", self.p("CLAUDE.md"))

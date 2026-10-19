@@ -7,7 +7,7 @@ import sys
 import tempfile
 import unittest
 
-from helpers import HOOKS
+from helpers import HOOKS, SYMLINKS, needs_symlinks
 
 PACK = os.path.join(os.path.dirname(__file__), "..")
 KWA = os.path.join(PACK, "bin", "kwa")
@@ -97,6 +97,7 @@ class Start(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertTrue(os.path.isdir(os.path.join(self.base, "proj-wt-9-reuse")))
 
+    @needs_symlinks
     def test_start_link_symlinks_local_files_instead_of_copying(self):
         open(os.path.join(self.repo, "secret.local"), "w", encoding="utf-8").write("VALEUR=1\n")  # fichier local, non suivi par git
         p = os.path.join(self.repo, ".claude", "kwa.policy.json")
@@ -362,7 +363,8 @@ class Modules(unittest.TestCase):
     def test_codex_parity(self):
         d = self.project()
         self.kwa("install", d)  # Codex est installé par défaut
-        self.assertTrue(os.path.islink(os.path.join(d, ".agents/skills/kwa-commit")))
+        parity = os.path.join(d, ".agents/skills/kwa-commit")
+        self.assertTrue(os.path.islink(parity) if SYMLINKS else os.path.isdir(parity), "lien, ou copie sans lien symbolique")
         hooks = json.load(open(os.path.join(d, ".codex/hooks.json"), encoding="utf-8"))
         cmds = [h["command"] for e in hooks["hooks"]["PreToolUse"] for h in e["hooks"]]
         self.assertTrue(all(c.startswith('cd "$(git rev-parse --show-toplevel)" && KWA_AGENT=codex KWA_PROJECT_DIR="$PWD" python3 .claude/kwa/hooks/') for c in cmds))

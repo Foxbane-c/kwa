@@ -7,6 +7,8 @@ import sys
 import tempfile
 import unittest
 
+from helpers import SYMLINKS
+
 HOOKS = os.path.join(os.path.dirname(__file__), "..", "core", "hooks")
 
 
@@ -134,12 +136,14 @@ class Delete(unittest.TestCase):
     def setUp(self):
         self.root = os.path.realpath(tempfile.mkdtemp())
         os.makedirs(os.path.join(self.root, "build"))
-        os.symlink("/etc", os.path.join(self.root, "link"))
+        if SYMLINKS:
+            os.symlink("/etc", os.path.join(self.root, "link"))
 
     def test_denied(self):
         for cmd in ["rm -rf /", "rm -rf ~", "rm -rf ../../../../../../../usr/x", "rm -rf /usr/local/x", "bash -c 'rm -rf /usr/x'",
                     "env rm -rf /usr/x", "nice -n 1 rm -rf /usr/x", "rm -rf .git", "rm -rf .claude/kwa",
-                    "rm -rf link/x", "true && rm -rf /usr/x", "find / -delete", "(cd /tmp && rm -rf /usr/x)", "echo $(rm -rf /usr/x)"]:
+                    "true && rm -rf /usr/x", "find / -delete", "(cd /tmp && rm -rf /usr/x)", "echo $(rm -rf /usr/x)",
+                    *(["rm -rf link/x"] if SYMLINKS else [])]:
             with self.subTest(cmd=cmd):
                 self.assertEqual(bash("guard-delete.py", cmd, cwd=self.root), "deny")
 

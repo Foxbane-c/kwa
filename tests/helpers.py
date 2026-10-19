@@ -4,11 +4,28 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import unittest
 
 # les tests ne doivent jamais interroger le vrai GitHub ; ceux qui ont besoin d'un faux `gh` fixent GH eux-mêmes
 os.environ.setdefault("GH", "false")
 
 HOOKS = os.path.join(os.path.dirname(__file__), "..", "core", "hooks")
+
+
+def _symlinks_available() -> bool:
+    """Windows refuse les liens symboliques hors mode développeur (WinError 1314) : testé une fois."""
+    d = tempfile.mkdtemp()
+    try:
+        os.symlink(os.path.abspath(__file__), os.path.join(d, "lien"))
+        return True
+    except (OSError, NotImplementedError):
+        return False
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+SYMLINKS = _symlinks_available()
+needs_symlinks = unittest.skipUnless(SYMLINKS, "liens symboliques indisponibles (Windows sans mode développeur)")
 BASH_GUARDS = ["guard-secrets.py", "guard-git.py", "guard-delete.py", "guard-policy.py", "guard-github.py"]
 RANK = {"allow": 0, "ask": 1, "deny": 2}
 

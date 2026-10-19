@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -55,7 +56,12 @@ def link_shared(paths: list[str], main_root: str, wt: str) -> list[str]:
         if not os.path.exists(src) or os.path.lexists(dst):
             continue
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        os.symlink(src, dst)
+        try:
+            os.symlink(src, dst)
+        except OSError:  # Windows sans mode développeur : une copie, qui ne suit plus le dépôt principal
+            shutil.copy2(src, dst)
+            print(f"attention : « {norm} » copié dans le worktree (lien symbolique impossible) : une modification "
+                  "ne remonte pas au dépôt principal", file=sys.stderr)
         done.append(norm)
     return done
 
