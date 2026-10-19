@@ -20,7 +20,7 @@ DEFAULT_EXT = [".ts", ".tsx", ".js", ".jsx", ".json", ".md"]
 
 
 def run(cmd: str, path: str, cwd: str) -> subprocess.CompletedProcess:
-    return subprocess.run(shlex.split(cmd.replace("{file}", shlex.quote(path))), cwd=cwd, capture_output=True, text=True, timeout=60)
+    return subprocess.run(shlex.split(cmd.replace("{file}", shlex.quote(path))), cwd=cwd, capture_output=True, encoding="utf-8", errors="replace", timeout=60)
 
 
 def format_one(path: str, d: dict, policy: dict) -> int:

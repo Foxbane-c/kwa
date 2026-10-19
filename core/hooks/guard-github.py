@@ -24,7 +24,7 @@ IMAGE = re.compile(r"!\[[^\]]*\]\(|<img ")
 
 def gh(*args: str) -> str | None:
     try:
-        r = subprocess.run([os.environ.get("GH", "gh"), *args], capture_output=True, text=True, timeout=30)
+        r = subprocess.run([os.environ.get("GH", "gh"), *args], capture_output=True, encoding="utf-8", errors="replace", timeout=30)
     except (OSError, subprocess.SubprocessError):
         return None
     return r.stdout if r.returncode == 0 else None

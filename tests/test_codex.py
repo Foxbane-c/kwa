@@ -24,7 +24,7 @@ def repo(branch="main"):
     d = os.path.realpath(tempfile.mkdtemp())
     subprocess.run(["git", "init", "-q", "-b", branch, d], check=True)
     os.makedirs(os.path.join(d, ".claude"))
-    with open(os.path.join(d, ".claude", "kwa.policy.json"), "w") as f:
+    with open(os.path.join(d, ".claude", "kwa.policy.json"), "w", encoding="utf-8") as f:
         json.dump({"write": {"no_code_on_main": ["src/"]}}, f)
     return d
 
@@ -36,7 +36,7 @@ def run(hook, payload, root, codex=True):
     else:
         env["CLAUDE_PROJECT_DIR"] = root
     p = subprocess.run([sys.executable, os.path.join(HOOKS, hook)], input=json.dumps({"cwd": root, **payload}),
-                       capture_output=True, text=True, env=env, cwd=root)
+                       capture_output=True, encoding="utf-8", env=env, cwd=root)
     assert p.returncode == 0, p.stderr
     if not p.stdout.strip():
         return "allow", ""
@@ -72,7 +72,7 @@ class Confirmations(unittest.TestCase):
         self.assertTrue(_kwa.codex_covers("scw container container deploy abc", policy))
         self.assertFalse(_kwa.codex_covers("scw container container list", policy))
         d = repo("feat/x")
-        with open(os.path.join(d, ".claude", "kwa.policy.json"), "w") as f:
+        with open(os.path.join(d, ".claude", "kwa.policy.json"), "w", encoding="utf-8") as f:
             json.dump(policy, f)
         bash = {"tool_name": "Bash", "tool_input": {"command": "scw container container deploy abc"}}
         self.assertEqual(run("guard-policy.py", bash, d, codex=False)[0], "ask")
@@ -125,12 +125,12 @@ class Router(unittest.TestCase):
         d = repo("feat/x")
         os.makedirs(os.path.join(d, ".claude", "kwa"))
         os.makedirs(os.path.join(d, ".claude", "skills", "kwa-commit"))
-        with open(os.path.join(d, ".claude", "kwa", "router.md"), "w") as f:
+        with open(os.path.join(d, ".claude", "kwa", "router.md"), "w", encoding="utf-8") as f:
             f.write("Invoque la skill avant d'agir.\n\n| Quand | Skill |\n|---|---|\n| Committer | /kwa-commit |\n")
         env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PROJECT_DIR"}
         env.update(KWA_AGENT="codex", KWA_PROJECT_DIR=d)
         p = subprocess.run([sys.executable, os.path.join(HOOKS, "skills-router.py")], input=json.dumps({"cwd": d}),
-                           capture_output=True, text=True, env=env)
+                           capture_output=True, encoding="utf-8", env=env)
         ctx = json.loads(p.stdout)["hookSpecificOutput"]["additionalContext"]
         self.assertIn("$kwa-commit", ctx)
         self.assertNotIn("/kwa-commit", ctx)
@@ -144,7 +144,7 @@ class ManualSkills(unittest.TestCase):
             yaml = os.path.join(skills, name, "agents", "openai.yaml")
             if "disable-model-invocation: true" in text:
                 self.assertTrue(os.path.isfile(yaml), name)
-                self.assertIn("allow_implicit_invocation: false", open(yaml).read(), name)
+                self.assertIn("allow_implicit_invocation: false", open(yaml, encoding="utf-8").read(), name)
 
 
 if __name__ == "__main__":

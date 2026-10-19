@@ -16,7 +16,7 @@ RANK = {"allow": 0, "ask": 1, "deny": 2}
 def call(hook, tool, tool_input, cwd, env=None):
     e = {**os.environ, "CLAUDE_PROJECT_DIR": cwd, **(env or {})}
     p = subprocess.run([sys.executable, os.path.join(HOOKS, hook)], input=json.dumps(
-        {"tool_name": tool, "tool_input": tool_input, "cwd": cwd}), capture_output=True, text=True, env=e)
+        {"tool_name": tool, "tool_input": tool_input, "cwd": cwd}), capture_output=True, encoding="utf-8", env=e)
     assert p.returncode == 0, p.stderr
     return json.loads(p.stdout)["hookSpecificOutput"]["permissionDecision"] if p.stdout.strip() else "allow"
 

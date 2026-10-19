@@ -79,7 +79,7 @@ def atomic_write(path: Path, text: str, mode: int | None = None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.")
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
             f.flush()
             os.fsync(f.fileno())
@@ -112,11 +112,11 @@ def atomic_write_raw(path: Path, text: str) -> None:
 
 
 def version() -> str:
-    return (PACK / "VERSION").read_text().strip()
+    return (PACK / "VERSION").read_text(encoding="utf-8").strip()
 
 
 def manifest() -> dict:
-    return json.loads((PACK / "manifest.json").read_text())["modules"]
+    return json.loads((PACK / "manifest.json").read_text(encoding="utf-8"))["modules"]
 
 
 def module_files(module: dict) -> list[tuple[str, dict]]:
@@ -172,7 +172,7 @@ def detect(target: Path) -> dict:
     all_deps = {k for p in all_pkgs for k in {**p.get("dependencies", {}), **p.get("devDependencies", {})}}
     wf_dir = target / ".github" / "workflows"
     wf = list(wf_dir.glob("*.y*ml")) if wf_dir.is_dir() else []
-    wf_text = "\n".join(f.read_text(errors="replace") for f in wf)
+    wf_text = "\n".join(f.read_text(encoding="utf-8", errors="replace") for f in wf)
     # .NET : les solutions (.sln, .slnx) et les projets (.csproj, .fsproj, .vbproj), chemins relatifs à la cible
     rel = lambda d, f: str((d / f).relative_to(target))  # noqa: E731
     solutions = sorted(rel(d, f) for d, _, fs in walk(target, 3) for f in fs if f.endswith((".sln", ".slnx")))
@@ -612,7 +612,8 @@ def apply_local_excludes(target: Path, dry: bool) -> str:
     if git.is_dir():
         path = git / "info" / "exclude"
     else:  # worktree : le fichier d'exclusion vit dans le dépôt commun
-        r = subprocess.run(["git", "-C", str(target), "rev-parse", "--git-path", "info/exclude"], capture_output=True, text=True)
+        r = subprocess.run(["git", "-C", str(target), "rev-parse", "--git-path", "info/exclude"], capture_output=True,
+                           encoding="utf-8", errors="replace")
         if r.returncode != 0 or not r.stdout.strip():
             return "dépôt git illisible"
         path = (target / r.stdout.strip()).resolve()
@@ -621,7 +622,7 @@ def apply_local_excludes(target: Path, dry: bool) -> str:
     missing = [w for w in wanted if w not in have]
     if missing and not dry:
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "a", encoding="utf-8") as f:
+        with open(path, "a", encoding="utf-8", newline="\n") as f:
             f.write(("\n" if have and have[-1] else "") + "# kwa\n" + "\n".join(missing) + "\n")
     return f"{len(missing)} motif(s) ajouté(s)" if missing else "à jour"
 
@@ -720,7 +721,7 @@ def finish_legacy(target: Path, dry: bool) -> list[str]:
 # --------------------------------------------------------------------------- recommandations
 
 def recommendations(tags: list[str], modules: list[str]) -> list[dict]:
-    data = json.loads((PACK / "core" / "recommended.json").read_text())
+    data = json.loads((PACK / "core" / "recommended.json").read_text(encoding="utf-8"))
     keys = ["all"] + [k for k in data if k != "all" and (k in tags or k in modules)]
     seen, out = set(), []
     for k in keys:
@@ -1328,6 +1329,8 @@ def cmd_recommend(a) -> int:
 
 
 def main() -> int:
+    for stream in (sys.stdout, sys.stderr):  # Windows : la console est en cp1252, Kwa parle UTF-8 (accents, flèches)
+        stream.reconfigure(encoding="utf-8")
     if len(sys.argv) > 1 and (sys.argv[1] in TOOLS or sys.argv[1] == "hook"):
         return run_tool(sys.argv[1:])
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])

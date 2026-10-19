@@ -63,7 +63,7 @@ class Lint(unittest.TestCase):
                     self.assertIn(ref, names, f"{d} renvoie vers {ref}, qui n'existe pas")
 
     def test_manifest_covers_every_skill(self):
-        man = json.load(open(os.path.join(PACK, "manifest.json")))["modules"]
+        man = json.load(open(os.path.join(PACK, "manifest.json"), encoding="utf-8"))["modules"]
         dests = " ".join(s["dest"] for m in man.values() for s in m.get("files", {}).values())
         for d in self.skills():
             if d == "init":  # livrée par le plugin seulement (elle lance la commande kwa que le plugin apporte)
@@ -76,12 +76,12 @@ class Router(unittest.TestCase):
     def run_router(self, installed):
         root = os.path.realpath(tempfile.mkdtemp())
         os.makedirs(os.path.join(root, ".claude", "kwa"))
-        open(os.path.join(root, ".claude", "kwa", "router.md"), "w").write(
-            open(os.path.join(PACK, "core", "templates", "skills-router.md")).read())
+        open(os.path.join(root, ".claude", "kwa", "router.md"), "w", encoding="utf-8").write(
+            open(os.path.join(PACK, "core", "templates", "skills-router.md"), encoding="utf-8").read())
         for s in installed:
             os.makedirs(os.path.join(root, ".claude", "skills", s))
         p = subprocess.run([sys.executable, os.path.join(HOOKS, "skills-router.py")], input=json.dumps({"cwd": root}),
-                           capture_output=True, text=True, env={**os.environ, "CLAUDE_PROJECT_DIR": root})
+                           capture_output=True, encoding="utf-8", env={**os.environ, "CLAUDE_PROJECT_DIR": root})
         return json.loads(p.stdout)["hookSpecificOutput"]["additionalContext"] if p.stdout.strip() else ""
 
     def test_only_installed_skills_are_listed(self):
@@ -529,7 +529,7 @@ class OwnStyle(unittest.TestCase):
     """Le site porte sa propre feuille de style : plus de trace d'une charte graphique empruntée."""
 
     def test_no_borrowed_prefixes_or_fonts(self):
-        files = subprocess.run(["git", "ls-files"], cwd=PACK, capture_output=True, text=True).stdout.split("\n")
+        files = subprocess.run(["git", "ls-files"], cwd=PACK, capture_output=True, encoding="utf-8").stdout.split("\n")
         hits = []
         for f in files:
             path = os.path.join(PACK, f)
@@ -550,7 +550,7 @@ class OwnStyle(unittest.TestCase):
 class Neutral(unittest.TestCase):
     def test_no_organisation_name_in_tracked_files(self):
         # le dépôt est personnel pour l'instant : aucun nom d'organisation, y compris dans les pages générées
-        files = subprocess.run(["git", "ls-files"], cwd=PACK, capture_output=True, text=True).stdout.split("\n")
+        files = subprocess.run(["git", "ls-files"], cwd=PACK, capture_output=True, encoding="utf-8").stdout.split("\n")
         needle = "naka" + "ma"
         hits = []
         for f in files:
@@ -716,10 +716,10 @@ class Bricks(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             subprocess.run(["git", "init", "-q", "-b", "main", tmp], check=True)
             hook = os.path.join(tmp, "hook.py")
-            open(hook, "w").write(self.b.HOOK_PY)
+            open(hook, "w", encoding="utf-8").write(self.b.HOOK_PY)
             run = lambda cmd: subprocess.run([sys.executable, hook], input=json.dumps(
                 {"hook_event_name": "PreToolUse", "tool_name": "Bash", "tool_input": {"command": cmd}, "cwd": tmp}),
-                capture_output=True, text=True)
+                capture_output=True, encoding="utf-8")
             for cmd in ("git commit -m wip", "cd . && git commit -m wip", "git -C . commit -m wip", "git -c x=y commit"):
                 out = json.loads(run(cmd).stdout)["hookSpecificOutput"]
                 self.assertEqual(out["permissionDecision"], "deny", cmd)

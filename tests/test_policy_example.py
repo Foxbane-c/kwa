@@ -60,10 +60,10 @@ class GitHubCircuit(unittest.TestCase):
         cls.repo = make_repo(POLICY, branch="feat/12-x")
         cls.tmp = tempfile.mkdtemp()
         stub = os.path.join(cls.tmp, "gh")
-        open(stub, "w").write('#!/bin/sh\ncase "$1 $2" in\n  "pr view") printf \'%s\' "$FAKE_PR" ;;\n  "issue view") printf \'%s\' "$FAKE_ISSUE" ;;\nesac\n')
+        open(stub, "w", encoding="utf-8").write('#!/bin/sh\ncase "$1 $2" in\n  "pr view") printf \'%s\' "$FAKE_PR" ;;\n  "issue view") printf \'%s\' "$FAKE_ISSUE" ;;\nesac\n')
         os.chmod(stub, os.stat(stub).st_mode | stat.S_IEXEC)
-        open(os.path.join(cls.tmp, "avec.md"), "w").write("Closes #12\n\ncorps\n")
-        open(os.path.join(cls.tmp, "sans.md"), "w").write("corps sans lien\n")
+        open(os.path.join(cls.tmp, "avec.md"), "w", encoding="utf-8").write("Closes #12\n\ncorps\n")
+        open(os.path.join(cls.tmp, "sans.md"), "w", encoding="utf-8").write("corps sans lien\n")
 
     def g(self, cmd, expected, pr="", issue=""):
         env = {"GH": os.path.join(self.tmp, "gh"), "FAKE_PR": pr, "FAKE_ISSUE": issue}

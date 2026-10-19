@@ -18,12 +18,12 @@ RUN = os.path.join(PLUGIN, "core", "hooks", "run.py")
 
 
 def read(path, mode="r"):
-    with open(path, mode) as f:
+    with open(path, mode, encoding=None if "b" in mode else "utf-8") as f:
         return f.read()
 
 
 def kwa(*args, env=None):
-    return subprocess.run([sys.executable, KWA, *args], capture_output=True, text=True, env={**os.environ, **(env or {})})
+    return subprocess.run([sys.executable, KWA, *args], capture_output=True, encoding="utf-8", env={**os.environ, **(env or {})})
 
 
 def hook(name, payload, root, extra=None):
@@ -31,7 +31,7 @@ def hook(name, payload, root, extra=None):
     env = {**os.environ, "CLAUDE_PLUGIN_ROOT": PLUGIN, "CLAUDE_PROJECT_DIR": root, **(extra or {})}
     env.pop("KWA_RUNTIME", None)
     p = subprocess.run([sys.executable, RUN, name], input=json.dumps({"cwd": root, **payload}), capture_output=True,
-                       text=True, env=env)
+                       encoding="utf-8", env=env)
     out = p.stdout.strip()
     return json.loads(out)["hookSpecificOutput"].get("permissionDecision", "context") if out else ""
 
@@ -39,7 +39,7 @@ def hook(name, payload, root, extra=None):
 def policy(root, **extra):
     os.makedirs(os.path.join(root, ".claude"), exist_ok=True)
     pol = {"kwa": 1, "protected_branches": ["main"], "write": {"no_code_on_main": ["src/"]}, **extra}
-    with open(os.path.join(root, ".claude", "kwa.policy.json"), "w") as f:
+    with open(os.path.join(root, ".claude", "kwa.policy.json"), "w", encoding="utf-8") as f:
         json.dump(pol, f)
 
 
@@ -103,7 +103,7 @@ class Build(unittest.TestCase):
     @unittest.skipUnless(shutil.which("claude"), "Claude Code absent")
     def test_claude_validates_plugin_and_marketplace(self):
         for target in (PLUGIN, PACK):
-            r = subprocess.run(["claude", "plugin", "validate", target], capture_output=True, text=True, timeout=120)
+            r = subprocess.run(["claude", "plugin", "validate", target], capture_output=True, encoding="utf-8", timeout=120)
             self.assertIn("Validation passed", r.stdout + r.stderr, target)
 
 
@@ -144,7 +144,7 @@ class Gate(unittest.TestCase):
     def test_rules_reach_the_agent_without_craft(self):
         policy(self.root, modules=["core", "issue-flow"])
         env = {**os.environ, "CLAUDE_PLUGIN_ROOT": PLUGIN, "CLAUDE_PROJECT_DIR": self.root}
-        p = subprocess.run([sys.executable, RUN, "skills-router"], input="{}", capture_output=True, text=True, env=env)
+        p = subprocess.run([sys.executable, RUN, "skills-router"], input="{}", capture_output=True, encoding="utf-8", env=env)
         ctx = json.loads(p.stdout)["hookSpecificOutput"]["additionalContext"]
         self.assertIn("Discipline git", ctx)
         self.assertNotIn("/kwa:tdd", ctx)
@@ -155,7 +155,7 @@ class Gate(unittest.TestCase):
         policy(self.root)
         os.makedirs(os.path.join(self.root, ".claude", "kwa", "hooks", "__pycache__"))
         self.assertEqual(hook("guard-write", self.EDIT, self.root), "deny", "un dossier resté vide ne coupe pas le plugin")
-        with open(os.path.join(self.root, ".claude", "kwa", "state.json"), "w") as f:
+        with open(os.path.join(self.root, ".claude", "kwa", "state.json"), "w", encoding="utf-8") as f:
             f.write("{}")
         self.assertEqual(hook("guard-write", self.EDIT, self.root), "")
 
@@ -177,7 +177,7 @@ class Gate(unittest.TestCase):
     def test_router_lists_plugin_skill_names_and_rules(self):
         policy(self.root, modules=["core", "craft", "issue-flow"])
         env = {**os.environ, "CLAUDE_PLUGIN_ROOT": PLUGIN, "CLAUDE_PROJECT_DIR": self.root}
-        p = subprocess.run([sys.executable, RUN, "skills-router"], input="{}", capture_output=True, text=True, env=env)
+        p = subprocess.run([sys.executable, RUN, "skills-router"], input="{}", capture_output=True, encoding="utf-8", env=env)
         ctx = json.loads(p.stdout)["hookSpecificOutput"]["additionalContext"]
         self.assertIn("/kwa:tdd", ctx)
         self.assertIn("/kwa:start-dev", ctx)
@@ -222,7 +222,7 @@ class Init(unittest.TestCase):
     def test_init_migrates_a_copy_install(self):
         self.assertEqual(kwa("install", self.t).returncode, 0)
         skill = os.path.join(self.t, ".claude", "skills", "kwa-commit", "SKILL.md")
-        with open(skill, "a") as f:
+        with open(skill, "a", encoding="utf-8") as f:
             f.write("retouche locale\n")
         r = kwa("init", self.t)
         self.assertIn("installation par copie retirée", r.stdout)
@@ -249,7 +249,7 @@ class Init(unittest.TestCase):
         kwa("install", self.t)
         settings = read(os.path.join(self.t, ".claude", "settings.json"))
         kwa("init", self.t)
-        with open(os.path.join(self.t, ".claude", "settings.json"), "w") as f:  # réglages restaurés après migration
+        with open(os.path.join(self.t, ".claude", "settings.json"), "w", encoding="utf-8") as f:  # réglages restaurés après migration
             f.write(settings)
         kwa("init", self.t)
         self.assertNotIn(".claude/kwa/hooks", read(os.path.join(self.t, ".claude", "settings.json")))
@@ -257,7 +257,7 @@ class Init(unittest.TestCase):
     def test_copy_install_leaves_no_python_cache_nor_codex_hooks(self):
         kwa("install", self.t)
         os.makedirs(os.path.join(self.t, ".claude", "kwa", "hooks", "__pycache__"))
-        with open(os.path.join(self.t, ".claude", "kwa", "hooks", "__pycache__", "_kwa.cpython-312.pyc"), "w") as f:
+        with open(os.path.join(self.t, ".claude", "kwa", "hooks", "__pycache__", "_kwa.cpython-312.pyc"), "w", encoding="utf-8") as f:
             f.write("x")
         kwa("init", self.t, "--no-codex")
         self.assertFalse(os.path.exists(os.path.join(self.t, ".claude", "kwa", "hooks")))
@@ -267,18 +267,18 @@ class Init(unittest.TestCase):
         kwa("install", self.t)
         claude = os.path.join(self.t, ".claude")
         os.rename(os.path.join(claude, "kwa"), os.path.join(claude, "kata"))  # une installation sous l'ancien nom
-        with open(os.path.join(claude, "kata", "state.json")) as f:
+        with open(os.path.join(claude, "kata", "state.json"), encoding="utf-8") as f:
             state = json.load(f)
         state["files"] = {k.replace(".claude/kwa/", ".claude/kata/"): v for k, v in state["files"].items()}
-        with open(os.path.join(claude, "kata", "state.json"), "w") as f:
+        with open(os.path.join(claude, "kata", "state.json"), "w", encoding="utf-8") as f:
             json.dump(state, f)
         settings = read(os.path.join(claude, "settings.json")).replace(".claude/kwa/hooks/", ".claude/kata/hooks/")
-        with open(os.path.join(claude, "settings.json"), "w") as f:
+        with open(os.path.join(claude, "settings.json"), "w", encoding="utf-8") as f:
             f.write(settings)
         pol = json.loads(read(os.path.join(claude, "kwa.policy.json")))
         pol["bash"]["deny"].append({"id": "proj-x", "pattern": "^make prod", "reason": "x"})
         os.remove(os.path.join(claude, "kwa.policy.json"))
-        with open(os.path.join(claude, "kata.policy.json"), "w") as f:
+        with open(os.path.join(claude, "kata.policy.json"), "w", encoding="utf-8") as f:
             json.dump({"kata": 1, **{k: v for k, v in pol.items() if k != "kwa"}}, f)
         r = kwa("init", self.t)
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -288,14 +288,14 @@ class Init(unittest.TestCase):
         self.assertEqual(kwa("doctor", self.t).returncode, 0, kwa("doctor", self.t).stdout)
 
     def test_the_kwa_shipped_in_the_plugin_can_init(self):
-        r = subprocess.run([sys.executable, os.path.join(PLUGIN, "bin", "kwa"), "init", self.t], capture_output=True, text=True)
+        r = subprocess.run([sys.executable, os.path.join(PLUGIN, "bin", "kwa"), "init", self.t], capture_output=True, encoding="utf-8")
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertTrue(os.path.exists(os.path.join(self.t, ".codex", "agents", "kwa-reviewer.toml")))
 
     def test_init_removes_the_renamed_codex_agent(self):
         old = os.path.join(self.t, ".codex", "agents", "kwa-relecteur.toml")
         os.makedirs(os.path.dirname(old))
-        with open(old, "w") as f:
+        with open(old, "w", encoding="utf-8") as f:
             f.write("# Géré par Kwa (kwa install) : généré depuis .claude/agents/kwa-relecteur.md, ne pas éditer.\n")
         kwa("init", self.t)
         self.assertFalse(os.path.exists(old))
@@ -305,7 +305,7 @@ class Init(unittest.TestCase):
         kwa("init", self.t)
         p = subprocess.run([sys.executable, KWA, "hook", "guard-write"], input=json.dumps(
             {"tool_name": "Edit", "tool_input": {"file_path": os.path.join(self.t, "src", "a.py")}, "cwd": self.t}),
-            capture_output=True, text=True, env={**os.environ, "KWA_PROJECT_DIR": self.t, "CLAUDE_PROJECT_DIR": ""})
+            capture_output=True, encoding="utf-8", env={**os.environ, "KWA_PROJECT_DIR": self.t, "CLAUDE_PROJECT_DIR": ""})
         self.assertIn('"deny"', p.stdout)
         self.assertIn("/kwa:start-dev", p.stdout)
         r = kwa("memory", "--help")

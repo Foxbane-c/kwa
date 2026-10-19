@@ -20,6 +20,19 @@ SUBST_RE = re.compile(r"\$\(([^()]*)\)|`([^`]*)`")
 _LAST: dict = {}  # dernière charge lue : sert au signal de refus (session, commande)
 
 
+def utf8_stdio() -> None:
+    """Charges JSON, chemins et messages sont en UTF-8 sur toutes les plateformes. Sous Windows, la console et les
+    tubes sont en cp1252 par défaut : les flux sont reconfigurés à l'import, avant toute lecture."""
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):  # flux remplacé (StringIO) ou déjà lu : on garde ce qu'il y a
+            pass
+
+
+utf8_stdio()
+
+
 def load_payload() -> dict:
     try:
         data = json.load(sys.stdin)

@@ -33,7 +33,7 @@ def main() -> int:
     marker = os.path.join(local, f"nudged-{sid}")
     if os.path.exists(marker):
         return 0
-    out = subprocess.run(["git", "-C", root, "status", "--porcelain", "-uall"], capture_output=True, text=True).stdout
+    out = subprocess.run(["git", "-C", root, "status", "--porcelain", "-uall"], capture_output=True, encoding="utf-8", errors="replace").stdout
     changed = [x[3:] for x in out.splitlines() if not x[3:].startswith(".claude/") and not x[3:].endswith(DOC_EXT)]
     use_journal = _journal.enabled()
     signals = _journal.session_signals(root, sid) if use_journal else 0

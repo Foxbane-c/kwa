@@ -35,7 +35,7 @@ def usage() -> None:
 
 
 def run(*cmd: str, cwd: str | None = None, check: bool = True) -> str:
-    r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    r = subprocess.run(cmd, cwd=cwd, capture_output=True, encoding="utf-8", errors="replace")
     if check and r.returncode != 0:
         print(f"échec : {' '.join(cmd)}\n{r.stderr.strip()}", file=sys.stderr)
         sys.exit(1)
@@ -61,6 +61,8 @@ def link_shared(paths: list[str], main_root: str, wt: str) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
+    for stream in (sys.stdout, sys.stderr):  # Windows : la console est en cp1252, Kwa parle UTF-8
+        stream.reconfigure(encoding="utf-8")
     if len(argv) < 3 or argv[0] not in {"fix", "feat", "chore", "docs"}:
         usage()
     typ, slug, title, rest = argv[0], argv[1], argv[2], argv[3:]
@@ -124,7 +126,7 @@ def main(argv: list[str]) -> int:
     if linked:
         print("liens vers le dépôt principal : " + ", ".join(linked))
     for cmd in start.get("install", []):
-        r = subprocess.run(cmd, shell=True, cwd=wt, capture_output=True, text=True)
+        r = subprocess.run(cmd, shell=True, cwd=wt, capture_output=True, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             print(f"attention : `{cmd}` a échoué dans le worktree ; à relancer à la main.\n{r.stderr.strip()[-400:]}", file=sys.stderr)
     print(f"\nTravailler dans : {wt}")

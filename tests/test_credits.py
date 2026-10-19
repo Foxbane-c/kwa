@@ -5,7 +5,7 @@ import re
 import unittest
 
 PACK = os.path.join(os.path.dirname(__file__), "..")
-CREDITS = json.load(open(os.path.join(PACK, "credits.json")))
+CREDITS = json.load(open(os.path.join(PACK, "credits.json"), encoding="utf-8"))
 SKILLS = os.path.join(PACK, "core", "skills")
 
 

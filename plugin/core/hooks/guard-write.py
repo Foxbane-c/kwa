@@ -38,7 +38,7 @@ def branch_of(path: str) -> str:
         folder = os.path.dirname(folder)
     try:
         return subprocess.run(["git", "-C", folder, "symbolic-ref", "--short", "-q", "HEAD"],
-                              capture_output=True, text=True, timeout=5).stdout.strip()
+                              capture_output=True, encoding="utf-8", errors="replace", timeout=5).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return ""
 

@@ -15,12 +15,12 @@ KWA = os.path.join(PACK, "bin", "kwa")
 def readonly(cmd, root, policy=None):
     if policy is not None:
         os.makedirs(os.path.join(root, ".claude"), exist_ok=True)
-        with open(os.path.join(root, ".claude", "kwa.policy.json"), "w") as f:
+        with open(os.path.join(root, ".claude", "kwa.policy.json"), "w", encoding="utf-8") as f:
             json.dump(policy, f)
     env = {**os.environ, "CLAUDE_PROJECT_DIR": root}
     p = subprocess.run([sys.executable, os.path.join(HOOKS, "readonly-bash.py")],
                        input=json.dumps({"tool_name": "Bash", "tool_input": {"command": cmd}, "cwd": root}),
-                       capture_output=True, text=True, env=env)
+                       capture_output=True, encoding="utf-8", env=env)
     assert p.returncode == 0, p.stderr
     return json.loads(p.stdout)["hookSpecificOutput"]["permissionDecision"] if p.stdout.strip() else "allow"
 
@@ -52,7 +52,7 @@ class Installed(unittest.TestCase):
     def test_agent_is_installed_for_both_tools_and_read_only_in_each(self):
         d = os.path.realpath(tempfile.mkdtemp())
         subprocess.run(["git", "init", "-q", d], check=True)
-        r = subprocess.run([sys.executable, KWA, "install", d, "--modules", "core,craft"], capture_output=True, text=True)
+        r = subprocess.run([sys.executable, KWA, "install", d, "--modules", "core,craft"], capture_output=True, encoding="utf-8")
         self.assertEqual(r.returncode, 0, r.stderr)
         claude = open(os.path.join(d, ".claude/agents/kwa-reviewer.md"), encoding="utf-8").read()
         self.assertIn("disallowedTools: Write, Edit", claude)
@@ -63,7 +63,7 @@ class Installed(unittest.TestCase):
         self.assertIn('sandbox_mode = "read-only"', codex)
         self.assertIn("developer_instructions = '''", codex)
         # la seconde installation ne réécrit rien
-        r = subprocess.run([sys.executable, KWA, "install", d, "--modules", "core,craft"], capture_output=True, text=True)
+        r = subprocess.run([sys.executable, KWA, "install", d, "--modules", "core,craft"], capture_output=True, encoding="utf-8")
         self.assertNotIn(".codex/agents/kwa-reviewer.toml", r.stdout)
 
     def test_skills_send_reviews_to_the_reviewer_agent(self):

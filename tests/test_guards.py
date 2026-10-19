@@ -16,7 +16,7 @@ def run(hook, tool, tool_input, cwd=None, env=None):
     if cwd:
         e["CLAUDE_PROJECT_DIR"] = cwd
     p = subprocess.run([sys.executable, os.path.join(HOOKS, hook)], input=json.dumps(payload),
-                       capture_output=True, text=True, env=e)
+                       capture_output=True, encoding="utf-8", env=e)
     assert p.returncode == 0, p.stderr
     return json.loads(p.stdout)["hookSpecificOutput"]["permissionDecision"] if p.stdout.strip() else "allow"
 
@@ -49,7 +49,7 @@ class Secrets(unittest.TestCase):
 
     def test_dotted_name_that_exists_as_a_file_is_denied(self):
         d = tempfile.mkdtemp()
-        open(os.path.join(d, "prod.env"), "w").write("X=1\n")
+        open(os.path.join(d, "prod.env"), "w", encoding="utf-8").write("X=1\n")
         self.assertEqual(bash("guard-secrets.py", "cat prod.env", cwd=d), "deny")
         self.assertEqual(bash("guard-secrets.py", "cat ./prod.env", cwd=d), "deny")
 
@@ -168,7 +168,7 @@ class Write(unittest.TestCase):
 
 class FailClosed(unittest.TestCase):
     def test_bad_payload_does_not_crash(self):
-        p = subprocess.run([sys.executable, os.path.join(HOOKS, "guard-git.py")], input="pas du json", capture_output=True, text=True)
+        p = subprocess.run([sys.executable, os.path.join(HOOKS, "guard-git.py")], input="pas du json", capture_output=True, encoding="utf-8")
         self.assertEqual(p.returncode, 0)
 
 
@@ -191,7 +191,7 @@ class Copilot(unittest.TestCase):
         e = {k: v for k, v in os.environ.items() if k not in ("CLAUDE_PROJECT_DIR", "KWA_PROJECT_DIR", "KWA_AGENT")}
         e["COPILOT_PLUGIN_DATA"] = tempfile.mkdtemp()
         return subprocess.run([sys.executable, os.path.join(HOOKS, hook)], input=json.dumps(payload),
-                              capture_output=True, text=True, env=e)
+                              capture_output=True, encoding="utf-8", env=e)
 
     def test_a_refusal_is_readable_by_copilot(self):
         p = self.hook("guard-git.py", "git commit -m x", os.path.join(self.repo, "sub"))
@@ -212,7 +212,7 @@ class Copilot(unittest.TestCase):
         code = "import sys; sys.path.insert(0, sys.argv[1]); import _kwa; _kwa.add_context('SessionStart', 'bonjour')"
         for env, top in (({"COPILOT_PLUGIN_DATA": "x"}, True), ({}, False)):
             e = {k: v for k, v in os.environ.items() if k not in ("COPILOT_PLUGIN_DATA", "KWA_AGENT")}
-            out = json.loads(subprocess.run([sys.executable, "-c", code, HOOKS], capture_output=True, text=True,
+            out = json.loads(subprocess.run([sys.executable, "-c", code, HOOKS], capture_output=True, encoding="utf-8",
                                             env={**e, **env}).stdout)
             with self.subTest(copilot=top):
                 self.assertEqual(out["hookSpecificOutput"]["additionalContext"], "bonjour")

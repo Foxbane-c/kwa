@@ -17,6 +17,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import _kwa  # noqa: E402, F401  règle les flux en UTF-8 avant la lecture de la charge
 
 HOOK_MODULE = {
     "guard-secrets": "core", "guard-git": "core", "guard-delete": "core", "guard-write": "core", "guard-policy": "core",
@@ -38,7 +39,7 @@ def policy_path(root: str) -> str:
     if not os.path.isfile(os.path.join(root, ".git")):  # pas un worktree : rien à chercher ailleurs
         return ""
     r = subprocess.run(["git", "-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir"],
-                       capture_output=True, text=True)
+                       capture_output=True, encoding="utf-8", errors="replace")
     if r.returncode == 0 and r.stdout.strip():
         main = os.path.join(os.path.dirname(r.stdout.strip()), ".claude", "kwa.policy.json")
         if os.path.isfile(main):
