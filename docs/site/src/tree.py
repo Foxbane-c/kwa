@@ -31,6 +31,7 @@ DESC = {  # fichiers installés : une ligne chacun
     "guard-github.py": "Une PR doit porter « Closes #N » ; fusion refusée sans issue liée ni preuve.",
     "_kwa.py": "Briques communes des gardes : découpe des commandes, lecture de la politique.",
     "_journal.py": "Journal des sessions, signaux d'apprentissage et masquage des secrets.",
+    "activity-log.py": "Note chaque événement de la session dans le journal d'activité : skill, outil et sa brique, sous-agent, fin de tour.",
     "_activity.py": "Journal d'activité : un fichier par session, plafonné et purgé, sans contenu de fichier ni de prompt.",
     "skills-router.py": "Injecte au démarrage la table « quand → skill », filtrée sur les skills installées.",
     "memory-context.py": "Reprise de session : dernière entrée du journal, état git, notes en attente.",

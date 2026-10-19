@@ -44,6 +44,10 @@ def _log_refusal(reason: str) -> None:
         tool = _LAST.get("tool_input") or {}
         _journal.append_signal(root, "refus", session=_journal._sid(_LAST), key=reason,
                                text=str(tool.get("command") or tool.get("file_path") or ""))
+        import _activity  # même module memory : le refus devient aussi une étape du journal d'activité
+
+        _activity.record(root, _journal._sid(_LAST), "deny", "codex" if is_codex() else "copilot" if is_copilot() else "claude",
+                         tool=_LAST.get("tool_name"), reason=reason)
     except Exception:  # noqa: BLE001
         pass
 

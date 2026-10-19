@@ -246,6 +246,10 @@
         },
         "core/skills/learn/SKILL.md": {
           "dest": ".claude/skills/kwa-learn/SKILL.md"
+        },
+        "core/hooks/activity-log.py": {
+          "dest": ".claude/kwa/hooks/activity-log.py",
+          "mode": "755"
         }
       },
       "hooks": {
@@ -258,6 +262,15 @@
                 "timeout": 10
               }
             ]
+          },
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/activity-log.py",
+                "timeout": 5
+              }
+            ]
           }
         ],
         "Stop": [
@@ -267,6 +280,15 @@
                 "type": "command",
                 "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/memory-nudge.py",
                 "timeout": 10
+              }
+            ]
+          },
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/activity-log.py",
+                "timeout": 5
               }
             ]
           }
@@ -299,6 +321,30 @@
               {
                 "type": "command",
                 "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/signal-prompt.py",
+                "timeout": 5
+              }
+            ]
+          }
+        ],
+        "PreToolUse": [
+          {
+            "matcher": "Agent|Task",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/activity-log.py",
+                "timeout": 5
+              }
+            ]
+          }
+        ],
+        "PostToolUse": [
+          {
+            "matcher": "*",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/kwa/hooks/activity-log.py",
                 "timeout": 5
               }
             ]
