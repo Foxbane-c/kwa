@@ -84,7 +84,7 @@ class ApplyPatch(unittest.TestCase):
         p = patch("*** Add File: src/a.ts", "+export const a = 1;", "*** Update File: docs/b.md", "@@", "-old", "+new",
                   "*** Move to: docs/c.md", "*** Delete File: old.txt")
         got = _kwa.edits({"cwd": "/r", **p})
-        self.assertEqual([(os.path.relpath(x, "/r"), k) for x, _, k in got],
+        self.assertEqual([(os.path.relpath(x, "/r").replace(os.sep, "/"), k) for x, _, k in got],
                          [("src/a.ts", "add"), ("docs/b.md", "update"), ("docs/c.md", "add"), ("old.txt", "delete")])
         self.assertEqual(got[0][1], "export const a = 1;")
         self.assertIn("new", got[1][1])

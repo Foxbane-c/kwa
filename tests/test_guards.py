@@ -1,6 +1,7 @@
 """Gardes Kwa : cas nominaux + contournements confirmés par l'audit de super-board."""
 import json
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -56,6 +57,8 @@ class Secrets(unittest.TestCase):
     def test_read_tool(self):
         self.assertEqual(run("guard-secrets.py", "Read", {"file_path": "/x/.env"}), "deny")
         self.assertEqual(run("guard-secrets.py", "Read", {"file_path": "/x/.env.example"}), "allow")
+        if os.name == "nt":  # Claude Code envoie des chemins à antislashs sous Windows
+            self.assertEqual(run("guard-secrets.py", "Read", {"file_path": "C:\\x\\.env"}), "deny")
 
 
 class Heredocs(unittest.TestCase):
@@ -110,6 +113,7 @@ class Git(unittest.TestCase):
         # session ouverte dans un projet sur main, commande qui vise un autre dépôt sur une branche de travail
         other = tempfile.mkdtemp()
         subprocess.run(["git", "init", "-q", "-b", "feat/y", other], check=True)
+        other = shlex.quote(other)  # un chemin Windows garde ses antislashs entre guillemets, comme dans un vrai shell
         for cmd in [f"git -C {other} commit -m x", f"cd {other} && git commit -m x", f"cd {other}; git commit -m x"]:
             with self.subTest(cmd=cmd):
                 self.assertEqual(bash("guard-git.py", cmd, cwd=self.repo), "allow")
@@ -117,6 +121,7 @@ class Git(unittest.TestCase):
         self.branch("feat/x")
         main_repo = tempfile.mkdtemp()
         subprocess.run(["git", "init", "-q", "-b", "main", main_repo], check=True)
+        main_repo = shlex.quote(main_repo)
         for cmd in [f"git -C {main_repo} commit -m x", f"cd {main_repo} && git commit -m x", f"git -C {main_repo} push"]:
             with self.subTest(cmd=cmd):
                 self.assertEqual(bash("guard-git.py", cmd, cwd=self.repo), "deny")

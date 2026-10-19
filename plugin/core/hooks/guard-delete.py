@@ -5,29 +5,27 @@ from __future__ import annotations
 
 import os
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _kwa import decide, guarded, load_payload, project_dir, segments  # noqa: E402
+from _kwa import decide, guarded, load_payload, project_dir, relative, segments, under  # noqa: E402
 
-TMP = ("/tmp", "/private/tmp", "/var/folders", "/private/var/folders")
-
-
-def inside(path: str, root: str) -> bool:
-    return path == root or path.startswith(root.rstrip("/") + "/")
+TMP = tuple(os.path.realpath(t) for t in ("/tmp", "/private/tmp", "/var/folders", "/private/var/folders",
+                                           tempfile.gettempdir()))
 
 
 def judge(path: str, cwd: str, root: str) -> None:
     if "$" in path or "`" in path:
         decide("ask", f"suppression d'une cible calculée à l'exécution ({path}) : confirmer")
     real = os.path.realpath(os.path.join(cwd, os.path.expanduser(path)))
-    if real in {"/", os.path.realpath(os.path.expanduser("~"))}:
-        decide("deny", "suppression de / ou ~ refusée")
-    if inside(real, root):
-        rel = os.path.relpath(real, root)
+    if os.path.dirname(real) == real or real == os.path.realpath(os.path.expanduser("~")):
+        decide("deny", "suppression de la racine ou de ~ refusée")
+    if under(real, root):
+        rel = relative(real, root)
         if rel == ".git" or rel.startswith(".git/") or rel == ".claude" or rel.startswith(".claude/hooks") or rel.startswith(".claude/kwa"):
             decide("deny", f"suppression de {rel} refusée (garde-fous du projet)")
         return
-    if any(inside(real, t) for t in TMP):
+    if any(under(real, t) for t in TMP):
         return
     decide("deny", f"suppression hors du projet refusée : {real}")
 

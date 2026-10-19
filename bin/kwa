@@ -174,7 +174,7 @@ def detect(target: Path) -> dict:
     wf = list(wf_dir.glob("*.y*ml")) if wf_dir.is_dir() else []
     wf_text = "\n".join(f.read_text(encoding="utf-8", errors="replace") for f in wf)
     # .NET : les solutions (.sln, .slnx) et les projets (.csproj, .fsproj, .vbproj), chemins relatifs à la cible
-    rel = lambda d, f: str((d / f).relative_to(target))  # noqa: E731
+    rel = lambda d, f: (d / f).relative_to(target).as_posix()  # noqa: E731
     solutions = sorted(rel(d, f) for d, _, fs in walk(target, 3) for f in fs if f.endswith((".sln", ".slnx")))
     projects = sorted(rel(d, f) for d, _, fs in walk(target, 4) for f in fs if f.endswith((".csproj", ".fsproj", ".vbproj")))
     found["dotnet"] = {"solutions": solutions, "projects": projects}

@@ -14,7 +14,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _kwa import edits, load_payload, load_policy, project_dir  # noqa: E402
+from _kwa import edits, load_payload, load_policy, project_dir, under  # noqa: E402
 
 DEFAULT_EXT = [".ts", ".tsx", ".js", ".jsx", ".json", ".md"]
 
@@ -28,7 +28,7 @@ def format_one(path: str, d: dict, policy: dict) -> int:
         return 0
     root = project_dir(d)
     real = os.path.realpath(path)
-    if real != root and not real.startswith(root + os.sep):
+    if not under(real, root):
         return 0  # fichier d'un autre dépôt ou d'un worktree voisin : ni sa politique ni son suivi git ne sont connus ici
     write = policy.get("command", "npx --no-install prettier --write {file}")
     check = policy.get("check", "npx --no-install prettier --check {file}")

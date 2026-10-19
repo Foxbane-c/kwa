@@ -192,8 +192,8 @@ class Init(unittest.TestCase):
         os.makedirs(os.path.join(self.t, "src"))
 
     def files(self):
-        return sorted(os.path.relpath(os.path.join(d, f), self.t) for d, _, fs in os.walk(self.t) if "/.git" not in d + "/"
-                      for f in fs)
+        return sorted(os.path.relpath(os.path.join(d, f), self.t).replace(os.sep, "/") for d, _, fs in os.walk(self.t)
+                      if "/.git" not in (d + "/").replace(os.sep, "/") for f in fs)
 
     def test_init_writes_configuration_only(self):
         r = kwa("init", self.t)

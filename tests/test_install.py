@@ -16,7 +16,7 @@ def kwa(*args):
 def tree(root):
     out = {}
     for d, _, fs in os.walk(root):
-        if "/.git" in d:
+        if "/.git" in d.replace(os.sep, "/"):
             continue
         for f in fs:
             p = os.path.join(d, f)

@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _kwa import decide, edits, glob_match, guarded, is_secret_path, load_payload, load_policy, project_dir, skill  # noqa: E402
+from _kwa import decide, edits, glob_match, guarded, is_secret_path, load_payload, load_policy, project_dir, relative, skill  # noqa: E402
 
 KEYS = [
     ("clé Anthropic", r"sk-ant-[A-Za-z0-9_-]{20,}"),
@@ -34,7 +34,7 @@ PROTECTED = (".claude/settings.json", ".claude/settings.local.json", ".claude/kw
 def branch_of(path: str) -> str:
     """Branche du checkout qui contient le fichier (le fichier ou ses dossiers peuvent être nouveaux)."""
     folder = os.path.dirname(path)
-    while folder and not os.path.isdir(folder) and folder != "/":
+    while folder and not os.path.isdir(folder) and os.path.dirname(folder) != folder:
         folder = os.path.dirname(folder)
     try:
         return subprocess.run(["git", "-C", folder, "symbolic-ref", "--short", "-q", "HEAD"],
@@ -45,7 +45,7 @@ def branch_of(path: str) -> str:
 
 def check_path(path: str, d: dict, policy: dict) -> None:
     wr = policy.get("write", {})
-    rel = os.path.relpath(os.path.realpath(path), project_dir(d))
+    rel = relative(os.path.realpath(path), project_dir(d))
     if is_secret_path(path):
         decide("deny", "Fichier de secrets : modifier le .env.example et laisser le mainteneur reporter la valeur réelle.")
     for rule in wr.get("deny", []):

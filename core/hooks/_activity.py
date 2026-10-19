@@ -13,6 +13,7 @@ import re
 import time
 
 from _journal import enabled, local_dir, scrub
+from _kwa import relative, under
 
 SESSION_BYTES = 1024 * 1024        # plafond d'un fichier de session (environ 5 000 lignes)
 TOTAL_BYTES = 20 * 1024 * 1024     # plafond du dossier : au-delà, les plus anciens partent
@@ -91,8 +92,8 @@ SHIP = re.compile(r"\b(git (commit|push|merge|tag)|gh pr (create|merge))\b")
 def classify(tool: str, tool_input: dict, verify: list[str] | None = None, root: str = "") -> tuple[str, str]:
     """(brique, cible) d'un appel d'outil ; brique vide pour une commande qui ne relève d'aucune étape."""
     path = str(tool_input.get("file_path") or tool_input.get("notebook_path") or tool_input.get("path") or "")
-    if root and path.startswith(root.rstrip("/") + "/"):
-        path = path[len(root.rstrip("/")) + 1:]
+    if root and path != root and under(path, root):
+        path = relative(path, root)
     if tool in READ_TOOLS:
         return "cadrer", path or str(tool_input.get("pattern") or tool_input.get("url") or tool_input.get("query") or "")
     if tool in WRITE_TOOLS:
