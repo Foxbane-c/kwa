@@ -1,0 +1,3 @@
+# Fins de ligne LF sur toutes les plateformes : scripts à shebang, gabarits copiés octet pour octet, plugin régénéré
+# depuis les sources (sans cela, un checkout Windows avec core.autocrlf fait dériver build-plugin --check).
+* text=auto eol=lf
