@@ -42,7 +42,8 @@ POINTER = "@AGENTS.md"
 POLICY_REL = ".claude/kwa.policy.json"
 LEGACY_POLICY_REL = ".claude/kata.policy.json"
 LEGACY_HOOKS = ".claude/kata/hooks/"
-SKIP_DIRS = {"node_modules", ".git", ".next", ".turbo", "dist", "build", ".expo", "ios", "android", "Pods", ".venv", "coverage"}
+SKIP_DIRS = {"node_modules", ".git", ".next", ".turbo", "dist", "build", ".expo", "ios", "android", "Pods", ".venv", "coverage",
+             "bin", "obj"}  # bin/ et obj/ : sorties de compilation .NET
 OVERLAP = {  # fichiers du projet que Kwa remplace, une fois sa politique validée
     "hooks": {"guard-bash.sh": "guard-policy + guard-git", "guard-github.sh": "guard-github (issue-flow)",
               "guard-write.sh": "guard-write", "format-after-edit.sh": "format-after-edit (verify)",
@@ -172,6 +173,11 @@ def detect(target: Path) -> dict:
     wf_dir = target / ".github" / "workflows"
     wf = list(wf_dir.glob("*.y*ml")) if wf_dir.is_dir() else []
     wf_text = "\n".join(f.read_text(errors="replace") for f in wf)
+    # .NET : les solutions (.sln, .slnx) et les projets (.csproj, .fsproj, .vbproj), chemins relatifs à la cible
+    rel = lambda d, f: str((d / f).relative_to(target))  # noqa: E731
+    solutions = sorted(rel(d, f) for d, _, fs in walk(target, 3) for f in fs if f.endswith((".sln", ".slnx")))
+    projects = sorted(rel(d, f) for d, _, fs in walk(target, 4) for f in fs if f.endswith((".csproj", ".fsproj", ".vbproj")))
+    found["dotnet"] = {"solutions": solutions, "projects": projects}
 
     tags = []
     if (target / "pnpm-workspace.yaml").exists() or pkg.get("workspaces"):
@@ -182,6 +188,10 @@ def detect(target: Path) -> dict:
             tags.append(tag)
     if any((target / f).exists() for f in ("pyproject.toml", "requirements.txt")):
         tags.append("python")
+    if solutions or projects or (target / "global.json").exists():
+        tags.append("dotnet")
+    if len(solutions) > 1:
+        tags.append("multi-solution")
     found["tags"] = sorted(set(tags))
 
     modules = ["core"]
@@ -191,6 +201,10 @@ def detect(target: Path) -> dict:
         modules.append("issue-flow")
     scripts = pkg.get("scripts", {})
     verify = [f"{pm} {s}" for s in ("typecheck", "lint", "test") if s in scripts] if pm else []
+    # une seule cible .NET : on sait quoi compiler et tester ; plusieurs solutions : la personne choisit (/kwa:init)
+    dotnet_target = solutions[0] if len(solutions) == 1 else projects[0] if not solutions and len(projects) == 1 else None
+    if dotnet_target and not verify:
+        verify = [f"dotnet build {dotnet_target}", f"dotnet test {dotnet_target} --no-build"]
     if verify:
         modules.append("verify")
     if prisma:
@@ -214,9 +228,13 @@ def detect(target: Path) -> dict:
         inferred["start"] = {"install": install}
     elif pm:
         inferred["start"] = {"install": [f"{pm} install"]}
+    elif dotnet_target:
+        inferred["start"] = {"install": [f"dotnet restore {dotnet_target}"]}
     if (target / ".env").is_file():  # fichier local ignoré : un worktree ne le reçoit pas, on le relie
         inferred.setdefault("start", {})["link"] = [".env"]
     code_dirs = [d + "/" for d in ("apps", "packages", "src", "app", "lib") if (target / d).is_dir()]
+    # .NET : le dossier de premier niveau de chaque projet (src/, tests/, ou le dossier d'une solution)
+    code_dirs += sorted({Path(p).parts[0] + "/" for p in projects if len(Path(p).parts) > 1} - set(code_dirs))
     if code_dirs:
         inferred["write"] = {"no_code_on_main": code_dirs}
     if eas:
@@ -1117,6 +1135,10 @@ def cmd_detect(a) -> int:
         print(f"  ✓ {m:16} {plugin_text(man[m]['about'], skills)}")
     for m in d["suggested"]:
         print(f"  ? {m:16} {plugin_text(man[m]['about'], skills)}  (sur demande : --with {m})")
+    sols = d["dotnet"]["solutions"]
+    if len(sols) > 1:
+        print("Solutions .NET (aucune vérification déduite : choisir laquelle viser, ou un filtre .slnf) :")
+        print("".join(f"  - {s}\n" for s in sols), end="")
     print("Politique déduite :")
     print(json.dumps(d["inferred"], indent=2, ensure_ascii=False))
     return 0
