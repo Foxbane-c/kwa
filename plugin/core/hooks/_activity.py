@@ -78,6 +78,39 @@ def record(root: str, session: str, kind: str, agent: str = "claude", **fields: 
         pass
 
 
+# Ce que fait un appel d'outil, en une brique : la même lecture que le mod kwa-activity. Les noms d'outils de Codex
+# (shell, apply_patch) et de Copilot (convertis en noms Claude quand ses hooks sont au format Claude) sont compris.
+READ_TOOLS = {"Read", "NotebookRead", "Grep", "Glob", "LS", "WebFetch", "WebSearch", "view", "glob", "grep", "web_fetch"}
+WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit", "apply_patch", "create", "edit"}
+SHELL_TOOLS = {"Bash", "shell", "bash", "powershell"}
+TEST = re.compile(r"\b(test|tests|pytest|unittest|jest|vitest|mocha|tsc|lint|eslint|typecheck|go test|cargo (test|check)"
+                  r"|mvn (test|verify)|gradle (test|check)|dotnet (build|test))\b")
+SHIP = re.compile(r"\b(git (commit|push|merge|tag)|gh pr (create|merge))\b")
+
+
+def classify(tool: str, tool_input: dict, verify: list[str] | None = None, root: str = "") -> tuple[str, str]:
+    """(brique, cible) d'un appel d'outil ; brique vide pour une commande qui ne relève d'aucune étape."""
+    path = str(tool_input.get("file_path") or tool_input.get("notebook_path") or tool_input.get("path") or "")
+    if root and path.startswith(root.rstrip("/") + "/"):
+        path = path[len(root.rstrip("/")) + 1:]
+    if tool in READ_TOOLS:
+        return "cadrer", path or str(tool_input.get("pattern") or tool_input.get("url") or tool_input.get("query") or "")
+    if tool in WRITE_TOOLS:
+        if tool == "apply_patch":
+            m = re.search(r"^\*\*\* (?:Add|Update|Delete) File: (.+)$", str(tool_input.get("input") or tool_input.get("patch") or ""), re.M)
+            path = m.group(1).strip() if m else path
+        return "faire", path
+    if tool in SHELL_TOOLS:
+        cmd = tool_input.get("command") or ""
+        cmd = " ".join(cmd) if isinstance(cmd, list) else str(cmd)
+        if any(v and v in cmd for v in (verify or [])) or TEST.search(cmd):
+            return "prouver", cmd
+        if SHIP.search(cmd):
+            return "livrer", cmd
+        return "", cmd
+    return "", ""
+
+
 def _count(path: str, brick: str) -> None:
     counts_path = path + ".counts.json"
     try:

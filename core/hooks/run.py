@@ -22,7 +22,7 @@ HOOK_MODULE = {
     "guard-secrets": "core", "guard-git": "core", "guard-delete": "core", "guard-write": "core", "guard-policy": "core",
     "skills-router": "core", "readonly-bash": "craft",  # sous plugin, le routeur porte aussi les règles communes
     "memory-context": "memory", "memory-nudge": "memory", "journal-compact": "memory", "journal-end": "memory",
-    "signal-prompt": "memory",
+    "signal-prompt": "memory", "activity-log": "memory",
     "guard-github": "issue-flow",
     "format-after-edit": "verify", "verify-stop": "verify",
 }

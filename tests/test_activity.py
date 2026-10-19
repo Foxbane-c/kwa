@@ -140,3 +140,65 @@ class Prune(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def run_hook(repo, payload, env=None):
+    p = {"session_id": "sess-H", "cwd": repo, **payload}
+    e = {k: v for k, v in os.environ.items() if k not in ("KWA_AGENT", "COPILOT_PLUGIN_DATA", "KWA_JOURNAL")}
+    return subprocess.run([sys.executable, os.path.join(HOOKS, "activity-log.py")], input=json.dumps(p),
+                          capture_output=True, text=True, env={**e, "CLAUDE_PROJECT_DIR": repo, **(env or {})})
+
+
+class Hook(unittest.TestCase):
+    def setUp(self):
+        self.repo = git_repo({"README.md": "x", ".claude/kwa.policy.json": json.dumps({"verify": {"commands": ["make check"]}})})
+
+    def events(self):
+        return _activity.read_session(self.repo, "sess-H")
+
+    def test_a_session_becomes_lines_one_per_event_and_nothing_is_printed(self):
+        steps = [
+            {"hook_event_name": "SessionStart", "source": "startup"},
+            {"hook_event_name": "PostToolUse", "tool_name": "Skill", "tool_input": {"skill": "kwa:debug"}},
+            {"hook_event_name": "PostToolUse", "tool_name": "Read", "tool_input": {"file_path": os.path.join(self.repo, "src", "panier.py")}},
+            {"hook_event_name": "PostToolUse", "tool_name": "Edit", "tool_input": {"file_path": os.path.join(self.repo, "src", "panier.py")}},
+            {"hook_event_name": "PostToolUse", "tool_name": "Bash", "tool_input": {"command": "make check"}},
+            {"hook_event_name": "PostToolUse", "tool_name": "Bash", "tool_input": {"command": "git commit -m fix"}},
+            {"hook_event_name": "PostToolUse", "tool_name": "Bash", "tool_input": {"command": "ls -la"}},
+            {"hook_event_name": "PreToolUse", "tool_name": "Agent", "tool_input": {"subagent_type": "kwa:reviewer", "description": "relire"}},
+            {"hook_event_name": "PostToolUse", "tool_name": "Agent", "tool_input": {"subagent_type": "kwa:reviewer"}},
+            {"hook_event_name": "Stop"},
+        ]
+        for s in steps:
+            r = run_hook(self.repo, s)
+            self.assertEqual((r.returncode, r.stdout), (0, ""), r.stderr)
+        ev = self.events()
+        self.assertEqual([e["kind"] for e in ev], ["session", "skill", "tool", "tool", "tool", "tool", "tool", "agent", "agent-end", "turn"])
+        self.assertEqual(ev[0].get("branch"), "main")
+        self.assertEqual(ev[1]["name"], "kwa:debug")
+        self.assertEqual([e.get("brick", "") for e in ev[2:7]], ["cadrer", "faire", "prouver", "livrer", ""])
+        self.assertEqual(ev[3]["target"], "src/panier.py")   # chemin relatif au projet
+        self.assertEqual(ev[7]["name"], "kwa:reviewer")
+
+    def test_the_agent_is_named_and_codex_tools_are_understood(self):
+        run_hook(self.repo, {"hook_event_name": "PostToolUse", "tool_name": "apply_patch",
+                             "tool_input": {"input": "*** Begin Patch\n*** Update File: src/a.py\n@@\n"}}, {"KWA_AGENT": "codex"})
+        run_hook(self.repo, {"hook_event_name": "PostToolUse", "tool_name": "Bash", "tool_input": {"command": "pytest"}},
+                 {"COPILOT_PLUGIN_DATA": tempfile.mkdtemp()})
+        a, b = self.events()
+        self.assertEqual((a["agent"], a["brick"], a["target"]), ("codex", "faire", "src/a.py"))
+        self.assertEqual((b["agent"], b["brick"]), ("copilot", "prouver"))
+
+    def test_a_guard_refusal_is_a_step_of_the_journal(self):
+        payload = {"tool_name": "Bash", "tool_input": {"command": "git commit -m x"}, "cwd": self.repo, "session_id": "sess-H"}
+        e = {k: v for k, v in os.environ.items() if k not in ("KWA_JOURNAL",)}
+        r = subprocess.run([sys.executable, os.path.join(HOOKS, "guard-git.py")], input=json.dumps(payload), capture_output=True,
+                           text=True, env={**e, "CLAUDE_PROJECT_DIR": self.repo, "KWA_RUNTIME": "plugin"})
+        self.assertIn("deny", r.stdout)
+        deny = [x for x in self.events() if x["kind"] == "deny"]
+        self.assertEqual(len(deny), 1)
+        self.assertEqual(deny[0]["tool"], "Bash")
+
+    def test_off_with_the_journal(self):
+        run_hook(self.repo, {"hook_event_name": "Stop"}, {"KWA_JOURNAL": "0"})
+        self.assertEqual(self.events(), [])
