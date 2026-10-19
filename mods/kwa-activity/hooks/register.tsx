@@ -1,8 +1,8 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, Timer } from 'claude-code'
 
-import type { Brick, Step, Usage } from '../types'
-import { BRICKS, duration, isOver, kilo, model, money, openBrick, svg } from './workflow'
+import type { Brick, Live, Step, Usage } from '../types'
+import { BRICKS, classify, duration, isOver, kilo, model, money, openBrick, svg } from './workflow'
 
 // Rien de ce mod n'entre dans le contexte du modèle : il lit les événements et dessine, sans réécrire ni le prompt,
 // ni le texte des skills, ni celui des sous-agents.
@@ -13,6 +13,8 @@ const frame = atom({ plugin: 'kwa-activity', key: 'frame' } as const, 0)
 // une fois par seconde tant qu'une étape tourne : les chronomètres natifs du Mod (frame, 8 fois par seconde, sert au terminal)
 const beat = atom({ plugin: 'kwa-activity', key: 'beat' } as const, 0)
 const isHidden = atom({ plugin: 'kwa-activity', key: 'isHidden' } as const, false)
+const live = atom({ plugin: 'kwa-activity', key: 'live' } as const, null)
+const touched = atom({ plugin: 'kwa-activity', key: 'touched' } as const, [])
 
 const PANE = 'kwa-progress'
 const KEEP = 200
@@ -31,6 +33,8 @@ const SPIN = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '�
 let tick: Timer | null = null
 let poll: Timer | null = null
 let seq = 0
+// Les commandes de vérification de la politique du projet, lues au démarrage : une commande qui en relève est Prouver.
+let verify: string[] = []
 // Les agents déjà revenus : un turn.complete peut arriver avant que agent.spawn ait écrit l'étape.
 const returned = new Set<string>()
 // Par surface : la brique dessinée ouverte et l'instant où l'on y est entré, pour jouer le dépliage une fois.
@@ -86,6 +90,12 @@ const isPlaced = async ($: EngineInterface) => (await $.ui.panes()).some(p => p.
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'kwa-activity', description: 'Afficher le Mod Kwa (workflow et coût), ou le masquer' })
+    try {
+      const policy = JSON.parse(await $.fs.read('.claude/kwa.policy.json'))
+      verify = Array.isArray(policy?.verify?.commands) ? policy.verify.commands.filter((c: unknown) => typeof c === 'string') : []
+    } catch {
+      verify = []  // pas de politique Kwa : la reconnaissance des tests se fait sur les commandes usuelles
+    }
     await refresh($)
     poll ??= $.clock.every(4000, () => refresh($))
     if ((await read($, steps)).some(s => s.endedAt === null)) await animate($)
@@ -156,6 +166,18 @@ export const register: Register = on => {
       const last = [...(await read($, steps))].reverse().find(x => x.kind === 'skill')
       const brick: Brick = name === 'guard-write' ? 'faire' : name === 'garde' ? last?.brick ?? 'faire' : 'livrer'
       await update($, steps, l => [...l, { id: id('g', now), kind: 'garde' as const, name, task: '', brick, startedAt: now, endedAt: now, isAborted: false }].slice(-KEEP))
+      return r
+    }
+    // ce que l'outil a fait (un refus n'a rien fait) : la ligne « en direct », et la brique touchée par le fil principal
+    const seen = r.deny ? null : classify(String((e as { tool?: string }).tool ?? ''), e as unknown as Record<string, unknown>, verify)
+    if (seen) {
+      const now = await $.clock.now()
+      const byAgent = !!e.agentId
+      await update($, live, (): Live => ({ label: seen.label, brick: seen.brick, at: now, byAgent }))
+      if (seen.brick && !byAgent) {
+        const b = seen.brick
+        await update($, touched, l => (l[l.length - 1] === b ? l : [...l.filter(x => x !== b), b]))
+      }
     }
     return r
   }).catch(($, e, next) => next(e)) // observer seulement : ne jamais bloquer un outil
@@ -179,12 +201,16 @@ export const register: Register = on => {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const list = await read($, steps)
     const u = await read($, usage)
-    const reset = () => { returned.clear(); return Promise.all([update($, steps, () => []), update($, first, () => null)]) }
+    const reset = () => { returned.clear(); return Promise.all([update($, steps, () => []), update($, first, () => null), update($, live, () => null), update($, touched, () => [])]) }
+    const t = await read($, touched)
+    const act = await read($, live)
+    // la dernière action, dite en une ligne : ce qu'elle a fait, par qui, il y a combien de temps
+    const liveLine = (now: number) => act ? `${act.byAgent ? 'un sous-agent ' : ''}${act.label} · il y a ${duration(now - act.at)}` : null
     if (e.surface === 'desktop' || e.surface === 'mobile') {
       const { Box, Svg, Button } = $.ui.resolve(e)
       const now = await $.clock.now()
       const started = (await $.session.usage()).startedAt
-      const m = model(list, now, (await read($, first)) ?? undefined)
+      const m = model(list, now, (await read($, first)) ?? undefined, { touched: t, current: t[t.length - 1] ?? null })
       const open = openBrick(m)
       const seen = unfold.get(e.surface)
       if (!seen || seen.brick !== open) unfold.set(e.surface, { brick: open, at: now })
@@ -199,6 +225,12 @@ export const register: Register = on => {
         <Box flexDirection="column" flexGrow={1} justifyContent="flex-start" alignItems="center" alignSelf="flex-start" width="100%" height="100%">
           <Svg key="flow" source={d.source} width={d.width} height={d.height} isInteractive
             alt={`${m.title} : ${m.rows.filter(x => x.status === 'done').length} étapes faites sur ${m.rows.length}`} />
+          {act && (
+            <Text key="now" wrap="truncate">
+              <Text color="claude">◆ En direct </Text>
+              <Text dimColor>{liveLine(now)}</Text>
+            </Text>
+          )}
           {running.length > 0 && (
             <Box key="live" flexDirection="column" width={d.width}>
               {running.slice(0, 6).map(x => (
@@ -237,6 +269,7 @@ export const register: Register = on => {
           </Text>
         )}
         {agents > 0 && <Text color="claude">{SPIN[n % SPIN.length]} {agents} sous-agent{agents > 1 ? 's' : ''} en cours</Text>}
+        {act && <Text wrap="truncate"><Text color="claude">◆ </Text><Text dimColor>{liveLine(now)}</Text></Text>}
         <Text> </Text>
         {BRICKS.map(([b, label], i) => {
           const mine = list.filter(x => x.brick === b)

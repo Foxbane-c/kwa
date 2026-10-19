@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { isOver, model, svg } from '../hooks/workflow'
+import { classify, isOver, model, openBrick, svg } from '../hooks/workflow'
 
 const step = (id: string, kind: 'skill' | 'agent' | 'garde', name: string, brick: 'cadrer' | 'faire' | 'prouver' | 'relire' | 'livrer' | 'capitaliser', endedAt: number | null) =>
   ({ id, kind, name, task: '', brick, startedAt: 0, endedAt, isAborted: false })
@@ -141,4 +141,28 @@ test('en haut, cinq ronds de workflow : seul celui détecté s’allume, aucun s
   expect(lit(svg(model([step('1', 'skill', '/kwa:review', 'relire', null)], 5), null, 0).source)).toEqual(['review'])
   expect(lit(svg(model([], 5), null, 0).source)).toEqual([])
   expect(bug).not.toContain('class="bg"')   // fond transparent : le Mod prend la couleur de l'application
+})
+
+test('chaque appel d’outil est rangé dans sa brique, une commande de la politique comprise', async () => {
+  expect(classify('Read', { file_path: '/p/src/panier.py' })).toEqual({ brick: 'cadrer', label: 'lit panier.py' })
+  expect(classify('Grep', { pattern: 'PROMO10' })!.brick).toBe('cadrer')
+  expect(classify('Edit', { file_path: '/p/src/panier.py' })).toEqual({ brick: 'faire', label: 'modifie panier.py' })
+  expect(classify('Write', { file_path: 'docs/x.md' })!.brick).toBe('faire')
+  expect(classify('Bash', { command: 'python3 -m unittest' })!.brick).toBe('prouver')
+  expect(classify('Bash', { command: 'make check' }, ['make check'])!.brick).toBe('prouver')   // venue de verify.commands
+  expect(classify('Bash', { command: 'dotnet test Shop.sln --no-build' })!.brick).toBe('prouver')
+  expect(classify('Bash', { command: 'git commit -m x' })!.brick).toBe('livrer')
+  expect(classify('Bash', { command: 'gh pr create --fill' })!.brick).toBe('livrer')
+  expect(classify('Bash', { command: 'ls -la' })).toEqual({ brick: null, label: 'exécute ls -la' })
+  expect(classify('Agent', {})).toBeNull()
+})
+
+test('sans skill en cours, la brique ouverte suit l’activité des outils', async () => {
+  const m = model([], 5, null, { touched: ['cadrer', 'faire'], current: 'faire' })
+  expect(openBrick(m)).toBe('faire')
+  const out = svg(m, null, 0).source
+  expect(out).toContain('class="frame open" style="stroke:#0ea5e9"')     // Faire, ouverte
+  expect(out).not.toContain('stroke:#6366f1" stroke-opacity="0.25" stroke-dasharray')   // Cadrer touchée : plus en pointillés
+  // une skill qui tourne garde la main sur la brique ouverte
+  expect(openBrick(model([step('1', 'skill', '/kwa:tdd', 'prouver', null)], 5, null, { touched: ['faire'], current: 'faire' }))).toBe('prouver')
 })
