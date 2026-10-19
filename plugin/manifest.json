@@ -228,6 +228,10 @@
           "dest": ".claude/kwa/hooks/_journal.py",
           "mode": "644"
         },
+        "core/hooks/_activity.py": {
+          "dest": ".claude/kwa/hooks/_activity.py",
+          "mode": "644"
+        },
         "core/hooks/journal-compact.py": {
           "dest": ".claude/kwa/hooks/journal-compact.py",
           "mode": "755"
