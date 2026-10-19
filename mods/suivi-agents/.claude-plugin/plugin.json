@@ -1,0 +1,9 @@
+{
+  "name": "suivi-agents",
+  "version": "0.2.0",
+  "description": "Suivi des tâches et des agents de la session, toujours visible sur la ligne d'aide du prompt",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Chaabane LEMARED"
+  }
+}

@@ -88,6 +88,8 @@ bash tests/run-safety.sh                    # suite hors-ligne
 | `stack-prisma` | migrations append-only, pas de reset / db push |
 | `stack-expo` | `/kwa:testflight`, soumission EAS confirmée |
 | `stack-scaleway` | déploiement direct confirmé |
+| `stack-nuxt` | conventions Nuxt 3 / Tailwind / Prisma, `/kwa:rgaa` (relecture d'accessibilité RGAA) |
+| `chaabane` | règles personnelles et profils génériques de Chaabane (fork) : `kwa:secu`, `kwa:critique`, `kwa:explorer`, `kwa:web-*`… |
 
 Le spécifique d'un projet vit dans `.claude/kwa.policy.json` (créé une fois à partir de la détection, jamais écrasé) :
 `bash.deny/ask`, `write.deny`, `write.no_code_on_main`, `verify.commands`, `start.install`, `environments`, `mobile`,

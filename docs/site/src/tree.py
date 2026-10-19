@@ -55,6 +55,22 @@ DESC = {  # fichiers installés : une ligne chacun
     "kwa-reviewer.md": "Agent relecteur en lecture seule, lancé par /kwa:review et /kwa:agents ; traduit pour Codex en bac à sable en lecture seule.",
     "readonly-bash.py": "Dans l'agent relecteur seulement : n'autorise que les commandes shell qui lisent.",
     "openai.yaml": "Réglage Codex : la skill ne se lance qu'à la demande, jamais d'elle-même.",
+    # module chaabane (fork) : règles personnelles et profils génériques
+    "kwa-chaabane.md": "Règles de Chaabane : français accentué, pédagogie, TypeScript strict, portes à sens unique.",
+    "kwa-nuxt.md": "Conventions Nuxt 3 / Vue 3 / Tailwind / Prisma : tokens sémantiques, Composition API, Zod en entrée.",
+    "kwa-secu.md": "Auditeur sécurité en lecture seule : failles exploitables, scénario d'attaque, correctif.",
+    "kwa-critique.md": "Avocat du diable : failles, angles morts et coûts cachés d'un plan avant de l'implémenter.",
+    "kwa-explorer.md": "Cartographe du code : fichiers impactés, contraintes et conventions avant toute implémentation.",
+    "kwa-backend-dev.md": "Implémente le côté serveur : services, API, Prisma.",
+    "kwa-frontend-dev.md": "Implémente l'interface Vue 3 / Nuxt 3 / Tailwind / Shadcn-vue, tokens sémantiques obligatoires.",
+    "kwa-web-dev.md": "Implémente un site vitrine Nuxt 4 / Tailwind v4 / GSAP / Lenis.",
+    "kwa-web-da.md": "Directeur artistique d'un site vitrine : palette, typographie, grille, rythme ; n'écrit que les tokens.",
+    "kwa-web-copy.md": "Rédacteur éditorial français d'un site vitrine : titres, textes, microcopie, méta-descriptions.",
+    "kwa-web-recette.md": "Recette adversariale du site rendu dans le navigateur, desktop et mobile, toutes langues.",
+    "kwa-web-seo-local.md": "Référencement local : Schema.org LocalBusiness, cohérence NAP, hreflang.",
+    "kwa-web-i18n-ar.md": "Bilinguisme français / arabe et rendu RTL d'un site vitrine.",
+    "kwa-web-images.md": "Imagerie d'un site vitrine : sourcing licite, recadrage, optimisation, textes alternatifs.",
+    "kwa-kindle-publisher.md": "Produit un EPUB 3 valide pour « Envoyer vers Kindle » à partir d'un Markdown ou d'un HTML.",
 }
 SYNTHETIC = [  # fichiers créés par `kwa init` ou par l'usage, pas copiés depuis le pack
     ("AGENTS.md", "doc", ["core"], "Source unique des instructions de l'agent. Kwa ne gère que son bloc entre marqueurs, le reste est à vous."),

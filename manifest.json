@@ -595,6 +595,69 @@
           ]
         }
       }
+    },
+    "chaabane": {
+      "about": "Règles personnelles de Chaabane (français, accents, pédagogie, TypeScript strict, portes à sens unique) et ses profils génériques : secu, critique, explorer, backend-dev, frontend-dev, web-*, kindle-publisher",
+      "files": {
+        "core/rules/chaabane.md": {
+          "dest": ".claude/rules/kwa-chaabane.md"
+        },
+        "core/agents/secu.md": {
+          "dest": ".claude/agents/kwa-secu.md"
+        },
+        "core/agents/critique.md": {
+          "dest": ".claude/agents/kwa-critique.md"
+        },
+        "core/agents/explorer.md": {
+          "dest": ".claude/agents/kwa-explorer.md"
+        },
+        "core/agents/backend-dev.md": {
+          "dest": ".claude/agents/kwa-backend-dev.md"
+        },
+        "core/agents/frontend-dev.md": {
+          "dest": ".claude/agents/kwa-frontend-dev.md"
+        },
+        "core/agents/web-dev.md": {
+          "dest": ".claude/agents/kwa-web-dev.md"
+        },
+        "core/agents/web-da.md": {
+          "dest": ".claude/agents/kwa-web-da.md"
+        },
+        "core/agents/web-copy.md": {
+          "dest": ".claude/agents/kwa-web-copy.md"
+        },
+        "core/agents/web-recette.md": {
+          "dest": ".claude/agents/kwa-web-recette.md"
+        },
+        "core/agents/web-seo-local.md": {
+          "dest": ".claude/agents/kwa-web-seo-local.md"
+        },
+        "core/agents/web-i18n-ar.md": {
+          "dest": ".claude/agents/kwa-web-i18n-ar.md"
+        },
+        "core/agents/web-images.md": {
+          "dest": ".claude/agents/kwa-web-images.md"
+        },
+        "core/agents/kindle-publisher.md": {
+          "dest": ".claude/agents/kwa-kindle-publisher.md"
+        }
+      }
+    },
+    "stack-nuxt": {
+      "about": "Conventions Nuxt 3 / Vue 3 / Tailwind / Shadcn-vue / Prisma (tokens sémantiques, Composition API, Zod en entrée) et /kwa-rgaa, la relecture d'accessibilité RGAA d'une interface",
+      "detect": {
+        "deps": [
+          "nuxt"
+        ]
+      },
+      "files": {
+        "core/rules/nuxt.md": {
+          "dest": ".claude/rules/kwa-nuxt.md"
+        },
+        "core/skills/rgaa/*": {
+          "dest": ".claude/skills/kwa-rgaa"
+        }
+      }
     }
   }
 }
