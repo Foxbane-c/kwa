@@ -251,6 +251,9 @@ def prune(jdir: str, days: int) -> int:
 def housekeeping(root: str, policy: dict | None) -> None:
     """Au démarrage d'une session : purge du journal, des vieux marqueurs et des vieilles sessions."""
     prune(journal_dir(root, policy, create=False), journal_days(policy))
+    prune_signals(root)
+    import _activity  # même module memory ; importé ici, il importe lui-même ce module
+    _activity.prune(root, policy)
     for sub, days in (("sessions", 30), ("", 30)):
         base = os.path.join(local_dir(root), sub) if sub else local_dir(root)
         try:
@@ -273,6 +276,32 @@ def append_signal(root: str, kind: str, session: str = "", key: str = "", text: 
            "key": scrub(key)[:90], "text": scrub(text)[:300]}
     with open(signals_path(root), "a", encoding="utf-8") as f:
         f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def prune_signals(root: str, days: int = 30) -> int:
+    """Ne garde que les signaux des `days` derniers jours (la lecture n'en regarde pas plus) : sans cela le fichier
+    grossit sans fin. Réécriture atomique ; renvoie le nombre de lignes retirées."""
+    path = signals_path(root)
+    cutoff, kept, dropped = time.time() - days * 86400, [], 0
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    keep = float(json.loads(line).get("ts", 0)) >= cutoff
+                except (ValueError, AttributeError):
+                    keep = False
+                if keep:
+                    kept.append(line)
+                else:
+                    dropped += 1
+        if dropped:
+            tmp = path + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                f.writelines(kept)
+            os.replace(tmp, path)
+    except OSError:
+        return 0
+    return dropped
 
 
 def read_signals(root: str, days: int = 30) -> list[dict]:
