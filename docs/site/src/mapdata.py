@@ -46,7 +46,7 @@ FAMILY_RULE = {
 FAMILIES = {
     "cadrer": ["brainstorm", "interview", "plan", "tickets", "prototype", "questionnaire", "architecture", "rephrase", "research", "domain"],
     "faire": ["init", "start-dev", "tdd", "execute", "agents", "parallel", "simple"],
-    "prouver": ["debug", "verify", "review", "review-feedback", "audit"],
+    "prouver": ["debug", "verify", "review", "review-feedback", "audit", "rgaa"],
     "livrer": ["commit", "ship", "deploy", "testflight", "humanize", "conflicts"],
     "transmettre": ["learn", "handoff", "agent-docs", "teach"],
 }

@@ -183,7 +183,8 @@ def detect(target: Path) -> dict:
     if (target / "pnpm-workspace.yaml").exists() or pkg.get("workspaces"):
         tags.append("monorepo")
     for tag, dep in (("next", "next"), ("nest", "@nestjs/core"), ("expo", "expo"), ("react-native", "react-native"),
-                     ("payload", "payload"), ("prisma", "prisma"), ("playwright", "@playwright/test")):
+                     ("payload", "payload"), ("prisma", "prisma"), ("playwright", "@playwright/test"),
+                     ("nuxt", "nuxt")):
         if dep in all_deps:
             tags.append(tag)
     if any((target / f).exists() for f in ("pyproject.toml", "requirements.txt")):
@@ -200,7 +201,9 @@ def detect(target: Path) -> dict:
     if (target / ".git").exists() and (target / ".github").exists():
         modules.append("issue-flow")
     scripts = pkg.get("scripts", {})
-    verify = [f"{pm} {s}" for s in ("typecheck", "lint", "test") if s in scripts] if pm else []
+    # npm exige « run » pour un script (sauf test) ; pnpm, yarn et bun l'acceptent sans
+    script = (lambda name: f"npm run {name}" if pm == "npm" and name != "test" else f"{pm} {name}")
+    verify = [script(s) for s in ("typecheck", "lint", "test") if s in scripts] if pm else []
     # une seule cible .NET : on sait quoi compiler et tester ; plusieurs solutions : la personne choisit (/kwa:init)
     dotnet_target = solutions[0] if len(solutions) == 1 else projects[0] if not solutions and len(projects) == 1 else None
     if dotnet_target and not verify:
@@ -211,6 +214,8 @@ def detect(target: Path) -> dict:
         modules.append("stack-prisma")
     if eas:
         modules.append("stack-expo")
+    if "nuxt" in tags:
+        modules.append("stack-nuxt")
     if re.search(r"scw |scaleway|SCW_", wf_text, re.I):
         modules.append("stack-scaleway")
     if any("deploy" in f.name for f in wf):
@@ -889,7 +894,9 @@ def marketplace_text() -> str:
                                     "description": "Garde-fous, skills de méthode, mémoire de session et workflow issue → PR."},
                                    # mod séparé : il observe la session et dessine son avancement, sans toucher au plugin
                                    {"name": "kwa-activity", "source": "./mods/kwa-activity", "category": "development",
-                                    "description": "Mod de suivi : le workflow Kwa en cours dessiné brique par brique, les sous-agents qui tournent, le coût et le contexte de la session."}]},
+                                    "description": "Mod de suivi : le workflow Kwa en cours dessiné brique par brique, les sous-agents qui tournent, le coût et le contexte de la session."},
+                                   {"name": "suivi-agents", "source": "./mods/suivi-agents", "category": "development",
+                                    "description": "Mod de suivi (fork) : les tâches de la session barrées une fois finies, les sous-agents rangés sous leur tâche, et une ligne d'aide sous le prompt (branche, delta git, contexte, coût, quota 5 h)."}]},
                       indent=2, ensure_ascii=False) + "\n"
 
 

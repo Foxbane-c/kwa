@@ -31,6 +31,7 @@ d'explorer le code ; elle dit comment le faire. Une question simple ou une conve
 | Écrire ou modifier un AGENTS.md, une règle ou une skill | /kwa:agent-docs |
 | « Je n'ai pas compris » : reformuler le dernier message | /kwa:rephrase |
 | Texte à relire pour en retirer le ton « écrit par une IA » (doc, README, PR, message) | /kwa:humanize |
+| Interface web à relire pour l'accessibilité (RGAA, clavier, formulaires, contrastes) | /kwa:rgaa |
 | Fusion ou rebase arrêté sur des conflits | /kwa:conflicts |
 | Fait extérieur à vérifier dans les sources (API, version, option, spécification) | /kwa:research |
 | Termes métier flous ou contradictoires, glossaire ou décision durable à écrire | /kwa:domain |

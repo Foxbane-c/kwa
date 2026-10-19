@@ -287,6 +287,15 @@ class Modules(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(d, ".claude/skills/kwa-learn/SKILL.md")))
         self.assertEqual(self.kwa("doctor", d).returncode, 0, self.kwa("doctor", d).stdout)
 
+    def test_npm_scripts_are_run_with_npm_run(self):
+        """Sous npm, « npm typecheck » n'existe pas : seul « test » se passe de « run »."""
+        d = git_repo({"package.json": json.dumps({"scripts": {"typecheck": "tsc", "lint": "eslint", "test": "vitest"},
+                                                  "dependencies": {"nuxt": "^3"}}), "package-lock.json": ""})
+        self.assertIn("stack-nuxt", self.kwa("detect", d).stdout)
+        self.kwa("install", d)
+        pol = json.load(open(os.path.join(d, ".claude/kwa.policy.json"), encoding="utf-8"))
+        self.assertEqual(pol["verify"]["commands"], ["npm run typecheck", "npm run lint", "npm test"])
+
     def test_detection_proposes_linking_the_local_environment_file(self):
         d = self.project()
         open(os.path.join(d, ".env"), "w", encoding="utf-8").write("A=1\n")

@@ -17,6 +17,12 @@
       "source": "./mods/kwa-activity",
       "category": "development",
       "description": "Mod de suivi : le workflow Kwa en cours dessiné brique par brique, les sous-agents qui tournent, le coût et le contexte de la session."
+    },
+    {
+      "name": "suivi-agents",
+      "source": "./mods/suivi-agents",
+      "category": "development",
+      "description": "Mod de suivi (fork) : les tâches de la session barrées une fois finies, les sous-agents rangés sous leur tâche, et une ligne d'aide sous le prompt (branche, delta git, contexte, coût, quota 5 h)."
     }
   ]
 }
