@@ -30,7 +30,7 @@ def git(root: str, *args: str, timeout: float = 0.8) -> str:
     if left <= 0.05:
         return ""
     try:
-        r = subprocess.run(["git", "-C", root, *args], capture_output=True, text=True, timeout=min(timeout, left))
+        r = subprocess.run(["git", "-C", root, *args], capture_output=True, encoding="utf-8", errors="replace", timeout=min(timeout, left))
         return r.stdout.strip() if r.returncode == 0 else ""
     except (OSError, subprocess.SubprocessError):
         return ""

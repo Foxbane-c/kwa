@@ -1,13 +1,12 @@
 """kwa-start, kwa-hygiene, mémoire, modules et détection de l'installeur."""
 import json
 import os
-import stat
 import subprocess
 import sys
 import tempfile
 import unittest
 
-from helpers import HOOKS
+from helpers import HOOKS, SYMLINKS, fake_command, needs_symlinks
 
 PACK = os.path.join(os.path.dirname(__file__), "..")
 KWA = os.path.join(PACK, "bin", "kwa")
@@ -15,7 +14,7 @@ BIN = os.path.join(PACK, "core", "bin")
 
 
 def sh(*cmd, cwd=None, env=None, input=None):
-    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env={**os.environ, **(env or {})}, input=input)
+    return subprocess.run(cmd, cwd=cwd, capture_output=True, encoding="utf-8", env={**os.environ, **(env or {})}, input=input)
 
 
 def git_repo(files=None, branch="main"):
@@ -26,7 +25,7 @@ def git_repo(files=None, branch="main"):
     for rel, text in (files or {}).items():
         p = os.path.join(d, rel)
         os.makedirs(os.path.dirname(p), exist_ok=True)
-        open(p, "w").write(text)
+        open(p, "w", encoding="utf-8").write(text)
     return d
 
 
@@ -40,14 +39,13 @@ class Start(unittest.TestCase):
         for k, v in (("user.email", "t@example.test"), ("user.name", "t")):
             sh("git", "-C", self.repo, "config", k, v)
         os.makedirs(os.path.join(self.repo, ".claude"))
-        json.dump({"start": {"install": ["touch installed.flag"]}}, open(os.path.join(self.repo, ".claude", "kwa.policy.json"), "w"))
-        open(os.path.join(self.repo, "a.txt"), "w").write("a")
+        touch = f'"{sys.executable}" -c "open(\'installed.flag\', \'w\').close()"'  # un « touch » qui existe aussi sous Windows
+        json.dump({"start": {"install": [touch]}}, open(os.path.join(self.repo, ".claude", "kwa.policy.json"), "w", encoding="utf-8"))
+        open(os.path.join(self.repo, "a.txt"), "w", encoding="utf-8").write("a")
         sh("git", "-C", self.repo, "add", "-A")
         sh("git", "-C", self.repo, "commit", "-q", "-m", "init")
         sh("git", "-C", self.repo, "push", "-q", "origin", "main")
-        stub = os.path.join(base, "gh")
-        open(stub, "w").write('#!/bin/sh\ncase "$1 $2" in\n  "issue create") echo called >> "$(dirname "$0")/gh-issue-create.log"; echo "https://github.com/o/r/issues/7" ;;\n  "issue view") echo "{}" ;;\nesac\n')
-        os.chmod(stub, os.stat(stub).st_mode | stat.S_IEXEC)
+        fake_command(base, "gh", '#!/bin/sh\ncase "$1 $2" in\n  "issue create") echo called >> "$(dirname "$0")/gh-issue-create.log"; echo "https://github.com/o/r/issues/7" ;;\n  "issue view") echo "{}" ;;\nesac\n')
         self.env = {"PATH": base + os.pathsep + os.environ["PATH"]}
         self.base = base
 
@@ -62,13 +60,13 @@ class Start(unittest.TestCase):
 
     def issue_calls(self):
         log = os.path.join(self.base, "gh-issue-create.log")
-        return len(open(log).read().split()) if os.path.exists(log) else 0
+        return len(open(log, encoding="utf-8").read().split()) if os.path.exists(log) else 0
 
     def set_flow(self, **flow):
         p = os.path.join(self.repo, ".claude", "kwa.policy.json")
-        d = json.load(open(p))
+        d = json.load(open(p, encoding="utf-8"))
         d["flow"] = flow
-        json.dump(d, open(p, "w"))
+        json.dump(d, open(p, "w", encoding="utf-8"))
 
     def test_issue_is_created_automatically_by_default(self):
         r = sh(sys.executable, os.path.join(BIN, "kwa-start"), "feat", "auto-one", "Auto", cwd=self.repo, env=self.env)
@@ -97,12 +95,13 @@ class Start(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertTrue(os.path.isdir(os.path.join(self.base, "proj-wt-9-reuse")))
 
+    @needs_symlinks
     def test_start_link_symlinks_local_files_instead_of_copying(self):
-        open(os.path.join(self.repo, "secret.local"), "w").write("VALEUR=1\n")  # fichier local, non suivi par git
+        open(os.path.join(self.repo, "secret.local"), "w", encoding="utf-8").write("VALEUR=1\n")  # fichier local, non suivi par git
         p = os.path.join(self.repo, ".claude", "kwa.policy.json")
-        d = json.load(open(p))
+        d = json.load(open(p, encoding="utf-8"))
         d["start"]["link"] = ["secret.local", "../dehors", "a.txt", "absent.local"]
-        json.dump(d, open(p, "w"))
+        json.dump(d, open(p, "w", encoding="utf-8"))
         r = sh(sys.executable, os.path.join(BIN, "kwa-start"), "feat", "linked", "Lien", "--no-issue", cwd=self.repo, env=self.env)
         self.assertEqual(r.returncode, 0, r.stderr)
         wt = os.path.join(self.base, "proj-wt-linked")
@@ -116,7 +115,7 @@ class Start(unittest.TestCase):
 
     def test_base_option_starts_from_another_branch(self):
         sh("git", "-C", self.repo, "switch", "-q", "-c", "dev")
-        open(os.path.join(self.repo, "dev-only.txt"), "w").write("d")
+        open(os.path.join(self.repo, "dev-only.txt"), "w", encoding="utf-8").write("d")
         sh("git", "-C", self.repo, "add", "-A")
         sh("git", "-C", self.repo, "commit", "-q", "-m", "dev")
         sh("git", "-C", self.repo, "push", "-q", "origin", "dev")
@@ -144,9 +143,8 @@ class FormatBoundary(unittest.TestCase):
         self.log = os.path.join(self.base, "npx.log")
         stub = os.path.join(self.base, "bin")
         os.makedirs(stub)
-        open(os.path.join(stub, "npx"), "w").write(
-            '#!/bin/sh\ncase "$*" in\n  *--version*) exit 0 ;;\n  *--write*) echo "$*" >> "%s" ;;\nesac\n' % self.log)
-        os.chmod(os.path.join(stub, "npx"), 0o755)
+        fake_command(stub, "npx", '#!/bin/sh\ncase "$*" in\n  *--version*) exit 0 ;;\n  *--write*) echo "$*" >> "%s" ;;\nesac\n'
+                     % self.log.replace(os.sep, "/"))
         self.env = {"PATH": stub + os.pathsep + os.environ["PATH"]}
         self.project = os.path.join(self.base, "project")
         self.other = os.path.join(self.base, "autre-depot")
@@ -155,12 +153,12 @@ class FormatBoundary(unittest.TestCase):
             sh("git", "init", "-q", "-b", "main", d)
 
     def run_hook(self, path):
-        open(path, "w").write("# titre\n")
+        open(path, "w", encoding="utf-8").write("# titre\n")
         return sh(sys.executable, os.path.join(HOOKS, "format-after-edit.py"), env={**self.env, "CLAUDE_PROJECT_DIR": self.project},
                   input=json.dumps({"tool_name": "Write", "tool_input": {"file_path": path}, "cwd": self.project}))
 
     def calls(self):
-        return open(self.log).read().count("--write") if os.path.exists(self.log) else 0
+        return open(self.log, encoding="utf-8").read().count("--write") if os.path.exists(self.log) else 0
 
     def test_new_file_inside_the_project_is_formatted(self):
         self.assertEqual(self.run_hook(os.path.join(self.project, "note.md")).returncode, 0)
@@ -172,7 +170,7 @@ class FormatBoundary(unittest.TestCase):
 
     def test_tracked_file_inside_the_project_is_not_rewritten(self):
         p = os.path.join(self.project, "suivi.md")
-        open(p, "w").write("# a\n")
+        open(p, "w", encoding="utf-8").write("# a\n")
         sh("git", "-C", self.project, "add", "suivi.md")
         self.run_hook(p)
         self.assertEqual(self.calls(), 0, "un fichier déjà suivi n'est pas reformaté (seulement signalé)")
@@ -184,7 +182,7 @@ class Hygiene(unittest.TestCase):
         if extra:
             os.makedirs(os.path.join(d, ".claude"), exist_ok=True)
             for rel, text in extra.items():
-                open(os.path.join(d, rel), "w").write(text)
+                open(os.path.join(d, rel), "w", encoding="utf-8").write(text)
         sh("git", "-C", d, "add", "-A")
         return sh(sys.executable, os.path.join(BIN, "kwa-hygiene"), "--root", d, *args)
 
@@ -278,10 +276,10 @@ class Modules(unittest.TestCase):
         d = self.project()
         r = self.kwa("install", d)
         self.assertEqual(r.returncode, 0, r.stderr)
-        state = json.load(open(os.path.join(d, ".claude/kwa/state.json")))
+        state = json.load(open(os.path.join(d, ".claude/kwa/state.json"), encoding="utf-8"))
         for m in ("core", "memory", "issue-flow", "verify", "stack-scaleway", "deploy"):
             self.assertIn(m, state["modules"])
-        pol = json.load(open(os.path.join(d, ".claude/kwa.policy.json")))
+        pol = json.load(open(os.path.join(d, ".claude/kwa.policy.json"), encoding="utf-8"))
         self.assertEqual(pol["verify"]["commands"], ["pnpm typecheck", "pnpm lint"])
         self.assertEqual(pol["start"]["install"], ["pnpm install --frozen-lockfile", "pnpm db:generate"])
         self.assertEqual(pol["write"]["no_code_on_main"], ["apps/"])
@@ -291,13 +289,13 @@ class Modules(unittest.TestCase):
 
     def test_detection_proposes_linking_the_local_environment_file(self):
         d = self.project()
-        open(os.path.join(d, ".env"), "w").write("A=1\n")
+        open(os.path.join(d, ".env"), "w", encoding="utf-8").write("A=1\n")
         self.kwa("install", d)
-        pol = json.load(open(os.path.join(d, ".claude/kwa.policy.json")))
+        pol = json.load(open(os.path.join(d, ".claude/kwa.policy.json"), encoding="utf-8"))
         self.assertEqual(pol["start"]["link"], [".env"])
         sans = self.project()
         self.kwa("install", sans)
-        self.assertNotIn("link", json.load(open(os.path.join(sans, ".claude/kwa.policy.json")))["start"])
+        self.assertNotIn("link", json.load(open(os.path.join(sans, ".claude/kwa.policy.json"), encoding="utf-8"))["start"])
 
     def test_a_dotnet_solution_is_detected_with_its_checks(self):
         """Une solution .NET : build et test de la solution, restore à l'installation, ses projets protégés sur main."""
@@ -307,7 +305,7 @@ class Modules(unittest.TestCase):
         self.assertIn("dotnet", out)
         self.assertNotIn("multi-solution", out)
         self.kwa("install", d)
-        pol = json.load(open(os.path.join(d, ".claude/kwa.policy.json")))
+        pol = json.load(open(os.path.join(d, ".claude/kwa.policy.json"), encoding="utf-8"))
         self.assertEqual(pol["verify"]["commands"], ["dotnet build Shop.sln", "dotnet test Shop.sln --no-build"])
         self.assertEqual(pol["start"]["install"], ["dotnet restore Shop.sln"])
         self.assertEqual(pol["write"]["no_code_on_main"], ["src/", "tests/"])
@@ -322,7 +320,7 @@ class Modules(unittest.TestCase):
         self.assertIn("Billing/Billing.sln", out)
         self.assertIn("Portal/Portal.slnx", out)
         self.kwa("install", d)
-        pol = json.load(open(os.path.join(d, ".claude/kwa.policy.json")))
+        pol = json.load(open(os.path.join(d, ".claude/kwa.policy.json"), encoding="utf-8"))
         self.assertNotIn("commands", pol.get("verify", {}))
         self.assertEqual(pol["write"]["no_code_on_main"], ["Billing/", "Portal/"])
         self.assertEqual(self.kwa("doctor", d).returncode, 0, self.kwa("doctor", d).stdout)
@@ -331,19 +329,19 @@ class Modules(unittest.TestCase):
         d = self.project()
         self.kwa("install", d)
         pol_path = os.path.join(d, ".claude/kwa.policy.json")
-        pol = json.load(open(pol_path))
+        pol = json.load(open(pol_path, encoding="utf-8"))
         pol["bash"]["deny"].append({"id": "mine", "reason": "r", "any": ["x"]})
-        json.dump(pol, open(pol_path, "w"))
-        open(os.path.join(d, ".github/pull_request_template.md"), "w").write("mon gabarit\n")
+        json.dump(pol, open(pol_path, "w", encoding="utf-8"))
+        open(os.path.join(d, ".github/pull_request_template.md"), "w", encoding="utf-8").write("mon gabarit\n")
         r = self.kwa("install", d)
         self.assertIn("conservée", r.stdout)
-        self.assertIn("mine", [x["id"] for x in json.load(open(pol_path))["bash"]["deny"]])
-        self.assertEqual(open(os.path.join(d, ".github/pull_request_template.md")).read(), "mon gabarit\n")
+        self.assertIn("mine", [x["id"] for x in json.load(open(pol_path, encoding="utf-8"))["bash"]["deny"]])
+        self.assertEqual(open(os.path.join(d, ".github/pull_request_template.md"), encoding="utf-8").read(), "mon gabarit\n")
 
     def test_git_exclude_and_no_commit(self):
         d = self.project()
         self.kwa("install", d)
-        self.assertIn(".claude/kwa/local/", open(os.path.join(d, ".git/info/exclude")).read())
+        self.assertIn(".claude/kwa/local/", open(os.path.join(d, ".git/info/exclude"), encoding="utf-8").read())
         self.assertNotEqual(sh("git", "-C", d, "log", "--oneline").returncode, 0)
         self.assertEqual(sh("git", "-C", d, "diff", "--cached", "--name-only").stdout, "")
 
@@ -355,15 +353,16 @@ class Modules(unittest.TestCase):
         try:
             r = self.kwa("install", wt)
             self.assertNotIn("pas de dépôt git", r.stdout)
-            self.assertIn(".claude/kwa/local/", open(os.path.join(d, ".git/info/exclude")).read())
+            self.assertIn(".claude/kwa/local/", open(os.path.join(d, ".git/info/exclude"), encoding="utf-8").read())
         finally:
             sh("git", "-C", d, "worktree", "remove", "--force", wt)
 
     def test_codex_parity(self):
         d = self.project()
         self.kwa("install", d)  # Codex est installé par défaut
-        self.assertTrue(os.path.islink(os.path.join(d, ".agents/skills/kwa-commit")))
-        hooks = json.load(open(os.path.join(d, ".codex/hooks.json")))
+        parity = os.path.join(d, ".agents/skills/kwa-commit")
+        self.assertTrue(os.path.islink(parity) if SYMLINKS else os.path.isdir(parity), "lien, ou copie sans lien symbolique")
+        hooks = json.load(open(os.path.join(d, ".codex/hooks.json"), encoding="utf-8"))
         cmds = [h["command"] for e in hooks["hooks"]["PreToolUse"] for h in e["hooks"]]
         self.assertTrue(all(c.startswith('cd "$(git rev-parse --show-toplevel)" && KWA_AGENT=codex KWA_PROJECT_DIR="$PWD" python3 .claude/kwa/hooks/') for c in cmds))
         # filtres valides pour Codex : pas de « * », l'écriture couvre apply_patch, fin de session sous 3 s
@@ -375,15 +374,15 @@ class Modules(unittest.TestCase):
                 if event == "SessionEnd":
                     self.assertTrue(all(h.get("timeout", 1) <= 3 for h in e["hooks"]))
         # une seconde installation ne duplique rien
-        before = open(os.path.join(d, ".codex/hooks.json")).read()
+        before = open(os.path.join(d, ".codex/hooks.json"), encoding="utf-8").read()
         self.kwa("install", d, "--codex")
-        self.assertEqual(open(os.path.join(d, ".codex/hooks.json")).read(), before)
+        self.assertEqual(open(os.path.join(d, ".codex/hooks.json"), encoding="utf-8").read(), before)
         # les confirmations passent par les règles de commandes de Codex
-        rules = open(os.path.join(d, ".codex/rules/kwa.rules")).read()
+        rules = open(os.path.join(d, ".codex/rules/kwa.rules"), encoding="utf-8").read()
         self.assertIn('pattern = ["git", "push"]', rules)
         self.assertIn('decision = "prompt"', rules)
         # les skills à lancer à la main le restent sous Codex
-        self.assertIn("allow_implicit_invocation: false", open(os.path.join(d, ".agents/skills/kwa-commit/agents/openai.yaml")).read())
+        self.assertIn("allow_implicit_invocation: false", open(os.path.join(d, ".agents/skills/kwa-commit/agents/openai.yaml"), encoding="utf-8").read())
 
     def test_unknown_module_and_with(self):
         d = self.project()
@@ -394,7 +393,7 @@ class Modules(unittest.TestCase):
     def test_doctor_flags_project_overlap(self):
         d = self.project()
         os.makedirs(os.path.join(d, ".claude/hooks"))
-        open(os.path.join(d, ".claude/hooks/guard-bash.sh"), "w").write("#!/bin/sh\n")
+        open(os.path.join(d, ".claude/hooks/guard-bash.sh"), "w", encoding="utf-8").write("#!/bin/sh\n")
         self.kwa("install", d)
         self.assertIn("fait doublon", self.kwa("doctor", d).stdout)
 

@@ -76,13 +76,13 @@ class Journal(unittest.TestCase):
     def test_journal_entry_has_facts_and_body(self):
         d = committed_repo()
         start(d)
-        open(os.path.join(d, "a.ts"), "w").write("x")
+        open(os.path.join(d, "a.ts"), "w", encoding="utf-8").write("x")
         sh("git", "-C", d, "add", "-A")
         sh("git", "-C", d, "commit", "-qm", "feat: a")
-        open(os.path.join(d, "b.ts"), "w").write("y")
+        open(os.path.join(d, "b.ts"), "w", encoding="utf-8").write("y")
         r = memory(d, "journal", "Objectif : ajouter a\nFait : a et b\nReste à faire : tests")
         self.assertEqual(r.returncode, 0, r.stderr)
-        text = open(entries(d)[0]).read()
+        text = open(entries(d)[0], encoding="utf-8").read()
         self.assertIn("auto: false", text)
         self.assertIn("## Faits", text)
         self.assertIn("Commits de la session : 1", text)
@@ -98,10 +98,10 @@ class Journal(unittest.TestCase):
         self.assertEqual(too_long.returncode, 2)
         self.assertEqual(entries(d), [])
         memory(d, "journal", f"Fait : voir {FAKE_PW}")
-        self.assertNotIn("hunter2xyz", open(entries(d)[0]).read())
+        self.assertNotIn("hunter2xyz", open(entries(d)[0], encoding="utf-8").read())
         memory(d, "journal", "Fait : version finale")
         self.assertEqual(len(entries(d)), 1)
-        self.assertIn("version finale", open(entries(d)[0]).read())
+        self.assertIn("version finale", open(entries(d)[0], encoding="utf-8").read())
 
     def test_last_list_prune_and_disabled(self):
         d = committed_repo()
@@ -127,33 +127,33 @@ class Journal(unittest.TestCase):
         start(d)
         self.assertEqual(hook("journal-end.py", d).returncode, 0)
         self.assertEqual(entries(d), [], "une session sans trace n'écrit rien")
-        open(os.path.join(d, "a.ts"), "w").write("x")
+        open(os.path.join(d, "a.ts"), "w", encoding="utf-8").write("x")
         t0 = time.time()
         self.assertEqual(hook("journal-end.py", d).returncode, 0)
         self.assertLess(time.time() - t0, 1.5, "SessionEnd dispose d'1,5 s")
-        text = open(entries(d)[0]).read()
+        text = open(entries(d)[0], encoding="utf-8").read()
         self.assertIn("auto: true", text)
         self.assertNotIn("## Journal", text)
         memory(d, "journal", "Objectif : raconté")
         hook("journal-end.py", d)
-        self.assertIn("auto: false", open(entries(d)[0]).read(), "le filet ne redevient pas automatique")
-        self.assertIn("Objectif : raconté", open(entries(d)[0]).read())
+        self.assertIn("auto: false", open(entries(d)[0], encoding="utf-8").read(), "le filet ne redevient pas automatique")
+        self.assertIn("Objectif : raconté", open(entries(d)[0], encoding="utf-8").read())
 
     def test_session_end_without_a_start_record_writes_nothing(self):
         d = committed_repo({"a.ts": "x"})
-        open(os.path.join(d, "b.ts"), "w").write("y")
+        open(os.path.join(d, "b.ts"), "w", encoding="utf-8").write("y")
         hook("journal-end.py", d)
         self.assertEqual(entries(d), [])
 
     def test_pre_compact_saves_facts_and_keeps_the_body(self):
         d = committed_repo()
         start(d)
-        open(os.path.join(d, "a.ts"), "w").write("x")
+        open(os.path.join(d, "a.ts"), "w", encoding="utf-8").write("x")
         hook("journal-compact.py", d)
-        self.assertIn("Fichiers touchés : 1", open(entries(d)[0]).read())
+        self.assertIn("Fichiers touchés : 1", open(entries(d)[0], encoding="utf-8").read())
         memory(d, "journal", "Objectif : garde-moi")
         hook("journal-compact.py", d)
-        self.assertIn("Objectif : garde-moi", open(entries(d)[0]).read())
+        self.assertIn("Objectif : garde-moi", open(entries(d)[0], encoding="utf-8").read())
 
     def test_hooks_never_fail_on_garbage_input(self):
         d = committed_repo()
@@ -164,7 +164,7 @@ class Journal(unittest.TestCase):
     def test_custom_journal_dir_from_policy(self):
         d = committed_repo()
         os.makedirs(os.path.join(d, ".claude"))
-        json.dump({"memory": {"journal_dir": "docs/journal"}}, open(os.path.join(d, ".claude", "kwa.policy.json"), "w"))
+        json.dump({"memory": {"journal_dir": "docs/journal"}}, open(os.path.join(d, ".claude", "kwa.policy.json"), "w", encoding="utf-8"))
         start(d)
         memory(d, "journal", "Objectif : partagé")
         self.assertTrue(os.listdir(os.path.join(d, "docs", "journal")))
@@ -178,9 +178,9 @@ class Resume(unittest.TestCase):
         memory(d, "journal", body)
         p = entries(d)[-1]
         if days_ago:
-            text = open(p).read()
+            text = open(p, encoding="utf-8").read()
             old = time.strftime("%Y-%m-%d %H:%M", time.localtime(time.time() - days_ago * 86400))
-            open(p, "w").write(re.sub(r"^date: .*$", f"date: {old}", text, flags=re.M))
+            open(p, "w", encoding="utf-8").write(re.sub(r"^date: .*$", f"date: {old}", text, flags=re.M))
         return p
 
     def test_resume_prefers_the_current_branch_and_lists_two_titles(self):
@@ -215,7 +215,7 @@ class Resume(unittest.TestCase):
     def test_resume_shows_automatic_entries_without_inventing_a_story(self):
         d = committed_repo()
         start(d, session_id="s1")
-        open(os.path.join(d, "a.ts"), "w").write("x")
+        open(os.path.join(d, "a.ts"), "w", encoding="utf-8").write("x")
         hook("journal-end.py", d, {"session_id": "s1"})
         out = context(start(d, session_id="s2"))
         self.assertIn("Fermée sans journal", out)
@@ -236,7 +236,7 @@ class Signals(unittest.TestCase):
 
     def inbox(self, d):
         try:
-            return open(os.path.join(local(d), "inbox.md")).read()
+            return open(os.path.join(local(d), "inbox.md"), encoding="utf-8").read()
         except OSError:
             return ""
 
@@ -273,7 +273,7 @@ class Signals(unittest.TestCase):
 
     def install_marker(self, d):
         os.makedirs(os.path.join(d, ".claude", "kwa"), exist_ok=True)
-        open(os.path.join(d, ".claude", "kwa", "state.json"), "w").write("{}")
+        open(os.path.join(d, ".claude", "kwa", "state.json"), "w", encoding="utf-8").write("{}")
 
     def refuse(self, d, n=1):
         self.install_marker(d)
@@ -286,7 +286,7 @@ class Signals(unittest.TestCase):
     def test_a_guard_refusal_leaves_a_signal(self):
         d = committed_repo({".claude/kwa.policy.json": json.dumps({"protected_branches": ["main"]})})
         self.assertIn('"deny"', self.refuse(d).stdout)
-        rec = [json.loads(x) for x in open(os.path.join(local(d), "signals.jsonl"))]
+        rec = [json.loads(x) for x in open(os.path.join(local(d), "signals.jsonl"), encoding="utf-8")]
         self.assertEqual((rec[0]["kind"], rec[0]["session"]), ("refus", "sess-A"))
         self.assertIn("main", rec[0]["key"])
         self.assertIn("git commit", rec[0]["text"])
@@ -330,7 +330,7 @@ class Nudge(unittest.TestCase):
         d = committed_repo()
         for i in range(4):
             os.makedirs(os.path.join(d, "src"), exist_ok=True)
-            open(os.path.join(d, "src", f"f{i}.ts"), "w").write("x")
+            open(os.path.join(d, "src", f"f{i}.ts"), "w", encoding="utf-8").write("x")
         return d
 
     def test_each_ask_is_dropped_when_already_satisfied(self):
@@ -352,7 +352,7 @@ class Nudge(unittest.TestCase):
         d = committed_repo()
         os.makedirs(local(d))
         marker = os.path.join(local(d), "nudged-vieille")
-        open(marker, "w").close()
+        open(marker, "w", encoding="utf-8").close()
         old = time.time() - 40 * 86400
         os.utime(marker, (old, old))
         start(d)
@@ -371,9 +371,9 @@ class Worktrees(unittest.TestCase):
         self.assertTrue(entries(d), "l'entrée est dans le dépôt principal")
         self.assertFalse(os.path.exists(os.path.join(wt, ".claude", "kwa", "local")))
         sh("git", "-C", d, "worktree", "remove", "--force", wt)
-        self.assertIn("depuis le worktree", open(entries(d)[0]).read(), "le journal survit au worktree")
-        self.assertIn("noté depuis le worktree", open(os.path.join(local(d), "inbox.md")).read())
-        self.assertIn("feat/x", open(entries(d)[0]).read())
+        self.assertIn("depuis le worktree", open(entries(d)[0], encoding="utf-8").read(), "le journal survit au worktree")
+        self.assertIn("noté depuis le worktree", open(os.path.join(local(d), "inbox.md"), encoding="utf-8").read())
+        self.assertIn("feat/x", open(entries(d)[0], encoding="utf-8").read())
 
 
 class Install(unittest.TestCase):
@@ -381,12 +381,12 @@ class Install(unittest.TestCase):
         d = committed_repo()
         env = {"KWA_HOME": tempfile.mkdtemp()}
         self.assertEqual(sh(sys.executable, KWA, "install", d, "--modules", "core,memory", env=env).returncode, 0)
-        s = json.load(open(os.path.join(d, ".claude", "settings.json")))
+        s = json.load(open(os.path.join(d, ".claude", "settings.json"), encoding="utf-8"))
         for event in ("SessionStart", "Stop", "PreCompact", "SessionEnd", "UserPromptSubmit"):
             self.assertIn(event, s["hooks"], event)
         for name in ("_journal.py", "journal-compact.py", "journal-end.py", "signal-prompt.py"):
             self.assertTrue(os.path.isfile(os.path.join(d, ".claude", "kwa", "hooks", name)), name)
-        self.assertEqual(json.load(open(os.path.join(d, ".claude", "kwa.policy.json")))["memory"]["journal_days"], 90)
+        self.assertEqual(json.load(open(os.path.join(d, ".claude", "kwa.policy.json"), encoding="utf-8"))["memory"]["journal_days"], 90)
         self.assertEqual(sh(sys.executable, KWA, "doctor", d, env=env).returncode, 0)
 
     def test_installed_copy_runs_end_to_end(self):

@@ -20,6 +20,19 @@ SUBST_RE = re.compile(r"\$\(([^()]*)\)|`([^`]*)`")
 _LAST: dict = {}  # dernière charge lue : sert au signal de refus (session, commande)
 
 
+def utf8_stdio() -> None:
+    """Charges JSON, chemins et messages sont en UTF-8 sur toutes les plateformes. Sous Windows, la console et les
+    tubes sont en cp1252 par défaut : les flux sont reconfigurés à l'import, avant toute lecture."""
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):  # flux remplacé (StringIO) ou déjà lu : on garde ce qu'il y a
+            pass
+
+
+utf8_stdio()
+
+
 def load_payload() -> dict:
     try:
         data = json.load(sys.stdin)
@@ -204,6 +217,21 @@ def project_dir(payload: dict) -> str:
                             or payload.get("cwd") or os.getcwd())
 
 
+def under(path: str, root: str) -> bool:
+    """Vrai si path est root ou se trouve dedans, avec les séparateurs et la casse de l'OS."""
+    path, root = os.path.normcase(os.path.normpath(path)), os.path.normcase(os.path.normpath(root))
+    return path == root or path.startswith(root.rstrip(os.sep) + os.sep)
+
+
+def relative(path: str, root: str) -> str:
+    """Chemin relatif à root écrit avec des « / » quel que soit l'OS : les préfixes et globs de la politique
+    (apps/, **/prisma/migrations/**) et les chemins protégés (.claude/settings.json) sont écrits ainsi."""
+    try:
+        return os.path.relpath(path, root).replace(os.sep, "/")
+    except ValueError:  # Windows : un autre lecteur n'a pas de chemin relatif
+        return path.replace(os.sep, "/")
+
+
 PATCH_FILE_RE = re.compile(r"^\*\*\* (Add|Update|Delete) File: (.+)$")
 PATCH_MOVE_RE = re.compile(r"^\*\*\* Move to: (.+)$")
 
@@ -319,4 +347,6 @@ SECRET_PATH = [
 
 def is_secret_path(p: str) -> bool:
     p = os.path.expanduser(p.strip().strip("'\""))
+    if os.sep == "\\":  # Windows : les outils envoient des chemins à antislashs, les motifs sont écrits avec /
+        p = p.replace("\\", "/")
     return bool(p) and not SAFE_SUFFIX.search(p) and any(r.search(p) for r in SECRET_PATH)

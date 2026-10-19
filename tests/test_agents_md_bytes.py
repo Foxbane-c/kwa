@@ -19,7 +19,7 @@ CASES = {
 
 
 def install(d, *extra):
-    return subprocess.run([sys.executable, KWA, "install", d, "--modules", "core", *extra], capture_output=True, text=True)
+    return subprocess.run([sys.executable, KWA, "install", d, "--modules", "core", *extra], capture_output=True, encoding="utf-8")
 
 
 class ByteForByte(unittest.TestCase):

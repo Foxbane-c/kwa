@@ -92,7 +92,7 @@ class Cap(unittest.TestCase):
         self.assertLess(len(events), 31)                     # le détail a cessé d'être écrit…
         self.assertEqual(events[-1]["kind"], "skill")        # …pas les étapes
         path = _activity.session_file(self.repo, "sess-K")
-        counts = json.load(open(path + ".counts.json"))
+        counts = json.load(open(path + ".counts.json", encoding="utf-8"))
         self.assertEqual(counts["cadrer"] + sum(1 for e in events if e["kind"] == "tool"), 30)
 
 
@@ -134,7 +134,7 @@ class Prune(unittest.TestCase):
         stale = _activity.session_file(self.repo, "sess-old")
         os.utime(stale, (time.time() - 40 * 86400,) * 2)
         _journal.housekeeping(self.repo, None)
-        self.assertEqual([json.loads(x)["ts"] for x in open(path)], [new["ts"]])
+        self.assertEqual([json.loads(x)["ts"] for x in open(path, encoding="utf-8")], [new["ts"]])
         self.assertFalse(os.path.exists(stale))
 
 
@@ -146,7 +146,7 @@ def run_hook(repo, payload, env=None):
     p = {"session_id": "sess-H", "cwd": repo, **payload}
     e = {k: v for k, v in os.environ.items() if k not in ("KWA_AGENT", "COPILOT_PLUGIN_DATA", "KWA_JOURNAL")}
     return subprocess.run([sys.executable, os.path.join(HOOKS, "activity-log.py")], input=json.dumps(p),
-                          capture_output=True, text=True, env={**e, "CLAUDE_PROJECT_DIR": repo, **(env or {})})
+                          capture_output=True, encoding="utf-8", env={**e, "CLAUDE_PROJECT_DIR": repo, **(env or {})})
 
 
 class Hook(unittest.TestCase):
@@ -193,7 +193,7 @@ class Hook(unittest.TestCase):
         payload = {"tool_name": "Bash", "tool_input": {"command": "git commit -m x"}, "cwd": self.repo, "session_id": "sess-H"}
         e = {k: v for k, v in os.environ.items() if k not in ("KWA_JOURNAL",)}
         r = subprocess.run([sys.executable, os.path.join(HOOKS, "guard-git.py")], input=json.dumps(payload), capture_output=True,
-                           text=True, env={**e, "CLAUDE_PROJECT_DIR": self.repo, "KWA_RUNTIME": "plugin"})
+                           encoding="utf-8", env={**e, "CLAUDE_PROJECT_DIR": self.repo, "KWA_RUNTIME": "plugin"})
         self.assertIn("deny", r.stdout)
         deny = [x for x in self.events() if x["kind"] == "deny"]
         self.assertEqual(len(deny), 1)

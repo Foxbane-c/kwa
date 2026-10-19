@@ -13,6 +13,7 @@ import re
 import time
 
 from _journal import enabled, local_dir, scrub
+from _kwa import relative, under
 
 SESSION_BYTES = 1024 * 1024        # plafond d'un fichier de session (environ 5 000 lignes)
 TOTAL_BYTES = 20 * 1024 * 1024     # plafond du dossier : au-delà, les plus anciens partent
@@ -71,11 +72,30 @@ def record(root: str, session: str, kind: str, agent: str = "claude", **fields: 
         if kind not in STEPS and os.path.exists(path) and os.path.getsize(path) >= SESSION_BYTES:
             _count(path, str(fields.get("brick") or "autre"))
             return
-        # une seule écriture d'une ligne courte en ajout : deux écrivains ne mêlent pas leurs lignes
-        with open(path, "a", encoding="utf-8") as f:
-            f.write(line)
+        _append(path, line)
     except OSError:
         pass
+
+
+def _append(path: str, line: str) -> None:
+    """Une ligne ajoutée d'un seul appel : sous POSIX, O_APPEND garantit que deux écrivains ne mêlent pas leurs lignes.
+    Sous Windows, l'ajout est un déplacement puis une écriture, non atomique : un verrou sur le premier octet du
+    fichier le remplace (msvcrt attend jusqu'à 10 s, puis l'erreur est ignorée par record)."""
+    data = line.encode("utf-8")
+    with open(path, "ab") as f:
+        if os.name != "nt":
+            f.write(data)
+            return
+        import msvcrt
+
+        f.seek(0)
+        msvcrt.locking(f.fileno(), msvcrt.LK_LOCK, 1)
+        try:
+            f.write(data)
+            f.flush()
+        finally:
+            f.seek(0)
+            msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
 
 
 # Ce que fait un appel d'outil, en une brique : la même lecture que le mod kwa-activity. Les noms d'outils de Codex
@@ -91,8 +111,8 @@ SHIP = re.compile(r"\b(git (commit|push|merge|tag)|gh pr (create|merge))\b")
 def classify(tool: str, tool_input: dict, verify: list[str] | None = None, root: str = "") -> tuple[str, str]:
     """(brique, cible) d'un appel d'outil ; brique vide pour une commande qui ne relève d'aucune étape."""
     path = str(tool_input.get("file_path") or tool_input.get("notebook_path") or tool_input.get("path") or "")
-    if root and path.startswith(root.rstrip("/") + "/"):
-        path = path[len(root.rstrip("/")) + 1:]
+    if root and path != root and under(path, root):
+        path = relative(path, root)
     if tool in READ_TOOLS:
         return "cadrer", path or str(tool_input.get("pattern") or tool_input.get("url") or tool_input.get("query") or "")
     if tool in WRITE_TOOLS:

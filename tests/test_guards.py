@@ -1,10 +1,13 @@
 """Gardes Kwa : cas nominaux + contournements confirmés par l'audit de super-board."""
 import json
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
 import unittest
+
+from helpers import SYMLINKS
 
 HOOKS = os.path.join(os.path.dirname(__file__), "..", "core", "hooks")
 
@@ -16,7 +19,7 @@ def run(hook, tool, tool_input, cwd=None, env=None):
     if cwd:
         e["CLAUDE_PROJECT_DIR"] = cwd
     p = subprocess.run([sys.executable, os.path.join(HOOKS, hook)], input=json.dumps(payload),
-                       capture_output=True, text=True, env=e)
+                       capture_output=True, encoding="utf-8", env=e)
     assert p.returncode == 0, p.stderr
     return json.loads(p.stdout)["hookSpecificOutput"]["permissionDecision"] if p.stdout.strip() else "allow"
 
@@ -49,13 +52,15 @@ class Secrets(unittest.TestCase):
 
     def test_dotted_name_that_exists_as_a_file_is_denied(self):
         d = tempfile.mkdtemp()
-        open(os.path.join(d, "prod.env"), "w").write("X=1\n")
+        open(os.path.join(d, "prod.env"), "w", encoding="utf-8").write("X=1\n")
         self.assertEqual(bash("guard-secrets.py", "cat prod.env", cwd=d), "deny")
         self.assertEqual(bash("guard-secrets.py", "cat ./prod.env", cwd=d), "deny")
 
     def test_read_tool(self):
         self.assertEqual(run("guard-secrets.py", "Read", {"file_path": "/x/.env"}), "deny")
         self.assertEqual(run("guard-secrets.py", "Read", {"file_path": "/x/.env.example"}), "allow")
+        if os.name == "nt":  # Claude Code envoie des chemins à antislashs sous Windows
+            self.assertEqual(run("guard-secrets.py", "Read", {"file_path": "C:\\x\\.env"}), "deny")
 
 
 class Heredocs(unittest.TestCase):
@@ -110,6 +115,7 @@ class Git(unittest.TestCase):
         # session ouverte dans un projet sur main, commande qui vise un autre dépôt sur une branche de travail
         other = tempfile.mkdtemp()
         subprocess.run(["git", "init", "-q", "-b", "feat/y", other], check=True)
+        other = shlex.quote(other)  # un chemin Windows garde ses antislashs entre guillemets, comme dans un vrai shell
         for cmd in [f"git -C {other} commit -m x", f"cd {other} && git commit -m x", f"cd {other}; git commit -m x"]:
             with self.subTest(cmd=cmd):
                 self.assertEqual(bash("guard-git.py", cmd, cwd=self.repo), "allow")
@@ -117,6 +123,7 @@ class Git(unittest.TestCase):
         self.branch("feat/x")
         main_repo = tempfile.mkdtemp()
         subprocess.run(["git", "init", "-q", "-b", "main", main_repo], check=True)
+        main_repo = shlex.quote(main_repo)
         for cmd in [f"git -C {main_repo} commit -m x", f"cd {main_repo} && git commit -m x", f"git -C {main_repo} push"]:
             with self.subTest(cmd=cmd):
                 self.assertEqual(bash("guard-git.py", cmd, cwd=self.repo), "deny")
@@ -129,12 +136,14 @@ class Delete(unittest.TestCase):
     def setUp(self):
         self.root = os.path.realpath(tempfile.mkdtemp())
         os.makedirs(os.path.join(self.root, "build"))
-        os.symlink("/etc", os.path.join(self.root, "link"))
+        if SYMLINKS:
+            os.symlink("/etc", os.path.join(self.root, "link"))
 
     def test_denied(self):
         for cmd in ["rm -rf /", "rm -rf ~", "rm -rf ../../../../../../../usr/x", "rm -rf /usr/local/x", "bash -c 'rm -rf /usr/x'",
                     "env rm -rf /usr/x", "nice -n 1 rm -rf /usr/x", "rm -rf .git", "rm -rf .claude/kwa",
-                    "rm -rf link/x", "true && rm -rf /usr/x", "find / -delete", "(cd /tmp && rm -rf /usr/x)", "echo $(rm -rf /usr/x)"]:
+                    "true && rm -rf /usr/x", "find / -delete", "(cd /tmp && rm -rf /usr/x)", "echo $(rm -rf /usr/x)",
+                    *(["rm -rf link/x"] if SYMLINKS else [])]:
             with self.subTest(cmd=cmd):
                 self.assertEqual(bash("guard-delete.py", cmd, cwd=self.root), "deny")
 
@@ -168,7 +177,7 @@ class Write(unittest.TestCase):
 
 class FailClosed(unittest.TestCase):
     def test_bad_payload_does_not_crash(self):
-        p = subprocess.run([sys.executable, os.path.join(HOOKS, "guard-git.py")], input="pas du json", capture_output=True, text=True)
+        p = subprocess.run([sys.executable, os.path.join(HOOKS, "guard-git.py")], input="pas du json", capture_output=True, encoding="utf-8")
         self.assertEqual(p.returncode, 0)
 
 
@@ -191,7 +200,7 @@ class Copilot(unittest.TestCase):
         e = {k: v for k, v in os.environ.items() if k not in ("CLAUDE_PROJECT_DIR", "KWA_PROJECT_DIR", "KWA_AGENT")}
         e["COPILOT_PLUGIN_DATA"] = tempfile.mkdtemp()
         return subprocess.run([sys.executable, os.path.join(HOOKS, hook)], input=json.dumps(payload),
-                              capture_output=True, text=True, env=e)
+                              capture_output=True, encoding="utf-8", env=e)
 
     def test_a_refusal_is_readable_by_copilot(self):
         p = self.hook("guard-git.py", "git commit -m x", os.path.join(self.repo, "sub"))
@@ -212,7 +221,7 @@ class Copilot(unittest.TestCase):
         code = "import sys; sys.path.insert(0, sys.argv[1]); import _kwa; _kwa.add_context('SessionStart', 'bonjour')"
         for env, top in (({"COPILOT_PLUGIN_DATA": "x"}, True), ({}, False)):
             e = {k: v for k, v in os.environ.items() if k not in ("COPILOT_PLUGIN_DATA", "KWA_AGENT")}
-            out = json.loads(subprocess.run([sys.executable, "-c", code, HOOKS], capture_output=True, text=True,
+            out = json.loads(subprocess.run([sys.executable, "-c", code, HOOKS], capture_output=True, encoding="utf-8",
                                             env={**e, **env}).stdout)
             with self.subTest(copilot=top):
                 self.assertEqual(out["hookSpecificOutput"]["additionalContext"], "bonjour")

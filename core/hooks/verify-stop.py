@@ -25,7 +25,7 @@ def main() -> int:
     if not commands or clean:
         return 0
     for cmd in commands:
-        r = subprocess.run(cmd, shell=True, cwd=root, capture_output=True, text=True)
+        r = subprocess.run(cmd, shell=True, cwd=root, capture_output=True, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             tail = "\n".join((r.stdout + r.stderr).splitlines()[-40:])
             print(f"STOP BLOQUÉ — `{cmd}` est rouge. Corriger avant de rendre la main :\n{tail}", file=sys.stderr)

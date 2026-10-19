@@ -10,17 +10,20 @@ from __future__ import annotations
 
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _kwa import edits, load_payload, load_policy, project_dir  # noqa: E402
+from _kwa import edits, load_payload, load_policy, project_dir, under  # noqa: E402
 
 DEFAULT_EXT = [".ts", ".tsx", ".js", ".jsx", ".json", ".md"]
 
 
 def run(cmd: str, path: str, cwd: str) -> subprocess.CompletedProcess:
-    return subprocess.run(shlex.split(cmd.replace("{file}", shlex.quote(path))), cwd=cwd, capture_output=True, text=True, timeout=60)
+    argv = shlex.split(cmd.replace("{file}", shlex.quote(path)))
+    argv[0] = shutil.which(argv[0]) or argv[0]  # Windows : npx et consorts sont des .cmd, que which sait trouver
+    return subprocess.run(argv, cwd=cwd, capture_output=True, encoding="utf-8", errors="replace", timeout=60)
 
 
 def format_one(path: str, d: dict, policy: dict) -> int:
@@ -28,7 +31,7 @@ def format_one(path: str, d: dict, policy: dict) -> int:
         return 0
     root = project_dir(d)
     real = os.path.realpath(path)
-    if real != root and not real.startswith(root + os.sep):
+    if not under(real, root):
         return 0  # fichier d'un autre dépôt ou d'un worktree voisin : ni sa politique ni son suivi git ne sont connus ici
     write = policy.get("command", "npx --no-install prettier --write {file}")
     check = policy.get("check", "npx --no-install prettier --check {file}")

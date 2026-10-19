@@ -6,17 +6,19 @@ import sys
 import tempfile
 import unittest
 
+from helpers import needs_symlinks
+
 KWA = os.path.join(os.path.dirname(__file__), "..", "bin", "kwa")
 
 
 def kwa(*args):
-    return subprocess.run([sys.executable, KWA, *args], capture_output=True, text=True)
+    return subprocess.run([sys.executable, KWA, *args], capture_output=True, encoding="utf-8")
 
 
 def tree(root):
     out = {}
     for d, _, fs in os.walk(root):
-        if "/.git" in d:
+        if "/.git" in d.replace(os.sep, "/"):
             continue
         for f in fs:
             p = os.path.join(d, f)
@@ -34,11 +36,11 @@ class Install(unittest.TestCase):
     def test_fresh_install(self):
         r = kwa("install", self.t)
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertIn("<!-- kwa:begin", open(self.p("AGENTS.md")).read())
-        self.assertEqual(open(self.p("CLAUDE.md")).read().strip(), "@AGENTS.md")
+        self.assertIn("<!-- kwa:begin", open(self.p("AGENTS.md"), encoding="utf-8").read())
+        self.assertEqual(open(self.p("CLAUDE.md"), encoding="utf-8").read().strip(), "@AGENTS.md")
         self.assertTrue(os.access(self.p(".claude/kwa/hooks/guard-git.py"), os.X_OK))
         self.assertTrue(os.path.exists(self.p(".claude/skills/kwa-commit/SKILL.md")))
-        s = json.load(open(self.p(".claude/settings.json")))
+        s = json.load(open(self.p(".claude/settings.json"), encoding="utf-8"))
         self.assertEqual(len(s["hooks"]["PreToolUse"]), 3)
         self.assertEqual(kwa("doctor", self.t).returncode, 0)
 
@@ -51,37 +53,38 @@ class Install(unittest.TestCase):
         self.assertEqual(tree(self.t), before)
 
     def test_existing_content_untouched_outside_markers(self):
-        open(self.p("AGENTS.md"), "w").write("# Mon projet\n\nrègle perso\n\n## Fin\nbas de page\n")
+        open(self.p("AGENTS.md"), "w", encoding="utf-8").write("# Mon projet\n\nrègle perso\n\n## Fin\nbas de page\n")
         kwa("install", self.t)
-        a = open(self.p("AGENTS.md")).read()
+        a = open(self.p("AGENTS.md"), encoding="utf-8").read()
         self.assertTrue(a.startswith("# Mon projet\n\nrègle perso\n\n## Fin\nbas de page\n"))
         # ré-installation : seul l'intérieur du bloc peut changer
-        open(self.p("AGENTS.md"), "w").write(a.replace("règle perso", "règle perso modifiée") + "\npied\n")
+        open(self.p("AGENTS.md"), "w", encoding="utf-8").write(a.replace("règle perso", "règle perso modifiée") + "\npied\n")
         kwa("install", self.t)
-        b = open(self.p("AGENTS.md")).read()
+        b = open(self.p("AGENTS.md"), encoding="utf-8").read()
         self.assertIn("règle perso modifiée", b)
         self.assertTrue(b.rstrip().endswith("pied"))
 
     def test_claude_md_with_own_rules_not_overwritten(self):
-        open(self.p("CLAUDE.md"), "w").write("# règles à moi\n")
+        open(self.p("CLAUDE.md"), "w", encoding="utf-8").write("# règles à moi\n")
         r = kwa("install", self.t)
-        self.assertEqual(open(self.p("CLAUDE.md")).read(), "# règles à moi\n")
+        self.assertEqual(open(self.p("CLAUDE.md"), encoding="utf-8").read(), "# règles à moi\n")
         self.assertIn("À FUSIONNER", r.stdout)
         self.assertEqual(kwa("doctor", self.t).returncode, 1)
 
+    @needs_symlinks
     def test_claude_md_symlink_kept(self):
-        open(self.p("AGENTS.md"), "w").write("# x\n")
+        open(self.p("AGENTS.md"), "w", encoding="utf-8").write("# x\n")
         os.symlink("AGENTS.md", self.p("CLAUDE.md"))
         kwa("install", self.t)
         self.assertTrue(os.path.islink(self.p("CLAUDE.md")))
 
     def test_settings_merge_keeps_existing_and_backs_up(self):
         os.makedirs(self.p(".claude"))
-        open(self.p(".claude/settings.json"), "w").write(json.dumps({
+        open(self.p(".claude/settings.json"), "w", encoding="utf-8").write(json.dumps({
             "permissions": {"allow": ["Bash(ls)"]},
             "hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "mon-hook"}]}]}}))
         kwa("install", self.t)
-        s = json.load(open(self.p(".claude/settings.json")))
+        s = json.load(open(self.p(".claude/settings.json"), encoding="utf-8"))
         self.assertEqual(s["permissions"]["allow"], ["Bash(ls)"])
         cmds = [h["command"] for e in s["hooks"]["PreToolUse"] if e["matcher"] == "Bash" for h in e["hooks"]]
         self.assertIn("mon-hook", cmds)
@@ -90,20 +93,20 @@ class Install(unittest.TestCase):
 
     def test_invalid_settings_left_intact(self):
         os.makedirs(self.p(".claude"))
-        open(self.p(".claude/settings.json"), "w").write("{pas du json")
+        open(self.p(".claude/settings.json"), "w", encoding="utf-8").write("{pas du json")
         r = kwa("install", self.t)
         self.assertEqual(r.returncode, 2)
-        self.assertEqual(open(self.p(".claude/settings.json")).read(), "{pas du json")
+        self.assertEqual(open(self.p(".claude/settings.json"), encoding="utf-8").read(), "{pas du json")
 
     def test_local_edit_backed_up_then_restored(self):
         kwa("install", self.t)
         f = self.p(".claude/rules/kwa-git-discipline.md")
-        open(f, "a").write("\nretouche locale\n")
+        open(f, "a", encoding="utf-8").write("\nretouche locale\n")
         r = kwa("install", self.t)
         self.assertIn("sauvegardé", r.stdout)
-        self.assertNotIn("retouche locale", open(f).read())
+        self.assertNotIn("retouche locale", open(f, encoding="utf-8").read())
         found = [os.path.join(d, x) for d, _, fs in os.walk(self.p(".claude/kwa/backup")) for x in fs]
-        self.assertTrue(any(open(x).read().endswith("retouche locale\n") for x in found))
+        self.assertTrue(any(open(x, encoding="utf-8").read().endswith("retouche locale\n") for x in found))
 
     def test_dry_run_writes_nothing(self):
         r = kwa("install", self.t, "--dry-run")
@@ -113,10 +116,10 @@ class Install(unittest.TestCase):
     def test_never_runs_git(self):
         subprocess.run(["git", "init", "-q", self.t], check=True)
         kwa("install", self.t)
-        log = subprocess.run(["git", "-C", self.t, "log"], capture_output=True, text=True)
+        log = subprocess.run(["git", "-C", self.t, "log"], capture_output=True, encoding="utf-8")
         self.assertNotEqual(log.returncode, 0, "aucun commit ne doit exister")
         self.assertEqual(subprocess.run(["git", "-C", self.t, "diff", "--cached", "--name-only"],
-                                        capture_output=True, text=True).stdout, "")
+                                        capture_output=True, encoding="utf-8").stdout, "")
 
     def test_refuses_installing_into_pack(self):
         self.assertEqual(kwa("install", os.path.join(os.path.dirname(__file__), "..")).returncode, 2)
@@ -124,7 +127,7 @@ class Install(unittest.TestCase):
     def test_status_reports_drift(self):
         kwa("install", self.t)
         self.assertEqual(kwa("status", self.t).returncode, 0)
-        open(self.p(".claude/kwa/hooks/guard-git.py"), "a").write("# x\n")
+        open(self.p(".claude/kwa/hooks/guard-git.py"), "a", encoding="utf-8").write("# x\n")
         self.assertEqual(kwa("status", self.t).returncode, 1)
 
 
@@ -137,13 +140,13 @@ class MigrationFromOldName(unittest.TestCase):
     def setUp(self):
         self.t = tempfile.mkdtemp()
         os.makedirs(os.path.join(self.t, ".git", "info"))
-        with open(self.p("AGENTS.md"), "w", newline="") as f:
+        with open(self.p("AGENTS.md"), "w", newline="", encoding="utf-8") as f:
             f.write(self.OLD_AGENTS_HEAD + self.OLD_AGENTS_TAIL)
         self.assertEqual(kwa("install", self.t).returncode, 0)
-        with open(self.p("AGENTS.md"), newline="") as f:
+        with open(self.p("AGENTS.md"), newline="", encoding="utf-8") as f:
             text = f.read()
         i, j = text.index("<!-- kwa:begin"), text.index("<!-- kwa:end -->") + len("<!-- kwa:end -->")
-        with open(self.p("AGENTS.md"), "w", newline="") as f:  # texte du projet avant ET après le bloc
+        with open(self.p("AGENTS.md"), "w", newline="", encoding="utf-8") as f:  # texte du projet avant ET après le bloc
             f.write(text[:i] + text[i:j] + self.OLD_AGENTS_TAIL)
         self.to_legacy()
 
@@ -164,16 +167,16 @@ class MigrationFromOldName(unittest.TestCase):
                     os.rename(os.path.join(base, name), os.path.join(base, "kata-" + name[4:]))
         os.rename(self.p(".claude", "kwa.policy.json"), self.p(".claude", "kata.policy.json"))
         for rel in (".claude/settings.json", ".claude/kata/state.json", ".claude/kata.policy.json", "AGENTS.md"):
-            with open(self.p(rel), newline="") as f:
+            with open(self.p(rel), newline="", encoding="utf-8") as f:
                 text = f.read()
-            with open(self.p(rel), "w", newline="") as f:
+            with open(self.p(rel), "w", newline="", encoding="utf-8") as f:
                 f.write(text.replace("kwa", "kata"))
-        s = json.load(open(self.p(".claude/settings.json")))
+        s = json.load(open(self.p(".claude/settings.json"), encoding="utf-8"))
         s["hooks"]["PreToolUse"].append({"matcher": "Bash", "hooks": [{"type": "command", "command": "./mon-hook-projet.sh"}]})
-        json.dump(s, open(self.p(".claude/settings.json"), "w"))
+        json.dump(s, open(self.p(".claude/settings.json"), "w", encoding="utf-8"))
         os.makedirs(self.p(".claude", "kata", "local"))
-        open(self.p(".claude", "kata", "local", "notes.jsonl"), "w").write('{"kind":"gotcha"}\n')
-        with open(self.p(".claude", "rules", "kata-git-discipline.md"), "a") as f:
+        open(self.p(".claude", "kata", "local", "notes.jsonl"), "w", encoding="utf-8").write('{"kind":"gotcha"}\n')
+        with open(self.p(".claude", "rules", "kata-git-discipline.md"), "a", encoding="utf-8") as f:
             f.write("\nretouche locale\n")
 
     def test_dry_run_changes_nothing_and_says_what_it_would_do(self):
@@ -200,19 +203,19 @@ class MigrationFromOldName(unittest.TestCase):
         self.assertTrue(os.path.exists(self.p(".claude/kwa/hooks/guard-git.py")))
         self.assertTrue(os.path.exists(self.p(".claude/skills/kwa-commit/SKILL.md")))
         # politique : renommée, clé mise à jour
-        self.assertEqual(json.load(open(self.p(".claude/kwa.policy.json")))["kwa"], 1)
+        self.assertEqual(json.load(open(self.p(".claude/kwa.policy.json"), encoding="utf-8"))["kwa"], 1)
         # notes et sauvegardes conservées, retouche locale sauvegardée
-        self.assertEqual(open(self.p(".claude/kwa/local/notes.jsonl")).read(), '{"kind":"gotcha"}\n')
+        self.assertEqual(open(self.p(".claude/kwa/local/notes.jsonl"), encoding="utf-8").read(), '{"kind":"gotcha"}\n')
         saved = [os.path.join(d, f) for d, _, fs in os.walk(self.p(".claude/kwa/backup")) for f in fs]
         self.assertTrue(any(x.endswith("kata-git-discipline.md") for x in saved), saved)
         # settings : plus aucun ancien hook, le hook du projet reste, les nouveaux sont branchés
-        cmds = [h["command"] for ev in json.load(open(self.p(".claude/settings.json")))["hooks"].values()
+        cmds = [h["command"] for ev in json.load(open(self.p(".claude/settings.json"), encoding="utf-8"))["hooks"].values()
                 for e in ev for h in e["hooks"]]
         self.assertFalse([c for c in cmds if ".claude/kata/" in c], cmds)
         self.assertIn("./mon-hook-projet.sh", cmds)
         self.assertTrue([c for c in cmds if ".claude/kwa/hooks/guard-git.py" in c])
         # AGENTS.md : hors bloc, octet pour octet ; marqueurs neufs
-        with open(self.p("AGENTS.md"), newline="") as f:
+        with open(self.p("AGENTS.md"), newline="", encoding="utf-8") as f:
             text = f.read()
         self.assertTrue(text.startswith(self.OLD_AGENTS_HEAD), "début du fichier intact (fins de ligne comprises)")
         self.assertTrue(text.endswith(self.OLD_AGENTS_TAIL), "fin du fichier intacte, sans retour final ajouté")
@@ -229,10 +232,10 @@ class MigrationFromOldName(unittest.TestCase):
         self.assertEqual(tree(self.t).keys(), before.keys())
 
     def test_unknown_file_in_old_folder_is_kept_and_reported(self):
-        open(self.p(".claude", "kata", "mine.txt"), "w").write("à moi")
+        open(self.p(".claude", "kata", "mine.txt"), "w", encoding="utf-8").write("à moi")
         r = kwa("install", self.t)
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(open(self.p(".claude", "kata", "mine.txt")).read(), "à moi")
+        self.assertEqual(open(self.p(".claude", "kata", "mine.txt"), encoding="utf-8").read(), "à moi")
         self.assertIn("À VÉRIFIER", r.stdout)
 
 

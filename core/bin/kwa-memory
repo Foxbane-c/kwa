@@ -27,7 +27,7 @@ import _journal  # noqa: E402  (installé avec ce script, dans .claude/kwa/hooks
 
 
 def root() -> str:
-    r = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+    r = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, encoding="utf-8", errors="replace")
     return r.stdout.strip() if r.returncode == 0 else os.getcwd()
 
 
@@ -52,7 +52,7 @@ def inbox_lines(r: str) -> list[str]:
 
 
 def git(r: str, *args: str) -> str:
-    return subprocess.run(["git", "-C", r, *args], capture_output=True, text=True).stdout.strip()
+    return subprocess.run(["git", "-C", r, *args], capture_output=True, encoding="utf-8", errors="replace").stdout.strip()
 
 
 def main(argv: list[str]) -> int:
@@ -113,7 +113,7 @@ def main(argv: list[str]) -> int:
             pol = json.load(open(os.path.join(r, ".claude", "kwa.policy.json"), encoding="utf-8")).get("memory", {})
         except (OSError, ValueError):
             pol = {}
-        base = (json.load(open(os.path.join(r, ".claude", "kwa.policy.json"))).get("base_branch", "main")
+        base = (json.load(open(os.path.join(r, ".claude", "kwa.policy.json"), encoding="utf-8")).get("base_branch", "main")
                 if os.path.exists(os.path.join(r, ".claude", "kwa.policy.json")) else "main")
         print("## Notes en attente\n" + ("\n".join(inbox_lines(r)) or "(aucune)"))
         if _journal.enabled():

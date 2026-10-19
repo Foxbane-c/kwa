@@ -19,7 +19,7 @@ PROTECTED = {"main", "master"} | {b for b in os.environ.get("KWA_PROTECTED_BRANC
 def current_branch(cwd: str) -> str:
     try:
         return subprocess.run(["git", "-C", cwd, "symbolic-ref", "--short", "-q", "HEAD"],
-                              capture_output=True, text=True, timeout=5).stdout.strip()
+                              capture_output=True, encoding="utf-8", errors="replace", timeout=5).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return ""
 
