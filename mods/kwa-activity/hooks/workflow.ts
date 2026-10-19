@@ -10,7 +10,9 @@ export type Agent = { name: string; task: string; ms: number }
 // running : les sous-agents qui tournent ; done : ceux qui ont fini ; peak : le plus grand nombre en même temps
 export type Swarm = { running: Agent[]; done: number; peak: number }
 // detected : une skill Kwa a désigné le workflow ; sinon `key` n'est que le parcours montré par défaut
-export type Model = { key: string; title: string; why: string; detected: boolean; rows: Row[]; swarm: Swarm }
+// touched : briques où les outils ont travaillé ; current : la brique de la dernière activité des outils
+export type Model = { key: string; title: string; why: string; detected: boolean; rows: Row[]; swarm: Swarm; touched: Brick[]; current: Brick | null }
+export type Activity = { touched: Brick[]; current: Brick | null }
 
 export const BRICKS: [Brick, string][] = [
   ['cadrer', 'Cadrer'], ['faire', 'Faire'], ['prouver', 'Prouver'],
@@ -65,7 +67,8 @@ const stepStatus = (s: Step): Status => (s.kind === 'garde' ? 'denied' : s.ended
 
 // `first` : la première skill Kwa de la session, gardée à part pour que le workflow détecté ne change pas quand
 // la liste des étapes est tronquée.
-export function model(steps: Step[], now: number, first: string | null = steps.find(s => s.kind === 'skill')?.name ?? null): Model {
+export function model(steps: Step[], now: number, first: string | null = steps.find(s => s.kind === 'skill')?.name ?? null,
+  activity: Activity = { touched: [], current: null }): Model {
   const key = (first && FLOW_OF[first]) || 'feature'
   const flow = FLOWS[key]!
   const why = first ? `d'après ${first}` : 'en attente d’une skill'
@@ -117,7 +120,28 @@ export function model(steps: Step[], now: number, first: string | null = steps.f
   let last = -1
   rows.forEach((r, i) => { if (!r.extra && r.status !== 'next') last = i })
   rows.forEach((r, i) => { if (r.status === 'next' && !r.extra && i < last) r.status = 'passed' })
-  return { key, title: flow.title, why, detected: first !== null, rows, swarm: swarm(steps, now) }
+  return { key, title: flow.title, why, detected: first !== null, rows, swarm: swarm(steps, now), ...activity }
+}
+
+// Ce que fait un appel d'outil, en une brique et quelques mots. `verify` : les commandes de vérification de la
+// politique du projet. Une commande du shell qui ne relève d'aucune brique garde son libellé, sans brique.
+const TEST = /\b(test|tests|pytest|unittest|jest|vitest|mocha|tsc|lint|eslint|typecheck|go test|cargo (test|check)|mvn (test|verify)|gradle (test|check)|dotnet (build|test))\b/
+const SHIP = /\b(git (commit|push|merge|tag)|gh pr (create|merge))\b/
+const base = (p: unknown) => String(p ?? '').split('/').filter(Boolean).pop() ?? ''
+export function classify(tool: string, args: Record<string, unknown>, verify: string[] = []): { brick: Brick | null; label: string } | null {
+  if (tool === 'Read' || tool === 'NotebookRead') return { brick: 'cadrer', label: `lit ${base(args.file_path ?? args.notebook_path)}` }
+  if (tool === 'Grep') return { brick: 'cadrer', label: `cherche « ${cut(String(args.pattern ?? ''), 24)} »` }
+  if (tool === 'Glob') return { brick: 'cadrer', label: `cherche des fichiers ${cut(String(args.pattern ?? ''), 24)}` }
+  if (tool === 'WebFetch' || tool === 'WebSearch') return { brick: 'cadrer', label: 'consulte le web' }
+  if (tool === 'Write') return { brick: 'faire', label: `écrit ${base(args.file_path)}` }
+  if (tool === 'Edit' || tool === 'MultiEdit' || tool === 'NotebookEdit') return { brick: 'faire', label: `modifie ${base(args.file_path ?? args.notebook_path)}` }
+  if (tool !== 'Bash') return null
+  const cmd = String(args.command ?? '').trim()
+  if (!cmd) return null
+  const shown = cut(cmd.split('\n')[0]!, 48)
+  if (verify.some(v => v && cmd.includes(v)) || TEST.test(cmd)) return { brick: 'prouver', label: `lance ${shown}` }
+  if (SHIP.test(cmd)) return { brick: 'livrer', label: shown }
+  return { brick: null, label: `exécute ${shown}` }
 }
 
 function swarm(steps: Step[], now: number): Swarm {
@@ -164,6 +188,7 @@ export function isOver(s: Step, status: string | undefined, now: number, staleMs
 export function openBrick(m: Model): Brick | null {
   const run = m.rows.find(r => r.status === 'run')
   if (run) return run.brick
+  if (m.current) return m.current   // sans skill en cours, la brique de la dernière activité des outils
   const reached = m.rows.filter(r => r.status !== 'next' && r.status !== 'passed')
   return reached.length ? reached[reached.length - 1]!.brick : null
 }
@@ -244,7 +269,7 @@ export function svg(m: Model, u: Usage | null, sessionMs: number, { unfoldAgo = 
     const color = BRICK_COLOR[b]
     const isOpen = b === open
     const live = rows.some(r => r.status === 'run')
-    const reached = rows.some(reachedRow)
+    const reached = rows.some(reachedRow) || m.touched.includes(b)
     const isDone = !isOpen && rows.some(r => r.status === 'done') && rows.every(r => r.status === 'done' || r.status === 'passed')
     const denied = rows.reduce((n, r) => n + (r.status === 'denied' ? r.count ?? 1 : 0), 0)
     let out = ''

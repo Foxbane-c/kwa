@@ -184,3 +184,19 @@ test('le schéma ne change pas pendant qu\u2019une étape tourne : seuls les tex
   expect(a.flow).not.toContain('0,42 $')   // le coût n'est plus dans le schéma
   expect(a.flow).toContain('Fenêtre de contexte')   // la carte du contexte, elle, y reste
 })
+
+test('le Mod suit en direct ce que font les outils, même sans skill Kwa', async ($, on) => {
+  engine(on)
+  on('tool.call', { tool: 'Edit' }, () => ({ result: {}, text: 'ok' }) as never)
+  on('tool.call', { tool: 'Bash' }, () => ({ result: {}, text: 'ok' }) as never)
+  await $.session.start({ source: 'startup', cwd: '/tmp', surface: 'desktop', isInteractive: true } as Parameters<typeof $.session.start>[0])
+  await $.tool.call({ tool: 'Edit', file_path: '/p/src/panier.py', old_string: 'a', new_string: 'b' } as never)
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect(await ui.find({ type: 'Text', text: /modifie panier\.py/ })).toBeDefined()
+  expect(JSON.stringify(await ui.find({ type: 'Svg' }))).toContain('frame open')   // une brique s'ouvre sans skill
+  await ui.unmount()
+  await $.tool.call({ tool: 'Bash', command: 'python3 -m unittest' } as never)
+  const ui2 = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect(await ui2.find({ type: 'Text', text: /lance python3 -m unittest/ })).toBeDefined()
+  await ui2.unmount()
+})
