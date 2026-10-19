@@ -386,6 +386,21 @@ class Panel(unittest.TestCase):
                 self.assertIn(label, self.ts)
 
 
+class Agents(unittest.TestCase):
+    """La page « Selon l'agent » montre les refus que les gardes émettent vraiment sous chaque agent."""
+
+    def test_each_agent_gets_the_refusal_it_understands(self):
+        sys.path.insert(0, os.path.join(PACK, "docs", "site", "src"))
+        import agents_page
+        claude, claude_code, _ = agents_page.refusal({})
+        copilot, copilot_code, err = agents_page.refusal({"COPILOT_PLUGIN_DATA": tempfile.mkdtemp()})
+        self.assertEqual(claude_code, 0)
+        self.assertNotIn("permissionDecision", {k for k in json.loads(claude) if k != "hookSpecificOutput"})
+        self.assertEqual(copilot_code, 2)
+        self.assertEqual(json.loads(copilot)["permissionDecision"], "deny")
+        self.assertIn("Kwa — ", err)
+
+
 class Flows(unittest.TestCase):
     """Workflows animés : chaque pièce nommée existe, chaque événement vise une étape, le scénario est complet."""
 

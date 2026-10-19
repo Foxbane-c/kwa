@@ -7,12 +7,11 @@ le journal : il reste alors le simple rappel des notes en attente.
 """
 from __future__ import annotations
 
-import json
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _kwa import cli, load_payload, load_policy, project_dir, skill  # noqa: E402
+from _kwa import add_context, cli, load_payload, load_policy, project_dir, skill  # noqa: E402
 
 
 def main() -> int:
@@ -35,7 +34,7 @@ def main() -> int:
     except Exception:  # noqa: BLE001  un filet ne doit jamais empêcher une session de démarrer
         msg = ""
     if msg:
-        print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": msg}}, ensure_ascii=False))
+        add_context("SessionStart", msg)
     return 0
 
 
