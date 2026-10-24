@@ -72,7 +72,8 @@ def main() -> None:
             if args[0] == "push":
                 rest = args[1:]
                 lease = any(a == "--force-with-lease" or a.startswith("--force-with-lease=") for a in rest)
-                hard = any(a in {"-f", "--force", "--mirror", "--all", "--delete", "-d"} or a.startswith("+") for a in rest)
+                hard = any(a in {"--force", "--mirror", "--all", "--delete"} or a.startswith(("+", ":"))
+                           or (re.fullmatch(r"-[a-zA-Z]+", a) and ("f" in a or "d" in a)) for a in rest)
                 force = lease or hard
                 targets = {re.sub(r"^\+|^refs/heads/", "", t.split(":")[-1]) for t in rest if not t.startswith("-")}
                 if hard:

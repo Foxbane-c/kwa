@@ -111,6 +111,13 @@ class Git(unittest.TestCase):
         self.assertEqual(bash("guard-git.py", "git reset --hard", cwd=self.repo), "ask")
         self.assertEqual(bash("guard-git.py", "git status", cwd=self.repo), "allow")
 
+    def test_bundled_force_flags(self):
+        self.branch("feat/x")
+        for cmd in ["git push -uf origin feat/x", "git push -fu origin feat/x", "git push -df origin feat/y",
+                    "git push origin :feat/y", "git -C . push -uf origin feat/x"]:
+            with self.subTest(cmd=cmd):
+                self.assertEqual(bash("guard-git.py", cmd, cwd=self.repo), "deny")
+
     def test_the_repo_named_by_the_command_decides(self):
         # session ouverte dans un projet sur main, commande qui vise un autre dépôt sur une branche de travail
         other = tempfile.mkdtemp()
