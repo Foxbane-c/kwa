@@ -114,7 +114,9 @@ class Git(unittest.TestCase):
     def test_bundled_force_flags(self):
         self.branch("feat/x")
         for cmd in ["git push -uf origin feat/x", "git push -fu origin feat/x", "git push -df origin feat/y",
-                    "git push origin :feat/y", "git -C . push -uf origin feat/x"]:
+                    "git push origin :feat/y", "git -C . push -uf origin feat/x", "git push -4f origin feat/x",
+                    "git push --forc origin feat/x", "git push --del origin feat/y", "git push --mirr origin",
+                    "git push --force-with-lease --force origin feat/x"]:
             with self.subTest(cmd=cmd):
                 self.assertEqual(bash("guard-git.py", cmd, cwd=self.repo), "deny")
 

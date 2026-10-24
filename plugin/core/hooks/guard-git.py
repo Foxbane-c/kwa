@@ -71,9 +71,14 @@ def main() -> None:
                                "dédiée et ouvrir une PR (KWA_ALLOW_MAIN=1 pour une exception assumée)")
             if args[0] == "push":
                 rest = args[1:]
-                lease = any(a == "--force-with-lease" or a.startswith("--force-with-lease=") for a in rest)
-                hard = any(a in {"--force", "--mirror", "--all", "--delete"} or a.startswith(("+", ":"))
-                           or (re.fullmatch(r"-[a-zA-Z]+", a) and ("f" in a or "d" in a)) for a in rest)
+                longs = [a[2:].split("=")[0] for a in rest if a.startswith("--") and len(a) > 2]
+                # git accepte les options longues abrégées (--forc, --del) : on compare par préfixe
+                is_lease = [len(o) > 6 and "force-with-lease".startswith(o) for o in longs]
+                lease = any(is_lease)
+                hard = any(a.startswith(("+", ":")) or (re.fullmatch(r"-[A-Za-z0-9]+", a) and ("f" in a or "d" in a))
+                           for a in rest) \
+                    or any(not el and len(o) >= 3 and any(full.startswith(o) for full in ("force", "delete", "mirror", "all"))
+                           for o, el in zip(longs, is_lease))
                 force = lease or hard
                 targets = {re.sub(r"^\+|^refs/heads/", "", t.split(":")[-1]) for t in rest if not t.startswith("-")}
                 if hard:
