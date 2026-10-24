@@ -77,7 +77,7 @@ def main() -> None:
                 lease = any(is_lease)
                 hard = any(a.startswith(("+", ":")) or (re.fullmatch(r"-[A-Za-z0-9]+", a) and ("f" in a or "d" in a))
                            for a in rest) \
-                    or any(not el and len(o) >= 3 and any(full.startswith(o) for full in ("force", "delete", "mirror", "all"))
+                    or any(not el and any(full.startswith(o) for full in ("force", "delete", "mirror", "all", "branches", "prune"))
                            for o, el in zip(longs, is_lease))
                 force = lease or hard
                 targets = {re.sub(r"^\+|^refs/heads/", "", t.split(":")[-1]) for t in rest if not t.startswith("-")}

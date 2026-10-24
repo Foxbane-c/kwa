@@ -116,7 +116,9 @@ class Git(unittest.TestCase):
         for cmd in ["git push -uf origin feat/x", "git push -fu origin feat/x", "git push -df origin feat/y",
                     "git push origin :feat/y", "git -C . push -uf origin feat/x", "git push -4f origin feat/x",
                     "git push --forc origin feat/x", "git push --del origin feat/y", "git push --mirr origin",
-                    "git push --force-with-lease --force origin feat/x"]:
+                    "git push --force-with-lease --force origin feat/x", "git push --mi origin", "git push --de origin feat/y",
+                    "git push --al origin", "git push --branches origin", "git push --prune origin",
+                    "git push --m origin", "git push --b origin"]:
             with self.subTest(cmd=cmd):
                 self.assertEqual(bash("guard-git.py", cmd, cwd=self.repo), "deny")
 
