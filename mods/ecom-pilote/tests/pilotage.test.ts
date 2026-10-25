@@ -64,5 +64,5 @@ test('les cartes : halo pour en cours, trait qui barre les faites, retard en rou
   expect(dessinSection([], 'en_attente', NOW, false).source).toContain('Rien en attente')
   const tete = dessinTete({ etat: { ...BASE, etapes: [], todo }, erreurEtat: null } as never, 2, false).source
   expect(tete).toContain('22,77 €')
-  expect(tete).toContain('relue 2 fois')
+  expect(tete).toContain('mémoire relue 2 fois')
 })

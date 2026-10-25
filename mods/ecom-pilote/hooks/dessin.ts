@@ -72,7 +72,7 @@ function budget(v: Vue, y: number, intro: boolean): string {
 // L'en-tête : titre, parcours, budget, et qui tient la baguette (Claude, avec le nombre de relectures du vault)
 export function dessinTete(v: Vue, memoire: number, intro: boolean): Drawing {
   const s = v.etat!
-  const chef = memoire > 0 ? `mémoire du projet relue ${memoire} fois aujourd’hui` : 'mémoire du projet pas encore relue aujourd’hui'
+  const chef = memoire > 0 ? `mémoire relue ${memoire} fois aujourd’hui` : 'mémoire pas encore relue aujourd’hui'
   const out = `<text x="16" y="28" class="title">Pilotage</text>` +
     `<text x="16" y="48" class="meta">${esc(cut(s.produit, 46))}</text>` +
     parcours(v, 84) + budget(v, 140, intro) +
