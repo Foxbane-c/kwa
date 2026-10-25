@@ -13,8 +13,8 @@ const lu = atom({ plugin: 'ecom-pilote', key: 'lu' } as const, 0)
 
 const PANE = 'ecom-pilote'
 const TITLE = 'E-commerce · pilotage'
-// La session peut être ouverte sur le dossier E-commerce ou sur son parent
-const CHEMINS = ['vault/pilotage.json', 'E-commerce/vault/pilotage.json']
+// Seulement une session ouverte sur le dossier E-commerce lui-même (installé au niveau de ce projet)
+const CHEMINS = ['vault/pilotage.json']
 const RELEVE_MS = 5 * 60 * 1000
 
 let poll: Timer | null = null
