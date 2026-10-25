@@ -69,13 +69,11 @@ export const SECTIONS: { id: Section; titre: string }[] = [
 ]
 
 // Les cartes d'une section, dans l'ordre de lecture : échéance la plus proche d'abord, sans date à la fin ;
-// les faites de la plus récente à la plus ancienne
+// les faites dans l'ordre chronologique, comme un mode d'emploi à rejouer (même jour : l'ordre du fichier)
 export function ranger(todo: Carte[], section: Section): Carte[] {
   const liste = todo.filter(c => c.etat === section)
   const cle = (c: Carte) => c.quand ?? '9999-99-99'
-  return section === 'fait'
-    ? liste.sort((a, b) => (b.quand ?? '').localeCompare(a.quand ?? ''))
-    : liste.sort((a, b) => cle(a).localeCompare(cle(b)))
+  return liste.sort((a, b) => cle(a).localeCompare(cle(b)))
 }
 
 // Les faites restent repliées, les autres dépliées, sauf choix de Chaabane

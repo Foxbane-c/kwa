@@ -18,7 +18,7 @@ test('un pilotage.json faux dit quelle carte est en cause', () => {
   expect(lireEtat(JSON.stringify({ ...BASE, todo: [] })).todo).toEqual([])
 })
 
-test('les cartes se rangent : échéance proche d’abord, faites de la plus récente à la plus ancienne', () => {
+test('les cartes se rangent : échéance proche d’abord, faites dans l’ordre chronologique', () => {
   const todo: Carte[] = [
     { titre: 'Sans date', etat: 'a_faire', recit: '', qui: 'Toi' },
     { titre: 'Devis', etat: 'a_faire', recit: '', qui: 'Claude', quand: '2026-10-28' },
@@ -27,7 +27,7 @@ test('les cartes se rangent : échéance proche d’abord, faites de la plus ré
     { titre: 'Récent', etat: 'fait', recit: '', qui: 'Claude', quand: '2026-10-25' },
   ]
   expect(ranger(todo, 'a_faire').map(c => c.titre)).toEqual(['Devis', 'Colis', 'Sans date'])
-  expect(ranger(todo, 'fait').map(c => c.titre)).toEqual(['Récent', 'Vieux'])
+  expect(ranger(todo, 'fait').map(c => c.titre)).toEqual(['Vieux', 'Récent'])
   expect(estPlie('fait', {})).toBe(true)
   expect(estPlie('en_cours', {})).toBe(false)
   expect(estPlie('fait', { fait: false })).toBe(false)
