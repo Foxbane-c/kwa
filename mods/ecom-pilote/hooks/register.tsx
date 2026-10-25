@@ -1,15 +1,22 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, Timer } from 'claude-code'
 
-import type { Etat, Tache, Vue } from '../types'
-import { dessin } from './dessin'
-import { delai, euros, lireEtat, lireTaches, trier } from './pilotage'
+import type { AgentVu, Etat, Jour, Tache, TacheFaite, Vue } from '../types'
+import { dessin, dessinJour, dessinTaches } from './dessin'
+import { delai, estPlie, euros, jour, jours, lireEtat, lireFaites, lireTaches, trier } from './pilotage'
 
-// V1, lecture seule : le mod lit vault/pilotage.json et les tâches Todoist du projet, et dessine. Il n'écrit rien,
-// ni dans le dépôt, ni dans Todoist, ni dans le contexte du modèle.
+// Lecture seule : le mod lit vault/pilotage.json et les tâches Todoist du projet, observe les sous-agents de la session,
+// et dessine. Il n'écrit rien, ni dans le dépôt, ni dans Todoist, ni dans le contexte du modèle.
 const vue = atom({ plugin: 'ecom-pilote', key: 'vue' } as const, null)
 const isHidden = atom({ plugin: 'ecom-pilote', key: 'isHidden' } as const, false)
 const lu = atom({ plugin: 'ecom-pilote', key: 'lu' } as const, 0)
+const agents = atom({ plugin: 'ecom-pilote', key: 'agents' } as const, [] as AgentVu[])
+const plies = atom({ plugin: 'ecom-pilote', key: 'plies' } as const, {} as Record<string, boolean>)
+const memoire = atom({ plugin: 'ecom-pilote', key: 'memoire' } as const, { jour: '', n: 0 })
+
+// Une lecture du vault (Basic Memory) : ce qui prouve que l'agent a consulté le savoir du projet avant d'agir
+const LECTURE_MEMOIRE = /basic-memory__(search_notes|read_note|build_context|recent_activity|search|view_note|fetch|read_content|cat|grep|find|ls|tail)$/
+const MAX_AGENTS = 40
 
 const PANE = 'ecom-pilote'
 const TITLE = 'E-commerce · pilotage'
@@ -34,13 +41,23 @@ async function lireFichier($: EngineInterface): Promise<{ texte: string } | null
   return null
 }
 
-async function lireTodoist($: EngineInterface, etat: Etat): Promise<{ taches: Tache[]; erreur: string | null }> {
+async function lireTodoist($: EngineInterface, etat: Etat, now: number): Promise<{ taches: Tache[]; faites: TacheFaite[]; erreur: string | null }> {
   try {
     const r = await $.mcp.call(etat.todoist.server, 'find-tasks', { projectId: etat.todoist.projectId, limit: 100 })
-    if (r.isError) return { taches: [], erreur: 'Todoist a refusé la lecture' }
-    return { taches: lireTaches(r.content as { type: string; text?: string }[]), erreur: null }
+    if (r.isError) return { taches: [], faites: [], erreur: 'Todoist a refusé la lecture' }
+    const taches = lireTaches(r.content as { type: string; text?: string }[])
+    // les tâches cochées des sept derniers jours ; un échec ici n'efface pas les tâches ouvertes
+    let faites: TacheFaite[] = []
+    try {
+      const f = await $.mcp.call(etat.todoist.server, 'find-completed-tasks',
+        { projectId: etat.todoist.projectId, since: jour(now - 6 * 86400000), until: jour(now), limit: 100 })
+      if (!f.isError) faites = lireFaites(f.content as { type: string; text?: string }[])
+    } catch {
+      // tâches faites indisponibles
+    }
+    return { taches, faites, erreur: null }
   } catch {
-    return { taches: [], erreur: 'Todoist injoignable depuis le mod' }
+    return { taches: [], faites: [], erreur: 'Todoist injoignable depuis le mod' }
   }
 }
 
@@ -56,13 +73,15 @@ async function relire($: EngineInterface): Promise<boolean> {
   } catch (err) {
     erreurEtat = err instanceof Error ? err.message : 'pilotage.json illisible'
   }
-  let aToi: Tache[] = [], claude: Tache[] = [], erreurTodoist: string | null = null
+  let aToi: Tache[] = [], claude: Tache[] = [], ouvertes: Tache[] = [], faites: TacheFaite[] = [], erreurTodoist: string | null = null
   if (etat) {
-    const t = await lireTodoist($, etat)
+    const t = await lireTodoist($, etat, maintenant)
     erreurTodoist = t.erreur
+    ouvertes = t.taches
+    faites = t.faites
     ;({ aToi, claude } = trier(t.taches, etat.todoist.labelClaude, maintenant))
   }
-  const next: Vue = { etat, erreurEtat, aToi, claude, erreurTodoist, lu: maintenant }
+  const next: Vue = { etat, erreurEtat, aToi, claude, ouvertes, faites, erreurTodoist, lu: maintenant }
   // une relecture qui ne change rien ne réécrit pas la vue : le schéma n'est pas redessiné
   const pareil = (a: Vue | null) => a !== null && JSON.stringify({ ...a, lu: 0 }) === JSON.stringify({ ...next, lu: 0 })
   await update($, vue, prev => (pareil(prev) ? prev : next))
@@ -77,6 +96,11 @@ async function ouvrir($: EngineInterface) {
     return { isPlaced: false }
   }
 }
+
+const basculer = ($: EngineInterface, j: Jour, plie: boolean) => () => void update($, plies, p => ({ ...p, [j.jour]: !plie }))
+const entete = (j: Jour, plie: boolean) =>
+  `${plie ? '▸' : '▾'} ${j.libelle} · ${[j.enCours && `${j.enCours} en cours`, j.enAttente && `${j.enAttente} en attente`, j.fait && `${j.fait} fait${j.fait > 1 ? 'es' : 'e'}`].filter(Boolean).join(' · ')}`
+const total = (liste: Jour[], k: 'fait' | 'enCours' | 'enAttente') => liste.reduce((n, j) => n + j[k], 0)
 
 const estPlace = async ($: EngineInterface) => (await $.ui.panes()).some(p => p.id === PANE && p.isPlaced)
 
@@ -112,6 +136,44 @@ export const register: Register = on => {
     return next(e)
   })
 
+  // Les sous-agents : leur lancement (description, type), leurs lectures du vault, leur fin
+  on('agent.spawn', async ($, e, next) => {
+    const r = await next(e)
+    if ('agentId' in r && r.agentId) {
+      const id = r.agentId
+      const debut = await $.clock.now()
+      await update($, agents, l => [...l.filter(a => a.id !== id),
+        { id, type: e.subagentType, description: e.description, debut, fin: null, enCours: true, savoir: 0 }].slice(-MAX_AGENTS))
+    }
+    return r
+  })
+
+  on('tool.call', async ($, e, next) => {
+    if (LECTURE_MEMOIRE.test(e.tool)) {
+      if (e.agentId === undefined) {
+        const auj = jour(await $.clock.now())
+        await update($, memoire, m => ({ jour: auj, n: m.jour === auj ? m.n + 1 : 1 }))
+      } else if ((await read($, agents)).some(a => a.id === e.agentId && a.savoir === 0))
+        await update($, agents, l => l.map(a => (a.id === e.agentId ? { ...a, savoir: a.savoir + 1 } : a)))
+    }
+    return next(e)
+  })
+
+  on('turn.start', async ($, e, next) => {
+    const r = await next(e)
+    if (e.agentId !== undefined && (await read($, agents)).some(a => a.id === e.agentId && !a.enCours))
+      await update($, agents, l => l.map(a => (a.id === e.agentId ? { ...a, enCours: true, fin: null } : a)))
+    return r
+  })
+
+  on('turn.complete', async ($, e, next) => {
+    if (e.agentId !== undefined && (await read($, agents)).some(a => a.id === e.agentId && a.enCours)) {
+      const fin = await $.clock.now()
+      await update($, agents, l => l.map(a => (a.id === e.agentId ? { ...a, enCours: false, fin } : a)))
+    }
+    return next(e)
+  })
+
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text } = $.ui.resolve(e)
     const v = await read($, vue)
@@ -124,17 +186,37 @@ export const register: Register = on => {
     )
     const s = v.etat
     const now = await $.clock.now()
+    const liste = jours(s.journal, await read($, agents), v.ouvertes, v.faites, s.todoist.labelClaude, now)
+    const pli = await read($, plies)
+    const mem = await read($, memoire)
+    const consultations = mem.jour === jour(now) ? mem.n : 0
+    const { Button } = $.ui.resolve(e)
     const relu = `Relu à ${new Date(await read($, lu)).toTimeString().slice(0, 5)} · état du ${s.majLe}${v.erreurTodoist ? ` · ${v.erreurTodoist}` : ''}`
     // Desktop et mobile : le schéma SVG, collé en haut ; le terminal et VS Code gardent la version texte
     if (e.surface === 'desktop' || e.surface === 'mobile') {
       const { Svg } = $.ui.resolve(e)
       if (!vus.has(e.surface)) vus.set(e.surface, now)
       const intro = now - vus.get(e.surface)! < INTRO_MS
-      const d = dessin(v, now, { intro })
+      const tete = dessin(v, now, { intro, partie: 'tete' })
+      const suite = dessin(v, now, { intro, partie: 'suite' })
+      const t = dessinTaches(liste, consultations)
       return (
         <Box flexDirection="column" flexGrow={1} justifyContent="flex-start" alignItems="center" alignSelf="flex-start" width="100%" height="100%">
-          <Svg key="pilotage" source={d.source} width={d.width} height={d.height}
-            alt={`Pilotage : ${v.aToi.length} pour toi, ${s.attentes.length} attentes, ${s.portes.filter(p => p.statut === 'ok').length} portes sur ${s.portes.length}`} />
+          <Svg key="tete" source={tete.source} width={tete.width} height={tete.height} alt={`Pilotage : ${s.produit}`} />
+          <Svg key="taches" source={t.source} width={t.width} height={t.height}
+            alt={`Tâches : ${total(liste, 'fait')} faites, ${total(liste, 'enCours')} en cours, ${total(liste, 'enAttente')} en attente`} />
+          {liste.map(j => {
+            const plie = estPlie(j, pli, now)
+            const d = plie ? null : dessinJour(j)
+            return (
+              <Box key={`j-${j.jour}`} flexDirection="column" alignItems="flex-start" width={360}>
+                <Button key={`jour-${j.jour}`} plain dimColor={plie} onPress={basculer($, j, plie)}>{entete(j, plie)}</Button>
+                {d ? <Svg key={`svg-${j.jour}`} source={d.source} width={d.width} height={d.height} alt={`Tâches : ${j.libelle}`} /> : null}
+              </Box>
+            )
+          })}
+          <Svg key="suite" source={suite.source} width={suite.width} height={suite.height}
+            alt={`${v.aToi.length} pour toi, ${s.attentes.length} attentes, ${s.portes.filter(p => p.statut === 'ok').length} portes sur ${s.portes.length}`} />
           <Text dimColor wrap="truncate">{relu}</Text>
         </Box>
       )
@@ -152,6 +234,24 @@ export const register: Register = on => {
           <Text bold>{s.produit}</Text>
           <Text>{s.etapes.map((x, i) => `${i + 1} ${x.nom} ${marque(x.statut)}`).join('   ')}</Text>
           <Text dimColor>{`Dépensé ${euros(s.budget.depense)} sur ${euros(s.budget.plafond)} de plafond`}</Text>
+        </Box>
+
+        <Box flexDirection="column">
+          {titre(`TÂCHES · ${total(liste, 'fait')} faites · ${total(liste, 'enCours')} en cours · ${total(liste, 'enAttente')} en attente`)}
+          <Text dimColor>{`Chef d’orchestre : Claude · vault consulté ${consultations} fois aujourd’hui`}</Text>
+          {liste.map(j => {
+            const plie = estPlie(j, pli, now)
+            return (
+              <Box key={`j-${j.jour}`} flexDirection="column">
+                <Button key={`jour-${j.jour}`} plain dimColor={plie} onPress={basculer($, j, plie)}>{entete(j, plie)}</Button>
+                {plie ? null : j.lignes.map((l, i) => (
+                  <Text key={`${j.jour}-${i}`} color={l.etat === 'en_cours' ? 'claude' : l.retard ? 'error' : undefined} dimColor={l.etat === 'fait'}>
+                    {`  ${l.etat === 'fait' ? '✓' : l.etat === 'en_cours' ? '●' : '○'} ${l.titre} — ${[l.qui, l.agent, l.heure].filter(Boolean).join(' · ')}${l.savoir === 'oui' ? ' · ✓ savoir' : l.savoir === 'non' ? ' · ? savoir' : ''}`}
+                  </Text>
+                ))}
+              </Box>
+            )
+          })}
         </Box>
 
         <Box flexDirection="column">

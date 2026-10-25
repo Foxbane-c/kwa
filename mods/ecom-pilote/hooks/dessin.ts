@@ -1,7 +1,7 @@
 // Le dessin du panneau en SVG, dans la grammaire du Mod Kwa (kwa-activity) : cadres arrondis colorés, pastilles,
 // flèches, animations courtes, thème clair et sombre. Fonction pure : la même vue donne le même SVG, donc le cadre qui
 // le montre ne se recharge que quand les données changent.
-import type { Attente, Porte, Tache, Vue } from '../types'
+import type { Attente, Jour, Ligne, Porte, Tache, Vue } from '../types'
 import { joursAvant } from './pilotage'
 
 export type Drawing = { source: string; width: number; height: number }
@@ -9,7 +9,7 @@ export type Drawing = { source: string; width: number; height: number }
 const W = 360
 const C = {
   toi: '#22c55e', attente: '#6366f1', claude: '#f97316', portes: '#eab308',
-  fait: '#10b981', retard: '#ef4444', gris: '#a1a1aa',
+  fait: '#10b981', retard: '#ef4444', gris: '#a1a1aa', taches: '#0ea5e9',
 }
 
 const esc = (t: string) => t.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -116,16 +116,21 @@ function portes(liste: Porte[], y: number, intro: boolean): { svg: string; h: nu
   return { svg: out, h: Math.max(84, liste.length * 26 + 4) }
 }
 
-// `intro` : première apparition du panneau sur une surface ; la jauge et l'anneau se remplissent alors une seule fois
-export function dessin(v: Vue, now: number, { intro = false }: { intro?: boolean } = {}): Drawing {
+// `intro` : première apparition du panneau sur une surface ; la jauge et l'anneau se remplissent alors une seule fois.
+// `partie` : « tete » (titre, parcours, budget) et « suite » (les quatre sections) encadrent le tableau des tâches
+// sur desktop ; « tout » dessine les deux d'un bloc.
+export function dessin(v: Vue, now: number, { intro = false, partie = 'tout' }: { intro?: boolean; partie?: 'tout' | 'tete' | 'suite' } = {}): Drawing {
   const s = v.etat!
   let y = 0
-  let out = `<text x="16" y="28" class="title">Pilotage</text>` +
-    `<text x="16" y="48" class="meta">${esc(cut(s.produit, 46))}</text>`
-  out += parcours(v, 84)
-  y = 140
-  out += budget(v, y, intro)
-  y += 36
+  let out = ''
+  if (partie !== 'suite') {
+    out += `<text x="16" y="28" class="title">Pilotage</text>` +
+      `<text x="16" y="48" class="meta">${esc(cut(s.produit, 46))}</text>`
+    out += parcours(v, 84)
+    out += budget(v, 140, intro)
+    y = 176
+    if (partie === 'tete') return svg(out, 170)
+  } else y = 8
 
   const sections: { n: number; titre: string; couleur: string; compte: string; corps: (y0: number) => { svg: string; h: number } }[] = [
     { n: 1, titre: 'À toi', couleur: C.toi, compte: `${v.aToi.length}`, corps: y0 => {
@@ -153,13 +158,72 @@ export function dessin(v: Vue, now: number, { intro = false }: { intro?: boolean
     y += h + 22
   }
   // l'heure de relecture est dessinée en texte natif sous le schéma : le SVG ne change ainsi qu'avec les données
-  const H = y - 8
+  return svg(out, y - 8)
+}
 
-  const style = `<style>
+// L'en-tête du tableau des tâches : les trois compteurs, et qui tient la baguette
+export function dessinTaches(liste: Jour[], memoire: number): Drawing {
+  const n = (k: 'fait' | 'enCours' | 'enAttente') => liste.reduce((t, j) => t + j[k], 0)
+  const encours = n('enCours')
+  const pills: [string, number, string][] = [['Fait', n('fait'), C.fait], ['En cours', encours, C.claude], ['En attente', n('enAttente'), C.attente]]
+  const L = (W - 40 - 16) / 3
+  let out = `<text x="16" y="22" class="bh" style="fill:${C.taches}">Tâches</text>` +
+    `<text x="${W - 16}" y="22" class="meta" text-anchor="end">pliables par jour</text>`
+  pills.forEach(([nom, k, teinte], i) => {
+    const x = 20 + i * (L + 8)
+    out += `<rect x="${x}" y="34" width="${L}" height="44" rx="12" fill="${teinte}" fill-opacity=".12" stroke="${teinte}" stroke-opacity=".5"/>` +
+      `<text x="${x + 12}" y="56" class="pct" style="fill:${teinte}">${k}</text>` +
+      `<text x="${x + 12}" y="71" class="mini">${nom}</text>` +
+      (nom === 'En cours' && k > 0 ? `<circle cx="${x + L - 14}" cy="50" r="5" fill="${teinte}"/><circle cx="${x + L - 14}" cy="50" r="5" fill="none" stroke="${teinte}" stroke-width="2">${pulse('r', '5;11', 1.4)}${pulse('opacity', '.9;0', 1.4)}</circle>` : '')
+  })
+  const chef = memoire > 0 ? `vault consulté ${memoire} fois aujourd’hui` : 'vault pas encore consulté aujourd’hui'
+  out += `<circle cx="27" cy="97" r="6" fill="${memoire > 0 ? C.fait : C.gris}"/>` +
+    `<text x="40" y="101" class="mini"><tspan class="fort">Chef d’orchestre : Claude</tspan> · ${chef}</text>`
+  return svg(out, 112)
+}
+
+// Une ligne : l'état à gauche (coche, halo qui respire, rond creux), le titre, qui la porte, la pastille « savoir »
+function ligne(l: Ligne, y: number): string {
+  const teinte = l.etat === 'fait' ? C.fait : l.etat === 'en_cours' ? C.claude : l.retard ? C.retard : C.attente
+  const H = 50
+  let o = `<rect x="16" y="${y}" width="${W - 32}" height="${H}" rx="10" class="box"${l.etat === 'en_attente' && !l.retard ? '' : ` style="stroke:${teinte}"`} stroke-opacity="${l.etat === 'en_cours' ? 1 : 0.55}"/>`
+  if (l.etat === 'en_cours')
+    o += `<rect x="16" y="${y}" width="${W - 32}" height="${H}" rx="10" fill="none" stroke="${teinte}" stroke-width="2.2" stroke-dasharray="40 ${2 * (W - 32 + H) - 40}">` +
+      `<animate attributeName="stroke-dashoffset" from="0" to="${-2 * (W - 32 + H)}" dur="3s" repeatCount="indefinite"/></rect>` +
+      `<circle cx="36" cy="${y + H / 2}" r="7" fill="${teinte}"/><circle cx="36" cy="${y + H / 2}" r="7" fill="none" stroke="${teinte}" stroke-width="2">${pulse('r', '7;13', 1.4)}${pulse('opacity', '.9;0', 1.4)}</circle>`
+  else if (l.etat === 'fait') o += `<circle cx="36" cy="${y + H / 2}" r="9" fill="${teinte}"/>${tick(36, y + H / 2, 0.9)}`
+  else o += `<circle cx="36" cy="${y + H / 2}" r="7" class="hollow" style="stroke:${teinte}"/>`
+  const titre = l.titre.charAt(0).toUpperCase() + l.titre.slice(1)
+  const qui = [l.qui, l.agent, l.heure].filter(Boolean).join(' · ')
+  o += `<text x="54" y="${y + 21}" class="sn${l.etat === 'fait' ? ' fini' : ''}">${esc(cut(titre, l.savoir === 'sans_objet' ? 34 : 27))}</text>` +
+    `<text x="54" y="${y + 38}" class="mini${l.etat === 'en_cours' ? ' vif' : ''}">${esc(cut(l.retard ? `${qui} · en retard` : qui, 46))}</text>`
+  if (l.savoir !== 'sans_objet') {
+    const ok = l.savoir === 'oui'
+    o += `<rect x="${W - 92}" y="${y + 8}" width="64" height="18" rx="9" fill="${ok ? C.fait : C.gris}" fill-opacity="${ok ? 0.16 : 0.1}"${ok ? '' : ` stroke="${C.gris}" stroke-opacity=".5" stroke-dasharray="3 3"`}/>` +
+      `<text x="${W - 60}" y="${y + 21}" class="porte" style="fill:${ok ? C.fait : C.gris}" text-anchor="middle">${ok ? '✓ savoir' : '? savoir'}</text>`
+  }
+  return o
+}
+
+const MAX_LIGNES = 12
+
+// Les tâches d'un jour déplié
+export function dessinJour(j: Jour): Drawing {
+  const vues = j.lignes.slice(0, MAX_LIGNES)
+  let out = vues.map((l, i) => ligne(l, 4 + i * 56)).join('')
+  let h = 4 + vues.length * 56
+  if (j.lignes.length > vues.length) {
+    out += `<text x="20" y="${h + 12}" class="meta">… et ${j.lignes.length - vues.length} autres</text>`
+    h += 22
+  }
+  return svg(out, h)
+}
+
+const STYLE = `<style>
 text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#18181b}
 .title{font-size:20px;font-weight:750}.bh{font-size:13px;font-weight:750;letter-spacing:.06em;text-transform:uppercase}
 .num{font-size:12px;font-weight:700;fill:#fff}.num.dim{fill:#71717a}.wl{font-size:11px;font-weight:600;fill:#71717a}.wl.on{font-weight:800;fill:${C.claude}}
-.sn{font-size:13.5px;font-weight:550}.mini{font-size:11px;fill:#71717a}.meta{font-size:12px;fill:#71717a}.meta.alerte{fill:${C.retard};font-weight:700}
+.sn{font-size:13.5px;font-weight:550}.mini{font-size:11px;fill:#71717a}.meta{font-size:12px;fill:#71717a}.meta.alerte{fill:${C.retard};font-weight:700}.sn.fini{fill:#71717a}.mini.vif{fill:${C.claude};font-weight:650}
 .fort{font-weight:750;fill:#18181b}.pill{font-size:11px;font-weight:750}.pill.blanc{fill:#fff}.pct{font-size:14px;font-weight:750}.porte{font-size:11px;font-weight:600;fill:#71717a}
 .frame{fill:none;stroke-width:1.6}.box{fill:#ffffff;stroke:#d4d4d8;stroke-width:1.3}.hollow{fill:none;stroke:#a1a1aa;stroke-width:2}
 .track{fill:#e4e4e7;stroke:#e4e4e7}.anneau{fill:none;stroke:#e4e4e7}.lien{stroke-width:2}.lien.on{stroke:${C.fait}}.lien.off{stroke:#d4d4d8;stroke-dasharray:3 4}
@@ -167,5 +231,6 @@ text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#18
 @media (prefers-color-scheme: dark){text{fill:#fafafa}.meta,.mini,.wl,.porte{fill:#a1a1aa}.num.dim{fill:#a1a1aa}.fort{fill:#fafafa}
 .box{fill:#18181b;stroke:#3f3f46}.track{fill:#3f3f46;stroke:#3f3f46}.anneau{stroke:#3f3f46}.lien.off{stroke:#3f3f46}.hollow{stroke:#71717a}}
 </style>`
-  return { width: W, height: H, source: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${style}${out}</svg>` }
-}
+
+const svg = (out: string, H: number): Drawing =>
+  ({ width: W, height: H, source: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${STYLE}${out}</svg>` })
