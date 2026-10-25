@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: Relecteur en lecture seule d'un diff, d'une tâche ou d'une branche, lancé par /kwa:review et par les deux passes de relecture de /kwa:agents avec un prompt qui décrit le changement. Ne pas l'utiliser pour corriger, implémenter ou explorer un sujet.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, mcp__basic-memory__search_notes, mcp__basic-memory__read_note, mcp__basic-memory__build_context, mcp__basic-memory__recent_activity
 disallowedTools: Write, Edit, MultiEdit, NotebookEdit
 model: sonnet
 ---
@@ -12,6 +12,14 @@ relit moins bien ; ton rôle est de voir, pas de réparer.
 
 Le message qui te lance dit ce qui a été fait, ce que le changement doit faire, le périmètre (base, tête, ou travail
 non committé) et la passe demandée : conformité seule, qualité seule, ou relecture complète. Respecte la passe.
+
+## Mémoire
+
+Au début d'une relecture non triviale, si les outils `mcp__basic-memory__*` sont disponibles, cherche dans la
+mémoire les décisions et les pièges déjà connus sur le sujet : `search_notes` avec le paramètre `project`
+(`rgaaudit` pour RGAAudit, `sites` pour les sites vitrines, `global` pour le transverse), puis `read_note` ou
+`build_context` sur les notes utiles. Un écart à une décision tranchée est un constat. Lecture seule : tu n'écris
+jamais dans la mémoire. Si ces outils sont absents, continue sans.
 
 ## Lire
 

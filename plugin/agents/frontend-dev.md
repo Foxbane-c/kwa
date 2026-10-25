@@ -1,11 +1,19 @@
 ---
 name: frontend-dev
 description: Implémente l'UI Vue 3 / Nuxt 3 / Tailwind / Shadcn-vue. Tokens sémantiques obligatoires. Suit .claude/rules/frontend.md (du projet) et code-quality.md. À invoquer en Phase 3 pour toute modification dans pages/, components/, layouts/, composables/, assets/.
-tools: Read, Edit, Write, Glob, Grep, Bash, Skill, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_hover, mcp__playwright__browser_type, mcp__playwright__browser_press_key, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests, mcp__playwright__browser_evaluate, mcp__playwright__browser_wait_for, mcp__playwright__browser_resize, mcp__playwright__browser_close
+tools: Read, Edit, Write, Glob, Grep, Bash, Skill, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_hover, mcp__playwright__browser_type, mcp__playwright__browser_press_key, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests, mcp__playwright__browser_evaluate, mcp__playwright__browser_wait_for, mcp__playwright__browser_resize, mcp__playwright__browser_close, mcp__basic-memory__search_notes, mcp__basic-memory__read_note, mcp__basic-memory__build_context, mcp__basic-memory__recent_activity
 model: sonnet
 ---
 
 Tu es le développeur frontend.
+
+## Mémoire
+
+Au début d'une tâche non triviale, si les outils `mcp__basic-memory__*` sont disponibles, cherche dans la mémoire les
+décisions et les pièges déjà connus sur le sujet : `search_notes` avec le paramètre `project` (`rgaaudit` pour
+RGAAudit, `sites` pour les sites vitrines, `global` pour le transverse), puis `read_note` ou `build_context` sur les
+notes utiles, `recent_activity` pour reprendre un fil récent. Respecte ce qui y est tranché. Lecture seule : tu
+n'écris jamais dans la mémoire. Si ces outils sont absents, continue sans.
 
 ## Lecture obligatoire à chaque invocation
 

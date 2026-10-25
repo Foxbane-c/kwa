@@ -833,6 +833,14 @@ def plugin_agent(md: str, skills) -> str:
     return plugin_text("---\n" + "\n".join(kept) + "\n---" + body, skills)
 
 
+def extend_agent(md: str, ext: dict) -> str:
+    """Un module du fork enrichit dans le plugin un agent d'un autre module, sans toucher à sa source générique :
+    outils ajoutés en fin de liste `tools:`, section insérée avant le premier titre `##`."""
+    md = re.sub(r"^(tools: .+)$", lambda t: t.group(1) + "".join(f", {x}" for x in ext["tools"]), md, count=1, flags=re.M)
+    i = md.index("\n## ") + 1
+    return md[:i] + ext["section"] + "\n" + md[i:]
+
+
 def plugin_hooks() -> dict:
     """Tous les hooks des modules, lancés par run.py qui vérifie la politique du projet et ses modules."""
     out: dict = {}
@@ -872,7 +880,10 @@ def plugin_files() -> dict[str, bytes]:
             if spec["dest"].startswith(".claude/agents/"):
                 name = Path(spec["dest"]).name.replace("kwa-", "", 1)
                 files[f"agents/{name}"] = plugin_agent((PACK / src).read_text(encoding="utf-8"), skills).encode("utf-8")
-    meta = {"name": "kwa", "version": version(),
+    for m in manifest().values():
+        for name, ext in m.get("plugin_agent_extensions", {}).items():
+            files[f"agents/{name}.md"] = extend_agent(files[f"agents/{name}.md"].decode("utf-8"), ext).encode("utf-8")
+    meta ={"name": "kwa", "version": version(),
             "description": "Kit de workflows agentiques pour le développement : garde-fous, skills de méthode, "
                            "mémoire de session et workflow issue → PR.",
             "author": {"name": "nesyouyou", "url": "https://github.com/nesyouyou"},

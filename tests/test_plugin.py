@@ -86,6 +86,14 @@ class Build(unittest.TestCase):
         self.assertNotIn("hooks:", head)
         self.assertIn("disallowedTools: Write, Edit", head)
 
+    def test_fork_extends_reviewer_with_read_only_memory_in_plugin_only(self):
+        head, body = read(os.path.join(PLUGIN, "agents", "reviewer.md")).split("---")[1:3]
+        tools = re.search(r"^tools: (.+)$", head, re.M).group(1).split(", ")
+        self.assertIn("mcp__basic-memory__search_notes", tools)
+        self.assertFalse([t for t in tools if re.search(r"write|edit|delete|move", t)], tools)
+        self.assertIn("## Mémoire", body)
+        self.assertNotIn("basic-memory", read(os.path.join(PACK, "core", "agents", "reviewer.md")))
+
     def test_both_manifests_and_the_marketplace(self):
         claude = json.loads(read(os.path.join(PLUGIN, ".claude-plugin", "plugin.json")))
         codex = json.loads(read(os.path.join(PLUGIN, ".codex-plugin", "plugin.json")))

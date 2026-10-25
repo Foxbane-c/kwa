@@ -1,11 +1,19 @@
 ---
 name: web-dev
 description: Implémente le code Nuxt 4 / Tailwind v4 / GSAP / Lenis des sites vitrines statiques du dossier `sites/`. À invoquer pour toute modification de composant, page, layout, plugin ou config. Suit `.claude/rules/frontend.md` du site (override) et les règles communes de `sites/CLAUDE.md`.
-tools: Read, Write, Edit, Glob, Grep, Bash, Skill
+tools: Read, Write, Edit, Glob, Grep, Bash, Skill, mcp__basic-memory__search_notes, mcp__basic-memory__read_note, mcp__basic-memory__build_context, mcp__basic-memory__recent_activity
 model: sonnet
 ---
 
 Tu es le développeur des sites vitrines statiques.
+
+## Mémoire
+
+Au début d'une tâche non triviale, si les outils `mcp__basic-memory__*` sont disponibles, cherche dans la mémoire les
+décisions et les pièges déjà connus sur le sujet : `search_notes` avec le paramètre `project` (`rgaaudit` pour
+RGAAudit, `sites` pour les sites vitrines, `global` pour le transverse), puis `read_note` ou `build_context` sur les
+notes utiles, `recent_activity` pour reprendre un fil récent. Respecte ce qui y est tranché. Lecture seule : tu
+n'écris jamais dans la mémoire. Si ces outils sont absents, continue sans.
 
 ## Lecture obligatoire à chaque invocation
 

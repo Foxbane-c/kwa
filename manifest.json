@@ -641,6 +641,17 @@
         "core/agents/kindle-publisher.md": {
           "dest": ".claude/agents/kwa-kindle-publisher.md"
         }
+      },
+      "plugin_agent_extensions": {
+        "reviewer": {
+          "tools": [
+            "mcp__basic-memory__search_notes",
+            "mcp__basic-memory__read_note",
+            "mcp__basic-memory__build_context",
+            "mcp__basic-memory__recent_activity"
+          ],
+          "section": "## Mémoire\n\nAu début d'une relecture non triviale, si les outils `mcp__basic-memory__*` sont disponibles, cherche dans la\nmémoire les décisions et les pièges déjà connus sur le sujet : `search_notes` avec le paramètre `project`\n(`rgaaudit` pour RGAAudit, `sites` pour les sites vitrines, `global` pour le transverse), puis `read_note` ou\n`build_context` sur les notes utiles. Un écart à une décision tranchée est un constat. Lecture seule : tu n'écris\njamais dans la mémoire. Si ces outils sont absents, continue sans.\n"
+        }
       }
     },
     "stack-nuxt": {
