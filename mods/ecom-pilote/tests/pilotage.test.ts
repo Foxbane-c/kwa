@@ -1,121 +1,68 @@
 import { expect, test } from 'claude-code/testing'
 
-import { dessin, dessinJour, dessinTaches } from '../hooks/dessin'
-import { delai, estPlie, jours, joursAvant, lireEtat, lireFaites, lireTaches, nomAgent, trier } from '../hooks/pilotage'
+import { dessinSection, dessinTete, lignes } from '../hooks/dessin'
+import { cartesAgents, estPlie, lireEtat, ranger } from '../hooks/pilotage'
+import type { Carte } from '../types'
 
-const AUJ = new Date(2026, 9, 25, 10, 0).getTime()   // 25/10/2026, 10 h, heure locale
-
-const ETAT = {
-  produit: 'Cahier', etapes: [{ id: 'valider', nom: 'Valider', statut: 'fait' }],
-  budget: { depense: 13.77, plafond: 300 },
-  attentes: [{ quoi: 'Colis', qui: 'AliExpress', depuis: '2026-10-25', echeance: '2026-11-03', etat: 'en_cours', preuve: 'commande' }],
-  portes: [{ critere: 'Minimum', statut: 'ok', valeur: '100' }],
-  todoist: { server: 'srv', projectId: 'p' },
+const BASE = {
+  version: 1, majLe: '2026-10-25', produit: 'Kit', etapes: [{ id: 'v', nom: 'Valider', statut: 'fait' }],
+  budget: { depense: 22.77, plafond: 300 },
 }
+const NOW = new Date(2026, 9, 25, 10, 0).getTime()
 
-test('les jours se comptent en dates locales, retard compris', () => {
-  expect(joursAvant('2026-11-03', AUJ)).toBe(9)
-  expect(joursAvant('2026-10-25', AUJ)).toBe(0)
-  expect(joursAvant('2026-10-20', AUJ)).toBe(-5)
-  const a = ETAT.attentes[0] as Parameters<typeof delai>[0]
-  expect(delai(a, AUJ).texte).toBe('J-9 · 03/11')
-  expect(delai({ ...a, echeance: '2026-10-20' }, AUJ)).toEqual({ texte: 'en retard de 5 j', retard: true })
-  expect(delai({ ...a, etat: 'recu' }, AUJ).texte).toBe('reçu')
+test('un pilotage.json faux dit quelle carte est en cause', () => {
+  expect(() => lireEtat('{')).toThrow(/JSON/)
+  expect(() => lireEtat(JSON.stringify(BASE))).toThrow(/todo/)
+  const faux = { ...BASE, todo: [{ titre: 'a', recit: 'b', qui: 'Claude', etat: 'fait' }, { titre: 'c', recit: 'd', qui: 'Toi', etat: 'bientot' }] }
+  expect(() => lireEtat(JSON.stringify(faux))).toThrow(/carte n° 2/)
+  expect(lireEtat(JSON.stringify({ ...BASE, todo: [] })).todo).toEqual([])
 })
 
-test('un pilotage.json valide est lu, le label de Claude a une valeur par défaut', () => {
-  const e = lireEtat(JSON.stringify(ETAT))
-  expect(e.todoist.labelClaude).toBe('claude')
-  expect(e.attentes.length).toBe(1)
+test('les cartes se rangent : échéance proche d’abord, faites de la plus récente à la plus ancienne', () => {
+  const todo: Carte[] = [
+    { titre: 'Sans date', etat: 'a_faire', recit: '', qui: 'Toi' },
+    { titre: 'Devis', etat: 'a_faire', recit: '', qui: 'Claude', quand: '2026-10-28' },
+    { titre: 'Colis', etat: 'a_faire', recit: '', qui: 'Toi', quand: '2026-11-03' },
+    { titre: 'Vieux', etat: 'fait', recit: '', qui: 'Claude', quand: '2026-10-20' },
+    { titre: 'Récent', etat: 'fait', recit: '', qui: 'Claude', quand: '2026-10-25' },
+  ]
+  expect(ranger(todo, 'a_faire').map(c => c.titre)).toEqual(['Devis', 'Colis', 'Sans date'])
+  expect(ranger(todo, 'fait').map(c => c.titre)).toEqual(['Récent', 'Vieux'])
+  expect(estPlie('fait', {})).toBe(true)
+  expect(estPlie('en_cours', {})).toBe(false)
+  expect(estPlie('fait', { fait: false })).toBe(false)
 })
 
-test('un pilotage.json faux dit quel champ est en cause', () => {
-  expect(() => lireEtat('{')).toThrow('pas du JSON')
-  expect(() => lireEtat(JSON.stringify({ ...ETAT, attentes: [{ ...ETAT.attentes[0], echeance: '3/11' }] }))).toThrow('attentes')
-  expect(() => lireEtat(JSON.stringify({ ...ETAT, budget: {} }))).toThrow('budget')
+test('un agent qui travaille devient une carte en cours, avec son nom humain', () => {
+  const c = cartesAgents([
+    { id: 'a', type: 'kwa:explorer', description: 'Cartographier le mod', debut: NOW, fin: null, enCours: true, savoir: 1 },
+    { id: 'b', type: 'fork', description: 'Fini', debut: NOW, fin: NOW, enCours: false, savoir: 0 },
+  ])
+  expect(c.length).toBe(1)
+  expect(c[0]!.agent).toBe('Explorateur · cartographie le code')
+  expect(c[0]!.recit).toContain('a relu la mémoire')
 })
 
-test('les tâches Todoist se répartissent entre Claude et Chaabane', () => {
-  const taches = lireTaches([{ type: 'text', text: JSON.stringify({ tasks: [
-    { content: 'Relever les devis', dueDate: '2026-10-26', labels: ['claude'], priority: 'p2' },
-    { content: 'Analyser Kalodata', dueDate: '2026-11-08', labels: ['claude'], priority: 'p2' },
-    { content: 'Choisir la marque', labels: [], priority: 'p1' },
-    { content: 'Plus tard', dueDate: '2026-12-01', labels: [], priority: 'p3' },
-    { content: 'Déjà faite', labels: [], priority: 'p1', checked: true },
-  ] }) }])
-  expect(taches.length).toBe(4)
-  const { aToi, claude } = trier(taches, 'claude', AUJ)
-  expect(claude.map(t => t.titre)).toEqual(['Relever les devis'])
-  expect(aToi.map(t => t.titre)).toEqual(['Choisir la marque'])
+test('le texte se coupe au mot et finit par … quand il déborde', () => {
+  expect(lignes('un deux trois quatre', 9, 3)).toEqual(['un deux', 'trois', 'quatre'])
+  const l = lignes('un deux trois quatre cinq six', 9, 2)
+  expect(l.length).toBe(2)
+  expect(l[1]!.endsWith('…')).toBe(true)
 })
 
-test('sans tâche urgente, Claude montre ses deux prochaines', () => {
-  const taches = lireTaches([{ type: 'text', text: JSON.stringify({ tasks: [
-    { content: 'B', dueDate: '2026-11-10', labels: ['claude'] },
-    { content: 'A', dueDate: '2026-11-08', labels: ['claude'] },
-    { content: 'C', dueDate: '2026-11-20', labels: ['claude'] },
-  ] }) }])
-  expect(trier(taches, 'claude', AUJ).claude.map(t => t.titre)).toEqual(['A', 'B'])
-})
-
-test('le schéma SVG est bien formé et suit les données', () => {
-  const etat = lireEtat(JSON.stringify({ ...ETAT, attentes: [...ETAT.attentes, { quoi: 'Devis <A> & co', qui: 'X', depuis: '2026-10-20', echeance: '2026-10-22', etat: 'en_cours', preuve: '' }] }))
-  const d = dessin({ etat, erreurEtat: null, aToi: [], claude: [], ouvertes: [], faites: [], erreurTodoist: null, lu: AUJ }, AUJ)
-  expect(d.source.startsWith('<svg')).toBe(true)
-  expect(d.source).toContain('Devis &lt;A&gt; &amp; co')   // texte échappé
-  expect(d.source).toContain('+3 j')                       // attente en retard
-  expect(d.source).toContain('Rien ne t’attend')
-  expect(d.height).toBeGreaterThan(300)
-})
-
-test('la jauge et l’anneau ne s’animent qu’à la première apparition', () => {
-  const v = { etat: lireEtat(JSON.stringify(ETAT)), erreurEtat: null, aToi: [], claude: [], ouvertes: [], faites: [], erreurTodoist: null, lu: AUJ }
-  const entree = dessin(v, AUJ, { intro: true }).source
-  const ensuite = dessin(v, AUJ).source
-  expect(entree).toContain('attributeName="stroke-dasharray"')
-  expect(entree).toContain('attributeName="width"')
-  expect(ensuite).not.toContain('attributeName="stroke-dasharray"')
-  expect(ensuite).not.toContain('attributeName="width"')
-  // les mêmes données redonnent exactement le même SVG : le cadre ne se recharge pas
-  expect(dessin(v, AUJ).source).toBe(ensuite)
-})
-
-test('le journal est lu, et un journal faux dit lequel', () => {
-  expect(lireEtat(JSON.stringify(ETAT)).journal).toEqual([])
-  const j = [{ jour: '2026-10-25', titre: 'Domaine acheté', etat: 'fait', qui: 'Toi' }]
-  expect(lireEtat(JSON.stringify({ ...ETAT, journal: j })).journal.length).toBe(1)
-  expect(() => lireEtat(JSON.stringify({ ...ETAT, journal: [{ ...j[0], etat: 'fini' }] }))).toThrow('journal')
-})
-
-test('les tâches se rangent par jour : aujourd’hui, à venir, passés, sans date', () => {
-  const ouvertes = lireTaches([{ type: 'text', text: JSON.stringify({ tasks: [
-    { content: 'Claude : comparer les devis', dueDate: '2026-10-28', labels: ['claude'] },
-    { content: 'Vieille relance', dueDate: '2026-10-20', labels: [] },
-    { content: 'Un jour', labels: [] },
-  ] }) }])
-  const faites = lireFaites([{ type: 'text', text: JSON.stringify({ tasks: [{ content: 'Relier Weave', completedAt: '2026-10-24T14:06:19.698Z', labels: [] }] }) }])
-  const agents = [{ id: 'a1', type: 'kwa:explorer', description: 'Cartographier le mod', debut: AUJ - 60000, fin: null, enCours: true, savoir: 1 },
-    { id: 'a2', type: 'fork', description: 'Écrire le tableau', debut: AUJ - 3600000, fin: AUJ - 600000, enCours: false, savoir: 0 }]
-  const journal = [{ jour: '2026-10-25', titre: 'Domaine acheté', etat: 'fait' as const, qui: 'Toi', savoir: true }]
-  const liste = jours(journal, agents, ouvertes, faites, 'claude', AUJ)
-  expect(liste.map(j => j.libelle)).toEqual(['Aujourd’hui', 'mer. 28/10', 'Hier', 'Sans date'])
-  const auj = liste[0]!
-  expect(auj.lignes.map(l => l.etat)).toEqual(['en_cours', 'en_attente', 'fait', 'fait'])
-  expect(auj.lignes[0]).toMatchObject({ qui: 'Claude pilote', agent: 'Explorateur · cartographie le code', savoir: 'oui' })
-  expect(auj.lignes[1]).toMatchObject({ titre: 'Vieille relance', retard: true, savoir: 'sans_objet' })
-  expect(liste[1]!.lignes[0]).toMatchObject({ titre: 'comparer les devis', qui: 'Claude' })
-  expect([auj.fait, auj.enCours, auj.enAttente]).toEqual([2, 1, 1])
-  expect(nomAgent('inconnu:truc')).toBe('inconnu:truc')
-  // aujourd'hui déplié, les autres jours repliés ; le choix de Chaabane l'emporte
-  expect(estPlie(auj, {}, AUJ)).toBe(false)
-  expect(estPlie(liste[2]!, {}, AUJ)).toBe(true)
-  expect(estPlie(liste[2]!, { '2026-10-24': false }, AUJ)).toBe(false)
-  // le dessin : compteurs, halo et contour qui tourne pour la tâche en cours, pastilles « savoir »
-  const tete = dessinTaches(liste, 3).source
-  expect(tete).toContain('vault consulté 3 fois')
-  const d = dessinJour(auj).source
-  expect(d).toContain('attributeName="stroke-dashoffset"')
-  expect(d).toContain('✓ savoir')
-  expect(dessinJour(liste[2]!).source).not.toContain('stroke-dashoffset')
-  expect(dessinJour(auj).source).toBe(d)
+test('les cartes : halo pour en cours, trait qui barre les faites, retard en rouge', () => {
+  const todo: Carte[] = [
+    { titre: 'Panneau', etat: 'en_cours', recit: 'Je refais le panneau.', qui: 'Claude' },
+    { titre: 'Domaine acheté', etat: 'fait', recit: 'Cloudflare, 10,46 $.', qui: 'Toi', quand: '2026-10-25' },
+    { titre: 'Devis', etat: 'a_faire', recit: 'Comparer.', qui: 'Claude', quand: '2026-10-20' },
+  ]
+  expect(dessinSection(ranger(todo, 'en_cours'), 'en_cours', NOW, false).source).toContain('stroke-dashoffset')
+  const fait = dessinSection(ranger(todo, 'fait'), 'fait', NOW, true).source
+  expect(fait).toContain('class="barre"')
+  expect(fait).toContain('aujourd’hui')
+  expect(dessinSection(ranger(todo, 'a_faire'), 'a_faire', NOW, false).source).toContain('en retard de 5 j')
+  expect(dessinSection([], 'en_attente', NOW, false).source).toContain('Rien en attente')
+  const tete = dessinTete({ etat: { ...BASE, etapes: [], todo }, erreurEtat: null } as never, 2, false).source
+  expect(tete).toContain('22,77 €')
+  expect(tete).toContain('relue 2 fois')
 })
