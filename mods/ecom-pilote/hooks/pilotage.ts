@@ -62,8 +62,8 @@ export function cartesAgents(agents: AgentVu[]): Carte[] {
 }
 
 export const SECTIONS: { id: Section; titre: string }[] = [
-  { id: 'en_cours', titre: 'En cours' },
   { id: 'a_faire', titre: 'À faire' },
+  { id: 'en_cours', titre: 'En cours' },
   { id: 'en_attente', titre: 'En attente' },
   { id: 'fait', titre: 'Fait' },
 ]
