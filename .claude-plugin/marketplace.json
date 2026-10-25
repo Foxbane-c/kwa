@@ -23,6 +23,12 @@
       "source": "./mods/suivi-agents",
       "category": "development",
       "description": "Mod de suivi (fork) : les tâches de la session barrées une fois finies, les sous-agents rangés sous leur tâche, et une ligne d'aide sous le prompt (branche, delta git, contexte, coût, quota 5 h)."
+    },
+    {
+      "name": "ecom-pilote",
+      "source": "./mods/ecom-pilote",
+      "category": "productivity",
+      "description": "Mod du projet E-commerce : parcours du produit, ce qui t'attend, ce qu'on attend (devis, colis), ce que Claude fait et les portes de décision, dans la grammaire de kwa-activity. S'ouvre seulement là où vault/pilotage.json existe."
     }
   ]
 }
