@@ -1,0 +1,1 @@
+{ "name": "ecom-pilote", "version": "0.1.0", "description": "Pilotage du projet E-commerce à droite de la conversation : parcours du produit, ce qui t'attend, ce qu'on attend, ce que Claude fait, portes de décision.", "types": "./types/index.d.ts" }
