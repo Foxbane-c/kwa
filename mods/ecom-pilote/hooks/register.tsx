@@ -200,21 +200,19 @@ export const register: Register = on => {
       const tete = dessin(v, now, { intro, partie: 'tete' })
       const suite = dessin(v, now, { intro, partie: 'suite' })
       const t = dessinTaches(liste, consultations)
+      // Une seule colonne plate : pas de Box imbriquée ni de hauteur imposée, que le panneau de bureau tronquait
+      const blocs = liste.flatMap(j => {
+        const plie = estPlie(j, pli, now)
+        const d = plie ? null : dessinJour(j)
+        const bouton = <Button key={`jour-${j.jour}`} plain dimColor={plie} onPress={basculer($, j, plie)}>{entete(j, plie)}</Button>
+        return d ? [bouton, <Svg key={`svg-${j.jour}`} source={d.source} width={d.width} height={d.height} alt={`Tâches : ${j.libelle}`} />] : [bouton]
+      })
       return (
-        <Box flexDirection="column" flexGrow={1} justifyContent="flex-start" alignItems="center" alignSelf="flex-start" width="100%" height="100%">
+        <Box flexDirection="column" alignItems="center" width="100%">
           <Svg key="tete" source={tete.source} width={tete.width} height={tete.height} alt={`Pilotage : ${s.produit}`} />
           <Svg key="taches" source={t.source} width={t.width} height={t.height}
             alt={`Tâches : ${total(liste, 'fait')} faites, ${total(liste, 'enCours')} en cours, ${total(liste, 'enAttente')} en attente`} />
-          {liste.map(j => {
-            const plie = estPlie(j, pli, now)
-            const d = plie ? null : dessinJour(j)
-            return (
-              <Box key={`j-${j.jour}`} flexDirection="column" alignItems="flex-start" width={360}>
-                <Button key={`jour-${j.jour}`} plain dimColor={plie} onPress={basculer($, j, plie)}>{entete(j, plie)}</Button>
-                {d ? <Svg key={`svg-${j.jour}`} source={d.source} width={d.width} height={d.height} alt={`Tâches : ${j.libelle}`} /> : null}
-              </Box>
-            )
-          })}
+          {blocs}
           <Svg key="suite" source={suite.source} width={suite.width} height={suite.height}
             alt={`${v.aToi.length} pour toi, ${s.attentes.length} attentes, ${s.portes.filter(p => p.statut === 'ok').length} portes sur ${s.portes.length}`} />
           <Text dimColor wrap="truncate">{relu}</Text>
