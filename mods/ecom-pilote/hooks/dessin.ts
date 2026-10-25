@@ -6,7 +6,9 @@ import { joursAvant } from './pilotage'
 
 export type Drawing = { source: string; width: number; height: number }
 
-const W = 360
+// Largeur du dessin en px, réglée avant chaque rendu sur la largeur du panneau : les cartes s'étalent quand on l'élargit
+let W = 360
+export const largeur = (px: number) => { W = Math.max(340, Math.min(760, Math.round(px))) }
 export const C = {
   en_cours: '#f97316', a_faire: '#0ea5e9', en_attente: '#6366f1', fait: '#10b981', retard: '#ef4444', gris: '#a1a1aa',
 }
@@ -91,12 +93,14 @@ function meta(c: Carte, now: number): { texte: string; retard: boolean } {
   return { texte: `${qui} · ${c.etat === 'en_attente' ? 'attendu ' : 'pour '}${quand}`, retard: n < 0 }
 }
 
-const T_TITRE = 34, T_RECIT = 46
+// Caractères par ligne selon la largeur : titre en 13,5 px gras (~7,6 px le signe), récit en 12 px (~6,3 px)
+const tTitre = () => Math.floor((W - 82) / 7.6)
+const tRecit = () => Math.floor((W - 70) / 6.3)
 
 // Une carte : l'icône d'état à gauche, le titre, le récit humain de ce qu'on a fait, et la ligne qui / quand
 function carte(c: Carte, y: number, now: number, intro: boolean): { svg: string; h: number } {
-  const titre = lignes(c.titre.charAt(0).toUpperCase() + c.titre.slice(1), T_TITRE, 2)
-  const recit = lignes(c.recit, T_RECIT, 4)
+  const titre = lignes(c.titre.charAt(0).toUpperCase() + c.titre.slice(1), tTitre(), 2)
+  const recit = lignes(c.recit, tRecit(), 4)
   const m = meta(c, now)
   const teinte = m.retard ? C.retard : C[c.etat]
   const h = 14 + titre.length * 18 + recit.length * 16 + 26
@@ -126,7 +130,7 @@ function carte(c: Carte, y: number, now: number, intro: boolean): { svg: string;
     ty += 18
   })
   recit.forEach(l => { o += `<text x="54" y="${ty}" class="recit${fait ? ' fini' : ''}">${esc(l)}</text>`; ty += 16 })
-  o += `<text x="54" y="${ty + 6}" class="mini${c.etat === 'en_cours' ? ' vif' : m.retard ? ' alerte' : ''}">${esc(cut(m.texte, 52))}</text>`
+  o += `<text x="54" y="${ty + 6}" class="mini${c.etat === 'en_cours' ? ' vif' : m.retard ? ' alerte' : ''}">${esc(cut(m.texte, Math.floor((W - 70) / 6)))}</text>`
   return { svg: o, h }
 }
 

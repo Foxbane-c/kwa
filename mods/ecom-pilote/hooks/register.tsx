@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, Timer } from 'claude-code'
 
 import type { AgentVu, Carte, Section, Vue } from '../types'
-import { dessinSection, dessinTete } from './dessin'
+import { dessinSection, dessinTete, largeur } from './dessin'
 import { SECTIONS, cartesAgents, estPlie, euros, jour, joursAvant, lireEtat, ranger } from './pilotage'
 
 // Lecture seule : le mod lit vault/pilotage.json, observe les sous-agents de la session, et dessine la liste des
@@ -53,7 +53,7 @@ async function relire($: EngineInterface): Promise<boolean> {
 
 async function ouvrir($: EngineInterface) {
   try {
-    return await $.ui.open({ id: PANE, title: TITLE })
+    return await $.ui.open({ id: PANE, title: TITLE, columns: 72 })
   } catch {
     return { isPlaced: false }
   }
@@ -148,6 +148,9 @@ export const register: Register = on => {
     // Desktop et mobile : des cartes SVG sous des en-têtes cliquables ; une seule colonne plate, sans Box imbriquée
     if (e.surface === 'desktop' || e.surface === 'mobile') {
       const { Svg } = $.ui.resolve(e)
+      // la largeur du panneau en cellules de la police de code (~7,8 px) : le dessin la remplit, et l'image
+      // est réduite à la place disponible si l'estimation déborde (Svg sans largeur imposée)
+      largeur(e.props.bodyColumns * 7.8)
       if (!vus.has(e.surface)) vus.set(e.surface, now)
       const intro = now - vus.get(e.surface)! < INTRO_MS
       const tete = dessinTete(v, consultations, intro)
@@ -157,11 +160,11 @@ export const register: Register = on => {
         const bouton = <Button key={`sec-${id}`} plain dimColor={plie} onPress={basculer($, id, plie)}>{entete(titre, liste.length, plie)}</Button>
         if (plie) return [bouton]
         const d = dessinSection(liste, id, now, intro)
-        return [bouton, <Svg key={`svg-${id}`} source={d.source} width={d.width} height={d.height} alt={`${titre} : ${liste.map(c => c.titre).join(', ') || 'rien'}`} />]
+        return [bouton, <Svg key={`svg-${id}`} source={d.source} alt={`${titre} : ${liste.map(c => c.titre).join(', ') || 'rien'}`} />]
       })
       return (
         <Box flexDirection="column" alignItems="center" width="100%">
-          <Svg key="tete" source={tete.source} width={tete.width} height={tete.height} alt={`Pilotage : ${s.produit}, ${euros(s.budget.depense)} dépensés`} />
+          <Svg key="tete" source={tete.source} alt={`Pilotage : ${s.produit}, ${euros(s.budget.depense)} dépensés`} />
           {blocs}
           <Text dimColor wrap="truncate">{relu}</Text>
         </Box>
